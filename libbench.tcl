@@ -4,7 +4,7 @@
 # This file has to have code that works in any version of Tcl that
 # the user would want to benchmark.
 #
-# RCS: @(#) $Id: libbench.tcl,v 1.12 2001/09/25 19:05:31 hobbs Exp $
+# RCS: @(#) $Id: libbench.tcl,v 1.13 2002/02/08 06:05:50 hobbs Exp $
 #
 # Copyright (c) 2000-2001 Jeffrey Hobbs.
 
@@ -105,6 +105,7 @@ proc bench {args} {
     while {[llength $args]} {
 	set key [lindex $args 0]
 	switch -glob -- $key {
+	    -res*	{ set opts(-res)  [lindex $args 1] }
 	    -pr*	{ set opts(-pre)  [lindex $args 1] }
 	    -po*	{ set opts(-post) [lindex $args 1] }
 	    -bo*	{ set opts(-body) [lindex $args 1] }
@@ -132,33 +133,44 @@ proc bench {args} {
     }
     if {$opts(-body) != ""} {
 	# always run it once to remove compile phase confusion
-	catch {uplevel \#0 $opts(-body)}
-	set code [catch {uplevel \#0 \
-		[list time $opts(-body) $opts(-iter)]} res]
-	if {!$BENCH(THREADED)} {
-	    if {$code == 0} {
-		# Get just the microseconds value from the time result
-		set res [lindex $res 0]
-	    } elseif {$code != 666} {
-		# A 666 result code means pass it through to the bench suite.
-		# Otherwise throw errors all the way out, unless we specified
-		# not to throw errors (option -errors 0 to libbench).
-		if {$BENCH(ERRORS)} {
-		    return -code $code -errorinfo $errorInfo \
-			    -errorcode $errorCode
-		} else {
-		    set res "ERR"
-		}
+	catch {uplevel \#0 $opts(-body)} res
+	if {[info exists opts(-res)] && [string compare $opts(-res) $res]} {
+	    if {$BENCH(ERRORS)} {
+		return -code error -errorinfo "Result was:\n$res\nResult\
+			should have been:\n$opts(-res)"
+	    } else {
+		set res "BAD_RES"
 	    }
-	    set bench($opts(-desc)) $res
 	} else {
-	    # Threaded runs report back asynchronously
-	    thread::send $BENCH(us) \
-		    [list thread_report $opts(-desc) $code $res]
+	    set code [catch {uplevel \#0 \
+		    [list time $opts(-body) $opts(-iter)]} res]
+	    if {!$BENCH(THREADED)} {
+		if {$code == 0} {
+		    # Get just the microseconds value from the time result
+		    set res [lindex $res 0]
+		} elseif {$code != 666} {
+		    # A 666 result code means pass it through to the bench suite.
+		    # Otherwise throw errors all the way out, unless we specified
+		    # not to throw errors (option -errors 0 to libbench).
+		    if {$BENCH(ERRORS)} {
+			return -code $code -errorinfo $errorInfo \
+				-errorcode $errorCode
+		    } else {
+			set res "ERR"
+		    }
+		}
+		set bench($opts(-desc)) $res
+		puts $BENCH(OUTFID) [list Sourcing "$opts(-desc): $res"]
+	    } else {
+		# Threaded runs report back asynchronously
+		thread::send $BENCH(us) \
+			[list thread_report $opts(-desc) $code $res]
+	    }
 	}
     }
-    if {$opts(-post) != ""} {
-	uplevel \#0 $opts(-post)
+    if {($opts(-post) != "") && [catch {uplevel \#0 $opts(-post)} err] \
+	    && $BENCH(ERRORS)} {
+	return -code error -errorinfo "post code threw error:\n$err"
     }
     return
 }
@@ -182,6 +194,7 @@ if {[catch {set BENCH(INTERP) [info nameofexec]}]} {
 }
 set BENCH(ERRORS)	1
 set BENCH(MATCH)	{}
+set BENCH(RMATCH)	{}
 set BENCH(OUTFILE)	stdout
 set BENCH(FILES)	{}
 set BENCH(ITERS)	1000
