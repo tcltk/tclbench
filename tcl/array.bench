@@ -1,0 +1,34 @@
+# -*- tcl -*-
+# Benchmark array / hash stuff
+#
+# RCS: @(#) $Id: array.bench,v 1.3 2004/12/20 22:30:31 hobbs Exp $
+#
+
+proc genKeys {N {prefix ""}} {
+    set lst {}
+    for {set i 0} {$i < $N} {incr i} {
+        lappend lst $prefix[format "%06d" $i]
+    }
+    return $lst
+}
+
+proc makeHash {var Mlst Nlst} {
+    upvar 1 $var hash
+    foreach m $Mlst {
+	foreach n $Nlst { set hash($m,$n) 1 }
+    }
+}
+
+set N 50
+set Nlst [genKeys $N]
+bench -desc "ARRAY genKeys $N" -iter 100 \
+	-body {genKeys $N}
+
+set M 500
+set Mlst [genKeys $M]
+bench -desc "ARRAY genKeys $M" -iter 50 \
+	-body {genKeys $M}
+
+catch {unset hash}
+bench -desc "ARRAY makeHash [llength $Mlst] [llength $Nlst]" -iter 50 \
+	-body {makeHash hash $Mlst $Nlst; catch {unset hash}}
