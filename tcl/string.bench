@@ -164,6 +164,16 @@ proc rev-recursive {string} {
     return [rev-recursive [string range $string 1 end]][string index $string 0]
 }
 
+proc str-split {string} {
+    split $string {}
+}
+proc str-split-iter {string} {
+    set var {}
+    foreach c [split $string {}] {
+	set var $c
+    }
+}
+
 # String comparisons
 #
 set str1 "This is a string"
@@ -288,6 +298,19 @@ bench -desc "STR reverse recur1, $chars chars" \
 bench -desc "STR reverse recur1, $chars uchars" \
 	-pre {set string [string range $ustring 0 $chars]} \
 	-body {rev-recursive $string}
+
+bench -desc "STR split, [string length $longString] chars" \
+	-body {str-split $longString} \
+	-iters 500
+bench -desc "STR split, [string length $ustring] uchars" \
+	-body {str-split $ustring} \
+	-iters 500
+bench -desc "STR split iter, [string length $longString] chars" \
+	-body {str-split-iter $longString} \
+	-iters 500
+bench -desc "STR split iter, [string length $ustring] uchars" \
+	-body {str-split-iter $ustring} \
+	-iters 500
 
 bench -desc "STR append" \
       -body {str-append $longString "01234567890123456789"}

@@ -1,7 +1,8 @@
 2001-03-28  Jeff Hobbs  <jeffh@activestate.com>
 
 	* tcl/string.bench: fixed str-first proc that had bogus code in it.
-
+	added more split benchmarks for dkf's split improvement in 8.4.
+	
 	* tk/canvas.bench: expanded item draw benchmarks
 
 2001-03-23    <jeffh@activestate.com>
