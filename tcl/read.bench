@@ -28,6 +28,32 @@ proc read-read-size {filename {trans {}}} {
     close $fp
 }
 
+
+# Read a file using read only, and a small buffersize
+proc read-read-10 {filename {trans {}}} {
+    set fp [open $filename r]
+    fconfigure $fp -buffersize 10
+    if {[string compare $trans {}] && ([info tclversion] > 8.1)} {
+	fconfigure $fp -translation $trans
+    }
+    read $fp
+    close $fp
+}
+
+# Read a file using read only, and a dynamically changing buffersize
+proc read-read-dyn {filename {trans {}}} {
+    set fp [open $filename r]
+    fconfigure $fp -buffersize 10
+    if {[string compare $trans {}] && ([info tclversion] > 8.1)} {
+	fconfigure $fp -translation $trans
+    }
+    read $fp 2
+    fconfigure $fp -buffersize 4096
+    read $fp
+    close $fp
+}
+
+
 proc makeFiles {largeFile smallFile} {
     # 60 chars
     set line "012345678901234567890123456789012345678901234567890123456789"
@@ -78,5 +104,26 @@ bench -iter $iters -desc "READ bin $small, read" \
 	-body {read-read $smallFile binary}
 bench -iter $iters -desc "READ bin $small, read & size" \
 	-body {read-read-size $smallFile binary}
+
+# New benchmarks, affect of buffersize on timing
+
+bench -iter $iters -desc "READ $large, read & small buffer" \
+	-body {read-read-10 $largeFile}
+bench -iter $iters -desc "READ $small, read & small buffer" \
+	-body {read-read-10 $smallFile}
+bench -iter $iters -desc "READ bin $large, read & small buffer" \
+	-body {read-read-10 $largeFile binary}
+bench -iter $iters -desc "READ bin $small, read & small buffer" \
+	-body {read-read-10 $smallFile binary}
+
+bench -iter $iters -desc "READ $large, read & dyn buffer" \
+	-body {read-read-dyn $largeFile}
+bench -iter $iters -desc "READ $small, read & dyn buffer" \
+	-body {read-read-dyn $smallFile}
+bench -iter $iters -desc "READ bin $large, read & dyn buffer" \
+	-body {read-read-dyn $largeFile binary}
+bench -iter $iters -desc "READ bin $small, read & dyn buffer" \
+	-body {read-read-dyn $smallFile binary}
+
 
 bench_rm $largeFile $smallFile
