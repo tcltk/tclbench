@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: regexp.bench,v 1.3 2001/05/22 22:16:17 hobbs Exp $
+# RCS: @(#) $Id: regexp.bench,v 1.4 2002/02/08 06:02:36 hobbs Exp $
 #
 
 # Literal regular expresion 
@@ -10,6 +10,11 @@ proc regexp-1.1 {string} {
 # Variable based regexp
 proc regexp-str-exp {string exp} {
     regexp $exp $string
+}
+
+# Static regexp
+proc regexp-str-static {string} {
+    regexp "bcd" $string
 }
 
 # Variable based regexp with catching
@@ -118,3 +123,14 @@ foreach {type re str} $tests {
     bench -desc "RE $type catching" \
 	    -body {regexp-catch $str $re}
 }
+
+bench -desc "RE static short match" \
+	-body {regexp-str-static "abcdef"}
+bench -desc "RE static short nomatch" \
+	-body {regexp-str-static "ghijkl"}
+set str "[str-repeat a 500][str-repeat b 20]c[str-repeat d 500]"
+bench -desc "RE static long match" \
+	-body {regexp-str-static $str}
+set str "[str-repeat a 500][str-repeat b 20]cc[str-repeat d 500]"
+bench -desc "RE static long nomatch" \
+	-body {regexp-str-static $str}
