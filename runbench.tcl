@@ -4,7 +4,7 @@ exec tclsh "$0" ${1+"$@"}
 
 # runbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: runbench.tcl,v 1.10 2001/05/23 05:37:23 hobbs Exp $}
+set RCS {RCS: @(#) $Id: runbench.tcl,v 1.11 2001/06/03 20:40:51 hobbs Exp $}
 #
 # Copyright (c) 2000-2001 Jeffrey Hobbs.
 
@@ -69,9 +69,10 @@ array set opts {
     errors	0
     verbose	0
     output	text
-    iters	2000
+    iters	1000
     norm	{}
 }
+
 if {[llength $argv]} {
     while {[llength $argv]} {
 	set key [lindex $argv 0]

@@ -1,3 +1,9 @@
+2001-06-03  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* libbench.tcl: 
+	* runbench.tcl: reduced default iterations to 1000 (still quite
+	sufficient to remove random noise).
+
 2001-05-31  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tcl/conditional.bench: added switch/if comparison bench.
