@@ -1,38 +1,62 @@
 # Unsetting an existing variable
-proc unset-1.1 {i} {
+proc unset-std {i} {
     set i 0
     unset i
 }
 
 # Catching invalid unset
-proc unset-1.2 {i} {
+proc unset-error {i} {
     set i 0
     catch {unset j}
 }
 
 # Catching valid unset
-proc unset-1.3 {i} {
+proc unset-ok {i} {
     set i 0
     catch {unset i}
 }
 
 # Testing existence befor unset
-proc unset-1.4 {i} {
+proc unset-exists {i} {
     set i 0
     if {[info exists i]} {
 	unset i
     }
 }
 
-proc unset-1.5 {i} {
+proc unset-nonexists {i} {
     set i 0
     if {[info exists j]} {
 	unset j
     }
 }
 
-bench -iter 10000 -desc "Unset existing variable" -body {unset-1.1 a}
-bench -iter 10000 -desc "Catch invalid unset" -body {unset-1.2 a}
-bench -iter 10000 -desc "Catch valid unset" -body {unset-1.3 a}
-bench -iter 10000 -desc "Check existence and unset" -body {unset-1.4 a}
-bench -iter 10000 -desc "Check nonexistence and unset" -body {unset-1.5 a}
+if {[catch {unset -nocomplain}]} {
+    proc unset-nocomplain-exists {i} [info body unset-ok]
+    proc unset-nocomplain-!exist {i} [info body unset-error]
+} else {
+    proc unset-nocomplain-exists {i} {
+	set i 0
+	unset -nocomplain i
+    }
+    proc unset-nocomplain-!exist {i} {
+	set i 0
+	unset -nocomplain j
+    }
+}
+
+set iters 10000
+bench -iter $iters -desc "UNSET var exists" \
+	-body {unset-std a}
+bench -iter $iters -desc "UNSET catch var exists" \
+	-body {unset-ok a}
+bench -iter $iters -desc "UNSET catch var !exist" \
+	-body {unset-error a}
+bench -iter $iters -desc "UNSET info check var exists" \
+	-body {unset-exists a}
+bench -iter $iters -desc "UNSET info check var !exist" \
+	-body {unset-nonexists a}
+bench -iter $iters -desc "UNSET nocomplain var exists" \
+	-body {unset-nocomplain-exists a}
+bench -iter $iters -desc "UNSET nocomplain var !exist" \
+	-body {unset-nocomplain-!exist a}

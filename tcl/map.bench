@@ -10,11 +10,23 @@ if { [catch {string map {a b} "abc"}] } {
     }
 }
 
-proc map-regsub {str nocase mapChars} {
-    foreach {exp subspec} $mapChars {
-	regsub -all $nocase $exp $str $subspec str
+if {[info tclversion] < 7.5} {
+    proc map-regsub {str nocase mapChars} {
+	while {$mapChars != ""} {
+	    set exp [lindex $mapChars 0]
+	    set subspec [lindex $mapChars 1]
+	    set mapChars [lrange $mapChars 2 end]
+	    regsub -all $nocase $exp $str $subspec str
+	}
+	return $str
     }
-    return $str
+} else {
+    proc map-regsub {str nocase mapChars} {
+	foreach {exp subspec} $mapChars {
+	    regsub -all $nocase $exp $str $subspec str
+	}
+	return $str
+    }
 }
 
 set longString ""

@@ -2,12 +2,14 @@
 proc loops-for-list {list} {
     set len [llength $list]
     for {set i 0} {$i < $len} {incr i} {
+	set var [lindex $list $i]
     }
 }
 
 # Iterate over lists with foreach
 proc loops-foreach-list {list} {
-    foreach i $list {
+    foreach elem $list {
+	set var $elem
     }
 }
 
@@ -31,13 +33,14 @@ proc loops-while-num {size} {
 proc loops-for-string {s} {
     set len [string length $s]
     for {set i 0} {$i < $len} {incr i} {
-        string index $s $i
+        set var [string index $s $i]
     }
 }
 
 # iterate over chars in string using [foreach] and [split]
 proc loops-foreach-string {s} {
     foreach c [split $s {}] {
+	set var $c
     }
 }
 
@@ -49,15 +52,15 @@ for {set i 0} {$i < $size} {incr i} {
     append string "0"
 }
 
-bench -desc "LOOP iterate list with for" \
+bench -desc "LOOP for, iterate list" \
 	-body {loops-for-list $list}
-bench -desc "LOOP iterate list with foreach" \
+bench -desc "LOOP foreach, iterate list" \
 	-body {loops-foreach-list $list}
-bench -desc "LOOP for" \
+bench -desc "LOOP for (to $size)" \
 	-body {loops-foo-num $size}
-bench -desc "LOOP while" \
+bench -desc "LOOP while (to $size)" \
 	-body {loops-while-num $size}
-bench -desc "LOOP iterate string with for" \
+bench -desc "LOOP for, iterate string" \
       -body {loops-for-string $string}
-bench -desc "LOOP iterate string with for" \
+bench -desc "LOOP foreach, iterate string" \
       -body {loops-foreach-string $string}

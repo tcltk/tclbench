@@ -14,6 +14,6 @@ proc catch-none {a} {
     set a 0
 }
 
-bench -body {catch-error arg} -desc "CATCH without error condition"
-bench -body {catch-ok arg} -desc "CATCH with error condition"
-bench -body {catch-none arg} -desc "CATCH command with no catch"
+bench -body {catch-error arg} -desc "CATCH return ok"
+bench -body {catch-ok arg} -desc "CATCH return error"
+bench -body {catch-none arg} -desc "CATCH no catch used"
