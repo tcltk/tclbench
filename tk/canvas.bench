@@ -3,6 +3,25 @@ proc canvas-create {w} {
     destroy $w
 }
 
+proc draw {cw {reps 100}} {
+    $cw delete all
+    if {$::tcl_version > 8.2} {
+	for {set i 0} {$i < $reps} {incr i 10} {
+	    $cw create rect [list 20 $i 23 [expr {$i+3}]] -fill red
+	    $cw create line [list 28 $i 35 $i] -fill yellow -arrow last \
+		    -arrowshape {3 6 3}
+	    $cw create text [list 40 $i] -text num_$i -fill black -anchor w
+	}
+    } else {
+	for {set i 0} {$i < $reps} {incr i 10} {
+	    $cw create rect 20 $i 23 [expr {$i+3}] -fill red
+	    $cw create line 28 $i 35 $i -fill yellow -arrow last \
+		    -arrowshape {3 6 3}
+	    $cw create text 40 $i -text num_$i -fill black -anchor w
+	}
+    }
+}
+
 eval destroy [winfo children .]
 
 bench -iters 500 -desc "CANVAS create" \
@@ -52,6 +71,16 @@ bench -iters 500 -desc "CANVAS configure all" \
 	    -yscrollcommand [list .sy set] \
 	    -yscrollincrement 20 \
 	} \
+	-post {destroy .c}
+
+bench -iters 400 -desc "CANVAS simple draw 100" \
+	-pre {destroy .c; canvas .c} \
+	-body {draw .c 100} \
+	-post {destroy .c}
+
+bench -iters 200 -desc "CANVAS simple draw 1000" \
+	-pre {destroy .c; canvas .c} \
+	-body {draw .c 1000} \
 	-post {destroy .c}
 
 eval destroy [winfo children .]

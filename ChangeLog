@@ -1,3 +1,7 @@
+Fri Mar 23 11:45:45 2001    <jeffh@gimlet.activestate.com>
+
+	* tk/canvas.bench: added simple item draw benchmarks
+
 Thu Mar 15 11:44:44 2001    <jeffh@gimlet.activestate.com>
 
 	* tcl/klist.bench: improved non-tclbench data output.
