@@ -1,3 +1,17 @@
+2004-12-20  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/array.bench (new): array hash benchmarks
+
+	* tcl/file.bench: fix checkall to operate for tclsh <=8.0
+
+	* tcl/string.bench: fix string match -nocase for tclsh <=8.2
+
+	* runbench.tcl (convertVersion): add -globtclsh -globwish file
+	path glob opts (tclsh* and wish* by default).
+	Normalize soft-links.
+
+	* normbench.tcl (normalize-text): harden time norm check
+
 2003-08-06  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* normbench.tcl (normalize): correct normalization of new-style
