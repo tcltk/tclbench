@@ -18,12 +18,15 @@ proc usage {} {
     set me [file tail [info script]]
     puts stderr "Usage: $me ?options?\
 	    \n\t-help			# print out this message\
-	    \n\t-paths <pathList>	# path or list of paths to search for interps\
+	    \n\t-errors <0|1>		# whether or not errors should be thrown\
 	    \n\t-minversion <version>	# minimum interp version to use\
 	    \n\t-maxversion <version>	# maximum interp version to use\
 	    \n\t-match <glob>		# only run tests matching this pattern\
 	    \n\t-notcl			# do not run tclsh tests\
 	    \n\t-notk			# do not run wish tests\
+	    \n\t-output <text|list|csv>	# style of output from program\
+	    \n\t-paths <pathList>	# path or list of paths to search for interps\
+	    \n\t-verbose		# output interim status info\
 	    \n\tfileList		# files to source, files matching *tk*\
 	    \n\t			# will be used for Tk benchmarks"
     exit 1
@@ -52,30 +55,33 @@ array set opts {
     wish	"wish?*"
     usetk	1
     usetcl	1
+    errors	1
+    verbose	0
+    output	text
+    iters	2000
 }
 if {[llength $argv]} {
     while {[llength $argv]} {
 	set key [lindex $argv 0]
 	switch -glob -- $key {
 	    -help*	{ usage }
-	    -path*	{
-		# Support single dir path or multiple paths as a list
-		if {[file isdir [lindex $argv 1]]} {
-		    lappend opts(paths) [lindex $argv 1]
-		} else {
-		    foreach path [lindex $argv 1] {
-			lappend opts(paths) $path
-		    }
-		}
+	    -err*	{
+		# Whether or not to throw errors
+		set opts(errors) [lindex $argv 1]
 		set argv [lreplace $argv 0 1]
 	    }
-	    -minv*	{
+	    -iter*	{
+		# Default iters to run a test
+		set opts(iters) [lindex $argv 1]
+		set argv [lreplace $argv 0 1]
+	    }
+	    -min*	{
 		# Allow a minimum version to search for,
 		# restricted to version, not patchlevel
 		set opts(minver) [convertVersion [lindex $argv 1]]
 		set argv [lreplace $argv 0 1]
 	    }
-	    -maxv*	{
+	    -max*	{
 		# Allow a maximum version to search for,
 		# restricted to version, not patchlevel
 		set opts(maxver) [convertVersion [lindex $argv 1]]
@@ -93,6 +99,27 @@ if {[llength $argv]} {
 		set opts(usetk) 0
 		set argv [lreplace $argv 0 0]
 	    }
+	    -outp*	{
+		# Output style
+		set opts(output) [lindex $argv 1]
+		if {![regexp {^(text|list|csv)$} $opts(output)]} { usage }
+		set argv [lreplace $argv 0 1]
+	    }
+	    -path*	{
+		# Support single dir path or multiple paths as a list
+		if {[file isdir [lindex $argv 1]]} {
+		    lappend opts(paths) [lindex $argv 1]
+		} else {
+		    foreach path [lindex $argv 1] {
+			lappend opts(paths) $path
+		    }
+		}
+		set argv [lreplace $argv 0 1]
+	    }
+	    -v*	{
+		set opts(verbose) 1
+		set argv [lreplace $argv 0 0]
+	    }
 	    default {
 		foreach arg $argv {
 		    if {![file exists $arg]} {
@@ -108,7 +135,8 @@ if {[llength $argv]} {
 	    }
 	}
     }
-} else {
+}
+if {[llength $opts(tcllist)] == 0 && [llength $opts(tklist)] == 0} {
     set opts(tcllist) [lsort [glob $MYDIR/tcl/*.bench]]
     set opts(tklist)  [lsort [glob $MYDIR/tk/*.bench]]
 }
@@ -123,9 +151,12 @@ if {[llength $opts(paths)] == 0} {
 }
 # Hobbs override for precise testing
 if {[info exists env(SNAME)]} {
-    set opts(paths) /home/hobbs/install/$env(SNAME)/bin
+    #set opts(paths) /home/hobbs/install/$env(SNAME)/bin
 }
 
+#
+# Collect interp info from path(s)
+#
 proc getInterps {optArray pattern iArray} {
     upvar 1 $optArray opts $iArray var
     foreach path $opts(paths) {
@@ -153,9 +184,19 @@ proc getInterps {optArray pattern iArray} {
 }
 
 #
+# variation of puts to allow for -verbose operation
+#
+proc vputs {args} {
+    global opts
+    if {$opts(verbose)} {
+	uplevel 1 [list puts] $args
+    }
+}
+
+#
 # Post processing
 #
-proc postProc {iArray} {
+proc orderInterps {iArray} {
     upvar 1 $iArray var
     set i 0
     foreach ipair $var(ORDERED) {
@@ -164,68 +205,143 @@ proc postProc {iArray} {
 	lappend var(VERSION)	$label
 	set var($label)		$interp
     }
-    puts "$iArray: $var(VERSION)"
+    vputs stdout "$iArray: $var(VERSION)"
 }
 
 #
 # Do benchmarking
 #
-proc collectData {iArray dArray match fileList} {
-    upvar 1 $iArray ivar $dArray DATA
+proc collectData {iArray dArray oArray fileList} {
+    upvar 1 $iArray ivar $dArray DATA $oArray opts
 
     array set DATA {MAXLEN 0}
     foreach label $ivar(VERSION) {
 	set interp $ivar($label)
-	puts "Benchmark $label $interp"
-	if {[catch {eval exec [list $interp libbench.tcl $match \
-		$interp stdout] $fileList} output]} {
+	vputs stdout "Benchmark $label $interp"
+	set cmd [list $interp libbench.tcl \
+		-match $opts(match) \
+		-iters $opts(iters) \
+		-interp $interp \
+		-errors $opts(errors) \
+		]
+	if {[catch {eval exec $cmd $fileList} output]} {
 	    error $::errorInfo
 	}
-	#puts $output ; continue
+	#vputs $output ; continue
 	array set tmp $output
-	foreach i [lsort -integer [array names tmp {[0-9]*}]] {
-	    set DATA($i,$label) [lindex $tmp($i) 1]
+	catch {unset tmp(Sourcing)}
+	foreach i [array names tmp] {
 	    set DATA($i,desc)   [lindex $tmp($i) 0]
-	    if {[string length $DATA($i,desc)] > $DATA(MAXLEN)} {
-		set DATA(MAXLEN) [string length $DATA($i,desc)]
+	    set DATA($i,$label) [lindex $tmp($i) 1]
+	    if {[string length $i$DATA($i,desc)] > $DATA(MAXLEN)} {
+		set DATA(MAXLEN) [string length $i$DATA($i,desc)]
 	    }
 	}
     }
 }
 
-proc outputData {iArray dArray} {
+#
+# Various data output styles
+#
+proc outputData-text {iArray dArray} {
     upvar 1 $iArray ivar $dArray DATA
 
-    set maxlen $DATA(MAXLEN)
-    puts "[format %[expr {$maxlen+5}]s\t { }][join $ivar(VERSION) \t]"
+    set fmt "%-[expr {$DATA(MAXLEN) + 1}]s"
+    set out [format $fmt "000 VERSIONS:"]
+    foreach lbl $ivar(VERSION) { append out [format " %7s" $lbl] }
+    append out \n
 
-    foreach name [lsort -dictionary [array names DATA {*desc}]] {
-	set num [lindex [split $name ,] 0]
-	puts -nonewline [format "%.3d) %-${maxlen}s" $num $DATA($name)]
-	foreach label $ivar(VERSION) {
+    foreach elem [lsort -dictionary [array names DATA {*desc}]] {
+	set name [lindex [split $elem ,] 0]
+	append out [format $fmt "$name $DATA($elem)"]
+	foreach lbl $ivar(VERSION) {
 	    # not %d to allow non-int result codes
-	    if {![info exists DATA($num,$label)]} {
-		set DATA($num,$label) "-=-"
-	    }
-	    puts -nonewline [format "\t%7s" $DATA($num,$label)]
+	    if {![info exists DATA($name,$lbl)]} { set DATA($name,$lbl) "-=-" }
+	    append out [format " %7s" $DATA($name,$lbl)]
 	}
-	puts ""
+	append out "\n"
+    }
+
+    append out [format $fmt "END VERSIONS:"]
+    foreach lbl $ivar(VERSION) { append out [format " %7s" $lbl] }
+    append out \n
+    return $out
+}
+
+#
+# List format is:
+#  <num> <desc> <val1> <val2> ...
+#
+proc outputData-list {iArray dArray} {
+    upvar 1 $iArray ivar $dArray DATA
+
+    set out [list [concat [list 000 VERSIONS:] $ivar(VERSION)]]
+
+    foreach elem [lsort -dictionary [array names DATA {*desc}]] {
+	set name [lindex [split $elem ,] 0]
+	set line [list $name $DATA($elem)]
+	foreach lbl $ivar(VERSION) {
+	    # not %d to allow non-int result codes
+	    if {![info exists DATA($name,$lbl)]} { set DATA($name,$lbl) "-=-" }
+	    lappend line $DATA($name,$lbl)
+	}
+	lappend out $line
+    }
+
+    lappend out [concat [list END VERSIONS:] $ivar(VERSION)]
+    return $out
+}
+
+proc list2csv {list} {
+    set out ""
+    foreach l $list {
+	set sep {}
+	foreach val $l {
+	    if {[string match -nocase "*\[\",\]*" $val]} {
+		append out $sep\"[string map [list \" \"\"] $val]\"
+	    } else {
+		append out $sep$val
+	    }
+	    set sep ,
+	}
+	append out \n
+    }
+    return $out
+}
+
+proc outputData {type iArray dArray} {
+    upvar 1 $iArray ivar $dArray DATA
+
+    switch -exact -- $type {
+	text {
+	    puts -nonewline stdout [outputData-text ivar DATA]
+	}
+	list {
+	    puts -nonewline stdout [join [outputData-list ivar DATA] \n]\n
+	}
+	csv {
+	    puts -nonewline stdout [list2csv [outputData-list ivar DATA]]
+	}
     }
 }
 
 if {[llength $opts(tcllist)] && $opts(usetcl)} {
     array set TCL_INTERP {ORDERED {} VERSION {}}
     getInterps opts $opts(tclsh) TCL_INTERP
-    postProc TCL_INTERP
-    collectData TCL_INTERP TCL_DATA $opts(match) $opts(tcllist)
-    outputData TCL_INTERP TCL_DATA
+    orderInterps TCL_INTERP
+    vputs stdout "STARTED [clock format [clock seconds]]"
+    collectData TCL_INTERP TCL_DATA opts $opts(tcllist)
+    outputData $opts(output) TCL_INTERP TCL_DATA
+    vputs stdout "FINISHED [clock format [clock seconds]]"
 }
 
 if {[llength $opts(tklist)] && $opts(usetk)} {
-    puts ""
+    vputs stdout ""
     array set TK_INTERP {ORDERED {} VERSION {}}
     getInterps opts $opts(wish) TK_INTERP
-    postProc TK_INTERP
-    collectData TK_INTERP TK_DATA $opts(match) $opts(tklist)
-    outputData TK_INTERP TK_DATA
+    orderInterps TK_INTERP
+    vputs stdout "STARTED [clock format [clock seconds]]"
+    collectData TK_INTERP TK_DATA opts $opts(tklist)
+    outputData $opts(output) TK_INTERP TK_DATA
+    vputs stdout "FINISHED [clock format [clock seconds]]"
 }

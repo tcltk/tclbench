@@ -84,10 +84,7 @@ proc bench_rm {args} {
 #
 proc bench {args} {
     global BENCH bench errorInfo errorCode
-    if {![info exists bench(major)]} {
-	set bench(major) 1
-	set bench(minor) 1
-    }
+
     # -pre script
     # -body script
     # -desc msg
@@ -98,12 +95,12 @@ proc bench {args} {
 	-body	{}
 	-desc	{}
 	-post	{}
-	-iter	2000
     }
+    set opts(-iter) $BENCH(ITERS)
     while {[llength $args]} {
 	set key [lindex $args 0]
 	switch -glob -- $key {
-	    -pr*	{ set opts(-pre) [lindex $args 1] }
+	    -pr*	{ set opts(-pre)  [lindex $args 1] }
 	    -po*	{ set opts(-post) [lindex $args 1] }
 	    -bo*	{ set opts(-body) [lindex $args 1] }
 	    -de*	{ set opts(-desc) [lindex $args 1] }
@@ -114,25 +111,33 @@ proc bench {args} {
 	}
 	set args [lreplace $args 0 1]
     }
-    if {($BENCH(PATTERN) != "") && \
-	    ![string match $BENCH(PATTERN) $opts(-desc)]} {
+    if {($BENCH(MATCH) != "") && ![string match $BENCH(MATCH) $opts(-desc)]} {
 	return
     }
     if {$opts(-pre) != ""} {
 	uplevel \#0 $opts(-pre)
     }
+    if {![info exists BENCH(index)]} {
+	set BENCH(index) 1
+    }
     if {$opts(-body) != ""} {
 	set code [catch {uplevel \#0 \
 		[list time $opts(-body) $opts(-iter)]} res]
 	if {$code == 0} {
-	    set bench($bench(major)) [list $opts(-desc) [lindex $res 0]]
-	} elseif {$code == 666} {
-	    if {$res == ""} { set res "N/A" }
-	    set bench($bench(major)) [list $opts(-desc) $res]
-	} else {
-	    return -code $code -errorinfo $errorInfo -errorcode $errorCode
+	    # Get just the microseconds value from the time result
+	    set res [lindex $res 0]
+	} elseif {$code != 666} {
+	    # A 666 result code means pass it through to the bench suite.
+	    # Otherwise throw errors all the way out, unless we specified
+	    # not to throw errors (option -errors 0 to libbench).
+	    if {$BENCH(ERRORS)} {
+		return -code $code -errorinfo $errorInfo -errorcode $errorCode
+	    } else {
+		set res "ERR"
+	    }
 	}
-	incr bench(major)
+	set bench([format "%.3d" $BENCH(index)]) [list $opts(-desc) $res]
+	incr BENCH(index)
     }
     if {$opts(-post) != ""} {
 	uplevel \#0 $opts(-post)
@@ -140,10 +145,48 @@ proc bench {args} {
     return
 }
 
-set BENCH(PATTERN)	[lindex $argv 0]
-set BENCH(INTERP)	[lindex $argv 1]
-set BENCH(OUTFILE)	[lindex $argv 2]
-set argv [lreplace $argv 0 2]
+proc usage {} {
+    set me [file tail [info script]]
+    puts stderr "Usage: $me ?options?\
+	    \n\t-help			# print out this message\
+	    \n\t-match <glob>		# only run tests matching this pattern\
+	    \n\t-interp	<name>		# name of interp (tries to get it right)\
+	    \n\tfileList		# files to benchmark"
+    exit 1
+}
+
+#
+# Process args
+#
+if {[catch {set BENCH(INTERP) [info nameofexec]}]} {
+    set BENCH(INTERP) $argv0
+}
+set BENCH(ERRORS)	1
+set BENCH(MATCH)	{}
+set BENCH(OUTFILE)	stdout
+set BENCH(FILES)	{}
+set BENCH(ITERS)	1000
+
+if {[llength $argv]} {
+    while {[llength $argv]} {
+	set key [lindex $argv 0]
+	switch -glob -- $key {
+	    -help*	{ usage }
+	    -err*	{ set BENCH(ERRORS)  [lindex $argv 1] }
+	    -int*	{ set BENCH(INTERP) [lindex $argv 1] }
+	    -mat*	{ set BENCH(MATCH) [lindex $argv 1] }
+	    -iter*	{ set BENCH(ITERS) [lindex $argv 1] }
+	    default {
+		foreach arg $argv {
+		    if {![file exists $arg]} { usage }
+		    lappend BENCH(FILES) $arg
+		}
+		break
+	    }
+	}
+	set argv [lreplace $argv 0 1]
+    }
+}
 
 if {[string compare $BENCH(OUTFILE) stdout]} {
     set BENCH(OUTFID) [open $BENCH(OUTFILE) w]
@@ -156,15 +199,20 @@ proc exit args {
     error "called \"exit $args\" in benchmark test"
 }
 
-foreach file $argv {
+#
+# Everything that gets output must be in pairwise format, because
+# the data will be collected in via an 'array set'.
+#
+
+foreach file $BENCH(FILES) {
     if {[file exists $file]} {
 	puts $BENCH(OUTFID) [list Sourcing $file]
 	source $file
     }
 }
 
-foreach i [lsort -integer [array names bench {[0-9]*}]] {
-    puts $BENCH(OUTFID) "$i [list $bench($i)]"
+foreach i [array names bench] {
+    puts $BENCH(OUTFID) [list $i $bench($i)]
 }
 
 exit.true ; # needed for Tk tests

@@ -1,3 +1,23 @@
+2000-05-31  Jeff Hobbs  <hobbs@scriptics.com>
+
+	* runbench.tcl: new options -errors (passed to libbench), -verbose
+	(by default we are now quieter on output), -output <text|list|csv>
+	(different output types - csv is char-sep-value for Excel).
+	Added start/finish times (in -verbose mode).
+	* libbench.tcl: libbench now takes -option switches for
+	flexibility, options for -errors BOOL (error suppression), -interp
+	NAME (to specify interp), -match PATTERN (glob pattern to filter
+	tests by desc), -iters NUM (default number of iters to run).
+	Reorganized how data is returned to runbench master.
+
+	* tk/entry.bench (new):
+	* tk/canvas.bench (new): new tests for widget creation, config
+
+	* tcl/array.bench (removed):
+	* tcl/vars.bench: merged array.bench tests into VAR
+
+	* tcl/map.bench: fixed for compatability with Tcl7.4-
+
 2000-05-25  Jeff Hobbs  <hobbs@scriptics.com>
 
 	* runbench.tcl: added -match, -notcl, -notk options, restructured
