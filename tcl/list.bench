@@ -85,8 +85,9 @@ proc list-2.10 {s i j} {
     lrange $s $i $j
 }
 
-proc list-2.11 {s w} {
-    lappend $s $w
+proc list-2.11 {w} {
+    lappend var $w
+    lappend var $w
 }
 
 proc list-2.12 {l j} {
@@ -207,7 +208,7 @@ bench -desc "LIST large, early range" \
 bench -desc "LIST large, late range" \
 	-body {list-2.10 $Lobj 50 199}
 bench -desc "LIST append to list" \
-      -body {list-2.11 $Lobj 10}
+      -body {list-2.11 10}
 bench -desc "LIST join list" \
       -body {list-2.12 $Lobj ","}
 
