@@ -1,0 +1,77 @@
+#
+# RCS: @(#) $Id: split.bench,v 1.1 2002/11/14 01:56:36 hobbs Exp $
+#
+
+proc str-split {string} {
+    split $string {}
+}
+proc str-split-iter {string} {
+    set var {}
+    foreach c [split $string {}] {
+	set var $c
+    }
+}
+
+proc split-char {c string} {
+    set var {}
+    foreach ch [split $string $c] {
+	set var $ch
+    }
+}
+
+# String operations
+# It is important to have 2 of each type, to avoid optimizations
+# in the core made for comparing the same exact obj.
+#
+
+proc init {} {
+    global longString longString2 ustring ustring2
+    for {set i 0} {$i < 100} {incr i} {
+	append longString "abcdefghijklmnopqrstuvwxyz01234567890123"
+    }
+    append longString 0987654321
+    for {set i 0} {$i < 100} {incr i} {
+	append longString2 "abcdefghijklmnopqrstuvwxyz01234567890123"
+    }
+    append longString2 0987654321
+    for {set i 0} {$i < 100} {incr i} {
+	append ustring "abcdefghijk\353\370\371\372pqrs\373uvwxyz0123456789012\374"
+    }
+    #set ustring2 "$ustring \369a"
+    for {set i 0} {$i < 100} {incr i} {
+	append ustring2 "abcdefghijk\353\370\371\372pqrs\373uvwxyz0123456789012\374"
+    }
+    if {[info tclversion] >= 8.0} {
+	global randString
+	expr {srand(12345)}
+	for {set i 0} {$i < 10000} {incr i} {
+	    append randString [format %c [expr {int(rand()*255)}]]
+	}
+    }
+}
+init
+
+set iter 400
+bench -desc "SPLIT, [string length $longString] chars" -iter $iter \
+	-body {str-split $longString}
+bench -desc "SPLIT, [string length $ustring] uchars" -iter $iter \
+	-body {str-split $ustring}
+bench -desc "SPLIT iter, [string length $longString] chars" -iter $iter \
+	-body {str-split-iter $longString}
+bench -desc "SPLIT iter, [string length $ustring] uchars" -iter $iter \
+	-body {str-split-iter $ustring}
+if {[info exists randString]} {
+    foreach len {100 1000 10000} {
+	set str [string range $randString 0 $len]
+	bench -desc "SPLIT, rand $len c" -iter $iter \
+		-body {str-split $str}
+	bench -desc "SPLIT iter, rand $len c" -iter $iter \
+		-body {str-split-iter $str}
+    }
+}
+foreach chars "c cz c\373" {
+    bench -desc "SPLIT on '$chars', [string length $longString] chars" \
+	    -iter $iter -body {split-char $chars $longString}
+    bench -desc "SPLIT on '$chars', [string length $ustring] uchars" \
+	    -iter $iter -body {split-char $chars $ustring}
+}

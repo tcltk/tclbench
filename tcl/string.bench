@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: string.bench,v 1.22 2002/06/12 19:33:29 hobbs Exp $
+# RCS: @(#) $Id: string.bench,v 1.23 2002/11/14 01:56:36 hobbs Exp $
 #
 
 proc str-cmp-null {a} {
@@ -142,6 +142,21 @@ proc str-range {a s e} {
     string range $a $s $e
 }
 
+proc str-grow-len {i} {
+    set str ""
+    while {$i} {
+	append str a
+	incr i -1
+    }
+}
+proc str-grow-len-uc {i} {
+    set str ""
+    while {$i} {
+	append str \370
+	incr i -1
+    }
+}
+
 if { [catch {string replace "abc" 0 0}] } {
     proc str-replace {a s e {r ""}} {
 	set res [string range $a 0 $s]$r[string range $a $e end]
@@ -215,16 +230,6 @@ if {[info tclversion] < 8.0} {
 	    return -code 666 "8.0+"
 	}
 	rev-recursive2 $string
-    }
-}
-
-proc str-split {string} {
-    split $string {}
-}
-proc str-split-iter {string} {
-    set var {}
-    foreach c [split $string {}] {
-	set var $c
     }
 }
 
@@ -308,6 +313,12 @@ bench -desc "STR length (==[string length $longString])" \
 	-body {str-len $longString}
 bench -desc "STR length static str" \
 	-body {str-len-static dummy}
+
+set len 1000
+bench -desc "STR length growing ($len)" -iter 100 \
+	-body {str-grow-len $len}
+bench -desc "STR length growing uc ($len)" -iter 100 \
+	-body {str-grow-len-uc $len}
 
 foreach len {0 100 500} {
     bench -desc "STR index $len" \
@@ -399,25 +410,6 @@ foreach chars {10 100 400} {
 	    -body {rev-recursive $string}
 }
 
-set iter 400
-bench -desc "STR split, [string length $longString] chars" -iter $iter \
-	-body {str-split $longString}
-bench -desc "STR split, [string length $ustring] uchars" -iter $iter \
-	-body {str-split $ustring}
-bench -desc "STR split iter, [string length $longString] chars" -iter $iter \
-	-body {str-split-iter $longString}
-bench -desc "STR split iter, [string length $ustring] uchars" -iter $iter \
-	-body {str-split-iter $ustring}
-if {[info exists randString]} {
-    foreach len {100 1000 10000} {
-	set str [string range $randString 0 $len]
-	bench -desc "STR split, rand $len c" -iter $iter \
-		-body {str-split $str}
-	bench -desc "STR split iter, rand $len c" -iter $iter \
-		-body {str-split-iter $str}
-    }
-}
-
 bench -desc "STR append" \
       -body {str-append $longString "01234567890123456789"}
 
@@ -448,6 +440,8 @@ bench -desc "STR append (1MB + 1MB * 3)" -iters $iters \
 bench -desc "STR append (1MB + 1MB * 5)" -iters $iters \
 	-body {str-append $base $base 4}
 
+catch {unset longString longString2 ustring ustring2}
+catch {unset randString}
 
 proc proc-locals {404040} {
     set 0000 1;  set 0001 1;  set 0002 1;  set 0003 1;  set 0004 1;  set 0005 1
