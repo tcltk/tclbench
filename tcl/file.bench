@@ -9,8 +9,10 @@ proc contents {file str} {
 }
 
 proc setup {dir size} {
+    global tcl_platform
     for {set i 0} {$i < $size} {incr i} {
 	file mkdir [file join $dir _benchdir.$i]
+	contents [file join $dir _benchdir.$i _benchfile.$i] "delete me"
 	contents [file join $dir _benchfile.$i] "delete me"
     }
 }
@@ -38,18 +40,36 @@ proc checkall {dir} {
 	file stat $f var
     }
 }
+proc recurseAndExamine {dir recurse} {
+    foreach f [glob -directory $dir -nocomplain *] {
+	file stat $f arr
+	if {$recurse && [file isdirectory $f]} {
+	    recurseAndExamine $f $recurse
+	}
+    }
+}
+proc recurseAndExamine4 {dir recurse} {
+    set orig [pwd]
+    cd $dir
+    foreach f [glob -nocomplain *] {
+	file stat $f arr
+	if {$recurse && [file isdirectory $f]} {
+	    recurseAndExamine4 $f $recurse
+	}
+    }
+    cd $orig
+}
 
-bench -desc "FILE exists tmpfile (1)" -iter 1 \
+set fileBogusAsObj $file.BOGUS
+
+bench -desc "FILE exists ~" -iter 100 \
+	-body {file exists ~}
+bench -desc "FILE exists tmpfile (obj)" -iter 100 \
 	-body {file exists $file}
-
-bench -desc "FILE exists! tmpfile (1)" -iter 1 \
-	-body {file exists $file.BOGUS}
-
-bench -desc "FILE exists tmpfile (100)" -iter 100 \
-	-body {file exists $file}
-
-bench -desc "FILE exists! tmpfile (100)" -iter 100 \
-	-body {file exists $file.BOGUS}
+bench -desc "FILE exists! tmpfile (str)" -iter 100 \
+	-body {file exists $file.BOGIE}
+bench -desc "FILE exists! tmpfile (obj)" -iter 100 \
+	-body {file exists $fileBogusAsObj}
 
 set num [llength [glob -directory $dir *]]
 bench -desc "FILE glob  tmpdir ($num entries)" -iter 100 \
@@ -66,15 +86,21 @@ foreach fcmd {
 bench -desc "FILE glob / all subcommands" -iter 100 \
 	-body {checkall $dir}
 
+bench -desc "FILE recurse / -dir" -iter 100 \
+	-body {recurseAndExamine $dir 1}
+
+bench -desc "FILE recurse / cd" -iter 100 \
+	-body {recurseAndExamine4 $dir 1}
+
 contents $file "exit"
 
-bench -desc "FILE exec interp" \
-	-iter 100 -body {exec $BENCH(INTERP) $file}
+bench -desc "FILE exec interp" -iter 30 \
+	-body {exec $BENCH(INTERP) $file}
 
 contents $file "catch {package require bogus-name}; package names"
 
-bench -desc "FILE exec interp: pkg require" \
-	-iter 100 -body {exec $BENCH(INTERP) $file}
+bench -desc "FILE exec interp: pkg require" -iter 30 \
+	-body {exec $BENCH(INTERP) $file}
 
 bench_rm $file
 file delete -force $dir
