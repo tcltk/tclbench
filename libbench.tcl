@@ -1,25 +1,70 @@
 #
-# libbench.tcl <interp> <outChannel> <benchFile1> ?<benchFile2> ...?
+# libbench.tcl <testPattern> <interp> <outChannel> <benchFile1> ?...?
+#
+# This file has to have code that works in any version of Tcl that
+# the user would want to benchmark.
 #
 
-# Not all interpreters support [file delete]
-if {[info exists tcl_platform(platform)]} {
-    if {$tcl_platform(platform) == "unix"} {
-	set TMPFILE /tmp/tmpbench.file
-	set deleteCommand "/bin/rm"
-    } elseif {$tcl_platform(platform) == "windows"} {
-	set TMPFILE [file join $env(TEMP) tmpbench.file]
-	set deleteCommand "$env(COMSPEC) /c del"
+# We will put our data into these named globals
+global BENCH bench
+
+#
+# We claim all procedures starting with bench*
+#
+
+# bench_tmpfile --
+#
+#   Return a temp file name that can be modified at will
+#
+# Arguments:
+#   None
+#
+# Results:
+#   Returns file name
+#
+proc bench_tmpfile {} {
+    global tcl_platform
+    if {[info exists tcl_platform(platform)]} {
+	if {$tcl_platform(platform) == "unix"} {
+	    return "/tmp/tclbench.dat"
+	} elseif {$tcl_platform(platform) == "windows"} {
+	    return [file join $env(TEMP) "tclbench.dat"]
+	} else {
+	    return "tclbench.dat"
+	}
+    } else {
+	# The Good Ol' Days (?) when only Unix support existed
+	return "/tmp/tclbench.dat"
     }
-} else {
-    # The Good Ol' Days (?) when only Unix support existed
-    set TMPFILE /tmp/tmpbench.file
-    set deleteCommand "/bin/rm"
+}
+
+# bench_rm --
+#
+#   Remove a file silently (no complaining)
+#
+# Arguments:
+#   args	Files to delete
+#
+# Results:
+#   Returns nothing
+#
+proc bench_rm {args} {
+    foreach file $args {
+	if {[info tclversion] > 7.4} {
+	    catch {file delete $file}
+	} else {
+	    catch {exec /bin/rm $file}
+	}
+    }
 }
 
 # bench --
 #
-#   main bench procedure
+#   Main bench procedure.
+#   The bench test is expected to exit cleanly.  If an error occurs,
+#   it will be thrown all the way up.  A bench proc may return the
+#   special code 666, which says take the string as the bench value.
+#   This is usually used for N/A feature situations.
 #
 # Arguments:
 #
@@ -38,7 +83,7 @@ if {[info exists tcl_platform(platform)]} {
 #   Sets up data in bench global array
 #
 proc bench {args} {
-    global bench errorInfo errorCode
+    global BENCH bench errorInfo errorCode
     if {![info exists bench(major)]} {
 	set bench(major) 1
 	set bench(minor) 1
@@ -69,16 +114,24 @@ proc bench {args} {
 	}
 	set args [lreplace $args 0 1]
     }
+    if {($BENCH(PATTERN) != "") && \
+	    ![string match $BENCH(PATTERN) $opts(-desc)]} {
+	return
+    }
     if {$opts(-pre) != ""} {
 	uplevel \#0 $opts(-pre)
     }
     if {$opts(-body) != ""} {
 	set code [catch {uplevel \#0 \
 		[list time $opts(-body) $opts(-iter)]} res]
-	if {$code && ($code != 666)} {
+	if {$code == 0} {
+	    set bench($bench(major)) [list $opts(-desc) [lindex $res 0]]
+	} elseif {$code == 666} {
+	    if {$res == ""} { set res "N/A" }
+	    set bench($bench(major)) [list $opts(-desc) $res]
+	} else {
 	    return -code $code -errorinfo $errorInfo -errorcode $errorCode
 	}
-	set bench($bench(major)) [list $opts(-desc) [lindex $res 0]]
 	incr bench(major)
     }
     if {$opts(-post) != ""} {
@@ -87,14 +140,16 @@ proc bench {args} {
     return
 }
 
-set MY_INTERP [lindex $argv 0]
-set outfile [lindex $argv 1]
-if {[string compare $outfile stdout]} {
-    set outfid [open $outfile w]
+set BENCH(PATTERN)	[lindex $argv 0]
+set BENCH(INTERP)	[lindex $argv 1]
+set BENCH(OUTFILE)	[lindex $argv 2]
+set argv [lreplace $argv 0 2]
+
+if {[string compare $BENCH(OUTFILE) stdout]} {
+    set BENCH(OUTFID) [open $BENCH(OUTFILE) w]
 } else {
-    set outfid stdout
+    set BENCH(OUTFID) stdout
 }
-set argv [lreplace $argv 0 1]
 
 rename exit exit.true
 proc exit args {
@@ -103,13 +158,13 @@ proc exit args {
 
 foreach file $argv {
     if {[file exists $file]} {
-	puts $outfid [list Sourcing $file]
+	puts $BENCH(OUTFID) [list Sourcing $file]
 	source $file
     }
 }
 
 foreach i [lsort -integer [array names bench {[0-9]*}]] {
-    puts $outfid "$i [list $bench($i)]"
+    puts $BENCH(OUTFID) "$i [list $bench($i)]"
 }
 
 exit.true ; # needed for Tk tests

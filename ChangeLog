@@ -1,0 +1,16 @@
+2000-05-25  Jeff Hobbs  <hobbs@scriptics.com>
+
+	* runbench.tcl: added -match, -notcl, -notk options, restructured
+	startup sequence.
+
+	* libbench.tcl: added ability to return string values from bench
+	tests and support for filtering tests to run.
+
+	* tcl/string.bench: moved string mapping benchmarks and added more
+	string equality benchmarks
+	* tcl/map.bench: added extended string mapping benchmark
+
+	* tcl/read.bench:
+	* tcl/startup.bench:
+	* tk/startup.bench: updated code to reflect proc-oriented tmpfile
+	operations.

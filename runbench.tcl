@@ -3,9 +3,14 @@
 exec tclsh "$0" ${1+"$@"}
 
 #
-# Run the main script from an 8.0+ interp
+# Run the main script from an 8.1.1+ interp
 #
-package require Tcl 8
+if {[catch {package require Tcl 8.1.1}]} {
+    set me [file tail [info script]]
+    puts stderr "$me requires 8.1.1+ to run, although it can benchmark\
+	    any Tcl v7+ interpreter"
+    exit 1
+}
 
 set MYDIR [file dirname [info script]]
 
@@ -16,6 +21,9 @@ proc usage {} {
 	    \n\t-paths <pathList>	# path or list of paths to search for interps\
 	    \n\t-minversion <version>	# minimum interp version to use\
 	    \n\t-maxversion <version>	# maximum interp version to use\
+	    \n\t-match <glob>		# only run tests matching this pattern\
+	    \n\t-notcl			# do not run tclsh tests\
+	    \n\t-notk			# do not run wish tests\
 	    \n\tfileList		# files to source, files matching *tk*\
 	    \n\t			# will be used for Tk benchmarks"
     exit 1
@@ -37,8 +45,13 @@ array set opts {
     paths	{}
     minver	0.0
     maxver	10.0
+    match	{}
     tcllist	{}
     tklist	{}
+    tclsh	"tclsh?*"
+    wish	"wish?*"
+    usetk	1
+    usetcl	1
 }
 if {[llength $argv]} {
     while {[llength $argv]} {
@@ -67,6 +80,18 @@ if {[llength $argv]} {
 		# restricted to version, not patchlevel
 		set opts(maxver) [convertVersion [lindex $argv 1]]
 		set argv [lreplace $argv 0 1]
+	    }
+	    -match*	{
+		set opts(match) [lindex $argv 1]
+		set argv [lreplace $argv 0 1]
+	    }
+	    -notcl	{
+		set opts(usetcl) 0
+		set argv [lreplace $argv 0 0]
+	    }
+	    -notk	{
+		set opts(usetk) 0
+		set argv [lreplace $argv 0 0]
 	    }
 	    default {
 		foreach arg $argv {
@@ -98,7 +123,7 @@ if {[llength $opts(paths)] == 0} {
 }
 # Hobbs override for precise testing
 if {[info exists env(SNAME)]} {
-    #set opts(paths) /home/hobbs/install/$env(SNAME)/bin
+    set opts(paths) /home/hobbs/install/$env(SNAME)/bin
 }
 
 proc getInterps {optArray pattern iArray} {
@@ -110,7 +135,7 @@ proc getInterps {optArray pattern iArray} {
 			$interp} patchlevel]} {
 		    error $::errorInfo
 		}
-		# Lame patch mechanism doesn't understand [abp]
+		# Lame package mechanism doesn't understand [abp]
 		set ver [convertVersion $patchlevel]
 		# Only allow versions within specified restrictions
 		if {
@@ -126,10 +151,6 @@ proc getInterps {optArray pattern iArray} {
 	}
     }
 }
-array set TCL_INTERP {ORDERED {} VERSION {}}
-array set TK_INTERP  {ORDERED {} VERSION {}}
-getInterps opts "tclsh?*" TCL_INTERP
-getInterps opts "wish?*" TK_INTERP
 
 #
 # Post processing
@@ -145,21 +166,19 @@ proc postProc {iArray} {
     }
     puts "$iArray: $var(VERSION)"
 }
-postProc TCL_INTERP
-postProc TK_INTERP
 
 #
 # Do benchmarking
 #
-proc collectData {iArray dArray fileList} {
+proc collectData {iArray dArray match fileList} {
     upvar 1 $iArray ivar $dArray DATA
 
     array set DATA {MAXLEN 0}
     foreach label $ivar(VERSION) {
 	set interp $ivar($label)
 	puts "Benchmark $label $interp"
-	if {[catch {eval exec [list $interp libbench.tcl $interp stdout] \
-		$fileList} output]} {
+	if {[catch {eval exec [list $interp libbench.tcl $match \
+		$interp stdout] $fileList} output]} {
 	    error $::errorInfo
 	}
 	#puts $output ; continue
@@ -173,6 +192,7 @@ proc collectData {iArray dArray fileList} {
 	}
     }
 }
+
 proc outputData {iArray dArray} {
     upvar 1 $iArray ivar $dArray DATA
 
@@ -184,17 +204,28 @@ proc outputData {iArray dArray} {
 	puts -nonewline [format "%.3d) %-${maxlen}s" $num $DATA($name)]
 	foreach label $ivar(VERSION) {
 	    # not %d to allow non-int result codes
+	    if {![info exists DATA($num,$label)]} {
+		set DATA($num,$label) "-=-"
+	    }
 	    puts -nonewline [format "\t%7s" $DATA($num,$label)]
 	}
 	puts ""
     }
 }
-if {[llength $opts(tcllist)]} {
-    collectData TCL_INTERP TCL_DATA $opts(tcllist)
+
+if {[llength $opts(tcllist)] && $opts(usetcl)} {
+    array set TCL_INTERP {ORDERED {} VERSION {}}
+    getInterps opts $opts(tclsh) TCL_INTERP
+    postProc TCL_INTERP
+    collectData TCL_INTERP TCL_DATA $opts(match) $opts(tcllist)
     outputData TCL_INTERP TCL_DATA
 }
-if {[llength $opts(tklist)]} {
+
+if {[llength $opts(tklist)] && $opts(usetk)} {
     puts ""
-    collectData TK_INTERP TK_DATA $opts(tklist)
+    array set TK_INTERP {ORDERED {} VERSION {}}
+    getInterps opts $opts(wish) TK_INTERP
+    postProc TK_INTERP
+    collectData TK_INTERP TK_DATA $opts(match) $opts(tklist)
     outputData TK_INTERP TK_DATA
 }
