@@ -1,4 +1,6 @@
-2001-03-28  Jeff Hobbs  <jeffh@gimlet.activestate.com>
+2001-03-28  Jeff Hobbs  <jeffh@activestate.com>
+
+	* tcl/string.bench: fixed str-first proc that had bogus code in it.
 
 	* tk/canvas.bench: expanded item draw benchmarks
 

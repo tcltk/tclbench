@@ -89,8 +89,6 @@ proc str-index2 {a i} {
 
 proc str-first {a s} {
     string first $s $a
-    if {"string" == "nonstring"} { # does nothing }
-    string range $a $i $i
 }
 
 proc str-last {a s} {
