@@ -107,6 +107,37 @@ proc list-list {a b c} {
     }
 }
 
+if {[info tclversion] < 8.4} {
+    proc biglist { size } {}
+    proc lset-1 args { return -code 666 "=8.4" }
+    proc lset-2 args { return -code 666 "=8.4" }
+    proc lset-3 args { return -code 666 "=8.4" }
+    proc lset-4 args { return -code 666 "=8.4" }
+} else {
+    proc biglist { size } {
+	set list ""
+	for {set i 0} {$i < $size} {incr i} { lappend list [expr {$i}] }
+	return $list
+    }
+
+    proc lset-1 { list } {
+	foreach "a b c d e" $list { lset list $a $b }
+	return $list
+    }
+    proc lset-2 { list } {
+	foreach [list a b c d e] $list { lset list $a $b }
+	return $list
+    }
+    proc lset-3 { l } {
+	foreach "a b c d e" $l { lset l $a $b }
+	return $l
+    }
+    proc lset-4 { l } {
+	foreach [list a b c d e] $l { lset l $a $b }
+	return $l
+    }
+}
+
 proc SET             {l1 l2} { set l1 "$l1 $l2" }
 proc APPEND          {l1 l2} { append l1 " $l2" }
 proc CONCAT          {l1 l2} { set l1 [concat $l1 $l2] }
@@ -126,7 +157,7 @@ foreach type $types {
 	set l1 [makeList $len a]
 	set l2 [makeList $len b]
 	bench -desc "LIST concat $type 2x$len" -iter 200 \
-		-body [subst {llength \[$type \$l1 \$l2\]}]
+		-body {llength [$type $l1 $l2]}
 	unset l1 l2
     }
 }
@@ -232,12 +263,23 @@ bench -desc "LIST large, early range" \
 bench -desc "LIST large, late range" \
 	-body {list-2.10 $Lobj 50 199}
 bench -desc "LIST append to list" \
-      -body {list-2.11 10}
+	-body {list-2.11 10}
 bench -desc "LIST join list" \
-      -body {list-2.12 $Lobj ","}
+	-body {list-2.12 $Lobj ","}
 
 bench -desc "LIST iterate list" \
-      -body {list-iter $Lobj}
+	-body {list-iter $Lobj}
 
 bench -desc "LIST list" \
-      -body {list-list one two three}
+	-body {list-list one two three}
+
+set lobj [biglist 1000]
+
+bench -desc "LIST lset foreach \"\"s list" \
+	-body {lset-1 $lobj}
+bench -desc "LIST lset foreach [list] list" \
+	-body {lset-2 $lobj}
+bench -desc "LIST lset foreach \"\"s l" \
+	-body {lset-3 $lobj}
+bench -desc "LIST lset foreach [list] l" \
+	-body {lset-4 $lobj}
