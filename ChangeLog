@@ -1,3 +1,9 @@
+2004-12-27  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* doc/runbench.1: fix doc for -throwerrors [Bug 1091766]
+
+	* runbench.tcl (getInterps): use exec << instead of echo [Bug 1091764]
+
 2004-12-24  Miguel Sofer <msofer@users.sf.net>
 
 	* tcl/namespace.bench: new benchmark, measures the cost of calling
