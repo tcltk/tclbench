@@ -29,6 +29,14 @@ proc loops-while-num {size} {
     }
 }
 
+# Looping with while
+proc loops-while-1 {size} {
+    set i 0
+    while {1} {
+	if {[incr i] > $size} { break }
+    }
+}
+
 # iterate over chars in string using [string index]
 proc loops-for-string {s} {
     set len [string length $s]
@@ -60,6 +68,8 @@ bench -desc "LOOP for (to $size)" \
 	-body {loops-foo-num $size}
 bench -desc "LOOP while (to $size)" \
 	-body {loops-while-num $size}
+bench -desc "LOOP while 1 (to $size)" \
+	-body {loops-while-1 $size}
 bench -desc "LOOP for, iterate string" \
       -body {loops-for-string $string}
 bench -desc "LOOP foreach, iterate string" \
