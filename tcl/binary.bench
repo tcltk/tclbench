@@ -1,0 +1,75 @@
+#
+# RCS: @(#) $Id: binary.bench,v 1.1 2001/06/19 20:45:50 hobbs Exp $
+#
+
+if {[catch {package require Tcl 8}]} {
+    return
+}
+
+proc bin-scan {binStr} {
+    binary scan $binStr c* var
+    return [llength $var]
+}
+
+proc bitset-v1 {bitmask str} {
+    set result ""
+    foreach c [split $str ""] {
+        binary scan $c c v
+        append result [binary format c [expr {$v | $bitmask}]]
+    }
+    return $result
+}
+
+proc bitset-v2 {bitmask str} {
+    set result ""
+    binary scan $str "c*" vals
+    foreach v $vals {
+        append result [binary format c [expr {$v | $bitmask}]]
+    }
+    return $result
+}
+
+proc bitset-v3 {bitmask str} {
+    set result ""
+    binary scan $str "c*" vals
+    foreach v $vals {
+        lappend result [expr {$v | $bitmask}]
+    }
+    return [binary format c* $result]
+}
+
+# String operations
+#
+
+proc init {} {
+    expr {srand(12345)}
+    for {set i 1} {$i <= 10000} {incr i} {
+	lappend binvals [expr {int(rand()*255)}]
+	append randStr [format %c [expr {int(rand()*255)}]]
+	if {$i == 1000} {
+	    set ::binvar1000 [binary format c* $binvals]
+	    set ::randStr1000 $randStr
+	} elseif {$i == 5000} {
+	    set ::binvar5000 [binary format c* $binvals]
+	    set ::randStr5000 $randStr
+	}
+    }
+    set ::binvar10000 [binary format c* $binvals]
+    set ::randStr10000 $randStr
+    return
+}
+init
+
+bench -desc "BIN c scan, 1000b" -iters 500 \
+	-body {bin-scan $binvar1000}
+bench -desc "BIN c scan, 5000b" -iters 300 \
+	-body {bin-scan $binvar5000}
+bench -desc "BIN c scan, 10000b" -iters 100 \
+	-body {bin-scan $binvar10000}
+
+foreach method {bitset-v1 bitset-v2 bitset-v3} {
+    foreach size {1000 5000 10000} iters {160 80 40} {
+	bench -desc "BIN $method $size chars" -iters $iters \
+		-body "$method 85 \$randStr$size"
+    }
+}
