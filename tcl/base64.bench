@@ -10,7 +10,7 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 # 
-# RCS: @(#) $Id: base64.bench,v 1.3 2002/02/08 06:03:17 hobbs Exp $
+# RCS: @(#) $Id: base64.bench,v 1.4 2002/04/26 03:42:40 hobbs Exp $
 
 if {[catch {package require Tcl 8.0}]} {
     return
@@ -234,9 +234,9 @@ foreach len  {10  100 1000 10000} \
     bench -desc "BASE64 encode $len" -iter $iter \
 	    -body {base64::encode $str}
     bench -desc "BASE64 encode2 $len" -iter $iter \
-	    -body {base64::encode2 $str}
+	    -body {base64::encode2 $str} -result $encstr
     bench -desc "BASE64 decode $len" -iter $iter  \
-	    -body {base64::decode $encstr}
+	    -body {base64::decode $encstr} -result $str
     bench -desc "BASE64 decode2 $len" -iter $iter  \
-	    -body {base64::decode2 $encstr}
+	    -body {base64::decode2 $encstr} -result $str
 }
