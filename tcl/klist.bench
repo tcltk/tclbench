@@ -25,7 +25,7 @@ proc shuffle0 { list } {
 }
 
 # shuffle1 is Techentin's implementation of Bentley's method. 
-proc shuffle1 { list } {
+proc shuffle1-s { list } {
     set n [llength $list]
     for { set i 0 } { $i < $n } { incr i } {
 	set j [expr {int(rand()*$n)}]
@@ -96,11 +96,36 @@ proc shuffle4 { list } {
     return $slist
 }
 
+# shuffle5 and shuffle5a are from Christoph Bauer.
+# They differ only in the use of the K combinator.
+proc shuffle5-s { list } {
+    set n 1
+    set slist {}
+    foreach item $list {
+	set index [expr {int(rand()*$n)}]
+	set slist [linsert $slist $index $item]
+	incr n
+    }
+    return $slist
+}
+
+proc shuffle5a { list } {
+    set n 1
+    set slist {}
+    foreach item $list {
+	set index [expr {int(rand()*$n)}]
+	set slist [linsert [K $slist [set slist {}]] $index $item]
+	incr n
+    }
+    return $slist
+}
+
 # The test harness times the various methods and prints the results. 
 
 set LENGTHS	[list 1     10   100  1000 10000]
 set ITERS	[list 5000  2000 800  200  20]
-set METHODS	[list shuffle0 shuffle1 shuffle1a shuffle2 shuffle3 shuffle4]
+set METHODS	[list shuffle0 shuffle1-s shuffle1a shuffle2 shuffle3 \
+	shuffle4 shuffle5-s shuffle5a]
 
 proc doShuffle {} {
     global LENGTHS ITERS METHODS
@@ -112,7 +137,7 @@ proc doShuffle {} {
     # do the benchmarking
     foreach method $METHODS {
 	foreach n $LENGTHS iter $ITERS {
-	    if {($method == "shuffle1") && ($n > 1000)} {
+	    if {[string match "*-s" $method] && ($n > 1000)} {
 		continue
 	    }
 	    bench -desc "KLIST $method llength $n" \
@@ -137,7 +162,7 @@ proc doShuffle0 {} {
     foreach method $METHODS {
 	puts  -nonewline [format " %-10s" $method]
 	foreach n $LENGTHS iter $ITERS {
-	    if {($method == "shuffle1") && ($n > 1000)} {
+	    if {[string match "*-s" $method] && ($n > 1000)} {
 		puts -nonewline "  ------"
 	    } else {
 		set t [time {$method $LISTS($n)} $iter]

@@ -1,3 +1,7 @@
+2001-04-11  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/klist.bench: added shuffle5* from wiki.
+
 2001-03-28  Jeff Hobbs  <jeffh@activestate.com>
 
 	* tcl/string.bench: fixed str-first proc that had bogus code in it.
