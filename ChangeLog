@@ -1,3 +1,9 @@
+2001-06-19  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/binary.bench: new "binary" benchmarks
+
+	* tcl/string.bench: more random split benchmarks
+
 2001-06-03  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* libbench.tcl: 

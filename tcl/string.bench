@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: string.bench,v 1.15 2001/06/03 20:37:03 hobbs Exp $
+# RCS: @(#) $Id: string.bench,v 1.16 2001/06/19 20:46:18 hobbs Exp $
 #
 
 proc str-cmp-null {a} {
@@ -210,14 +210,25 @@ proc str-split-iter {string} {
 # String operations
 #
 
-set longString ""
-for {set i 0} {$i < 100} {incr i} {
-    append longString "abcdefghijklmnopqrstuvwxyz01234567890123"
+proc init {} {
+    global longString ustring
+    set longString ""
+    for {set i 0} {$i < 100} {incr i} {
+	append longString "abcdefghijklmnopqrstuvwxyz01234567890123"
+    }
+    append longString 0987654321
+    for {set i 0} {$i < 100} {incr i} {
+	append ustring "abcdefghijk\353\370\371\372pqrs\373uvwxyz0123456789012\374"
+    }
+    if {[info tclversion] >= 8.0} {
+	global randString
+	expr {srand(12345)}
+	for {set i 0} {$i < 10000} {incr i} {
+	    append randString [format %c [expr {int(rand()*255)}]]
+	}
+    }
 }
-for {set i 0} {$i < 100} {incr i} {
-    append ustring "abcdefghijk\353\370\371\372pqrs\373uvwxyz0123456789012\374"
-}
-append longString 0987654321
+init
 
 # String comparisons
 #
@@ -343,6 +354,15 @@ bench -desc "STR split iter, [string length $longString] chars" -iter $iter \
 	-body {str-split-iter $longString}
 bench -desc "STR split iter, [string length $ustring] uchars" -iter $iter \
 	-body {str-split-iter $ustring}
+if {[info exists randString]} {
+    foreach len {100 1000 10000} {
+	set str [string range $randString 0 $len]
+	bench -desc "STR split, rand $len c" -iter $iter \
+		-body {str-split $str}
+	bench -desc "STR split iter, rand $len c" -iter $iter \
+		-body {str-split-iter $str}
+    }
+}
 
 bench -desc "STR append" \
       -body {str-append $longString "01234567890123456789"}
