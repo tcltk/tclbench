@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: string.bench,v 1.23 2002/11/14 01:56:36 hobbs Exp $
+# RCS: @(#) $Id: string.bench,v 1.24 2004/12/20 22:29:23 hobbs Exp $
 #
 
 proc str-cmp-null {a} {
@@ -130,12 +130,20 @@ proc str-match-exact {a} {
     string match exactString $a
 }
 
-proc str-match-nocase {a p} {
-    string match -nocase $p $a
-}
-
-proc str-match-nocase-exact {a} {
-    string match -nocase exactString $a
+if {[info tclversion] < 8.2} {
+    proc str-match-nocase {a p} {
+	string match [string tolower $p] [string tolower $a]
+    }
+    proc str-match-nocase-exact {a} {
+	string match exactstring [string tolower $a]
+    }
+} else {
+    proc str-match-nocase {a p} {
+	string match -nocase $p $a
+    }
+    proc str-match-nocase-exact {a} {
+	string match -nocase exactString $a
+    }
 }
 
 proc str-range {a s e} {
@@ -346,25 +354,27 @@ bench -desc "STR last (total failure)" \
 	-body {str-last $longString ===}
 
 bench -desc "STR match, exact (failure)" \
-	-body {str-match-exact nomatchwhatsoever}
+	-body {str-match-exact nomatchwhatsoever} -result 0
 bench -desc "STR match, exact (success)" \
-	-body {str-match-exact exactString}
+	-body {str-match-exact exactString} -result 1
 bench -desc "STR match, exact -nocase (success)" \
-	-body {str-match-nocase-exact EXACTSTRING}
+	-body {str-match-nocase-exact EXACTSTRING} -result 1
 bench -desc "STR match, exact -nocase (failure)" \
-	-body {str-match-nocase-exact nomatchwhatsoever}
+	-body {str-match-nocase-exact nomatchwhatsoever} -result 0
 bench -desc "STR match, simple (success)" \
-	-body {str-match cba cba}
+	-body {str-match cba cba} -result 1
 bench -desc "STR match, simple (failure)" \
-	-body {str-match cba ===}
+	-body {str-match cba ===} -result 0
 bench -desc "STR match, complex (success early)" \
-	-body {str-match $longString *901*}
+	-body {str-match $longString *901*} -result 1
 bench -desc "STR match, complex (success late)" \
-	-body {str-match $longString *321}
+	-body {str-match $longString *321} -result 1
 bench -desc "STR match, complex (failure)" \
-	-body {str-match $longString *cba*}
+	-body {str-match $longString *cba*} -result 0
+bench -desc "STR match, complex (failure 2)" -iter 100 \
+	-body {str-match $longString *a*z*cba*} -result 0
 bench -desc "STR match, complex (total failure)" \
-	-body {str-match $longString *===*}
+	-body {str-match $longString *===*} -result 0
 
 bench -desc "STR range, index 100..200 of [string length $longString]" \
 	-body {str-range $longString 100 200}
