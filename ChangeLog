@@ -1,8 +1,12 @@
-Fri Mar 23 11:45:45 2001    <jeffh@gimlet.activestate.com>
+2001-03-28  Jeff Hobbs  <jeffh@gimlet.activestate.com>
+
+	* tk/canvas.bench: expanded item draw benchmarks
+
+2001-03-23    <jeffh@activestate.com>
 
 	* tk/canvas.bench: added simple item draw benchmarks
 
-Thu Mar 15 11:44:44 2001    <jeffh@gimlet.activestate.com>
+2001-03-15    <jeffh@activestate.com>
 
 	* tcl/klist.bench: improved non-tclbench data output.
 

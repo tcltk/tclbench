@@ -3,22 +3,42 @@ proc canvas-create {w} {
     destroy $w
 }
 
-proc draw {cw {reps 100}} {
-    $cw delete all
-    if {$::tcl_version > 8.2} {
-	for {set i 0} {$i < $reps} {incr i 10} {
-	    $cw create rect [list 20 $i 23 [expr {$i+3}]] -fill red
-	    $cw create line [list 28 $i 35 $i] -fill yellow -arrow last \
-		    -arrowshape {3 6 3}
-	    $cw create text [list 40 $i] -text num_$i -fill black -anchor w
-	}
-    } else {
-	for {set i 0} {$i < $reps} {incr i 10} {
-	    $cw create rect 20 $i 23 [expr {$i+3}] -fill red
-	    $cw create line 28 $i 35 $i -fill yellow -arrow last \
-		    -arrowshape {3 6 3}
-	    $cw create text 40 $i -text num_$i -fill black -anchor w
-	}
+proc draw {w {reps 10}} {
+    $w delete all
+    set reps [expr {$reps * 10}]
+    for {set i 0} {$i < $reps} {incr i 10} {
+	$w create rect 20 $i 23 [expr {$i+3}] -fill red
+	$w create line 28 $i 35 $i -fill yellow -arrow last \
+		-arrowshape {3 6 3}
+	$w create text 40 $i -text num_$i -fill black -anchor w
+    }
+}
+
+proc draw-2 {w {reps 10}} {
+    $w delete all
+    set reps [expr {$reps * 10}]
+    for {set i 0} {$i < $reps} {incr i 10} {
+	$w create rect [expr {20.+1.}] [expr {$i+1.}] [expr {23.+1.}] [expr {$i+3.}] -fill red
+	$w create line [expr {28.+1.}] $i [expr {35.+1.}] $i -fill yellow -arrow last \
+		-arrowshape {3 6 3}
+	$w create text [expr {40.+1.}] $i -text num_$i -fill black -anchor w
+    }
+}
+
+proc draw-3 {w {reps 10}} {
+    $w delete all
+    set height [winfo reqheight .c]
+    set width [winfo reqwidth .c]
+    set coords {}
+    set noCoords 1024
+    for { set x 0 } { $x < $noCoords } { incr x } {
+	lappend coords $x
+	lappend coords \
+		[expr {$height/3*sin(4*3.14*$x/$width)+$height/2}]
+    }
+    eval [list $w create line] $coords
+    for { set x 0 } { $x < $reps } { incr x } {
+	$w coords [lrange $coords [expr {$x*5}] end]; update idle
     }
 }
 
@@ -73,14 +93,24 @@ bench -iters 500 -desc "CANVAS configure all" \
 	} \
 	-post {destroy .c}
 
-bench -iters 400 -desc "CANVAS simple draw 100" \
+bench -iters 400 -desc "CANVAS simple draw 10" \
+	-pre {destroy .c; canvas .c} \
+	-body {draw .c 10} \
+	-post {destroy .c}
+
+bench -iters 200 -desc "CANVAS simple draw 100" \
 	-pre {destroy .c; canvas .c} \
 	-body {draw .c 100} \
 	-post {destroy .c}
 
-bench -iters 200 -desc "CANVAS simple draw 1000" \
+bench -iters 50 -desc "CANVAS simple draw 1000" \
 	-pre {destroy .c; canvas .c} \
 	-body {draw .c 1000} \
+	-post {destroy .c}
+
+bench -iters 100 -desc "CANVAS draw-3 100" \
+	-pre {destroy .c; canvas .c} \
+	-body {draw .c 100} \
 	-post {destroy .c}
 
 eval destroy [winfo children .]
