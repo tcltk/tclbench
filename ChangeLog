@@ -1,7 +1,18 @@
 2001-05-22  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* runbench.tcl: corrected error for reporting errors in sourced files
+
+	* tcl/fcopy.bench: made use of bench_tmpfile for more accurate
+	data (not skewed by network).
+
+	* libbench.tcl (bench_tmpfile): correctly allow multiple calls to
+	bench_tmpfile within one file.
+
 	* normbench.tcl: new file that allows for post-process
 	normalization of the benchmark data.
+	Corrected last minute code checkin bug.
+	Added support for moving left (to higher versions) to normalize
+	when the requested version returned non-double data.
 
 	* tcl/libbench.tcl:
 	* tcl/runbench.tcl: changed -iterations to be a maximum number for

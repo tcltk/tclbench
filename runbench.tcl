@@ -4,7 +4,7 @@ exec tclsh "$0" ${1+"$@"}
 
 # runbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: runbench.tcl,v 1.9 2001/05/22 22:39:12 hobbs Exp $}
+set RCS {RCS: @(#) $Id: runbench.tcl,v 1.10 2001/05/23 05:37:23 hobbs Exp $}
 #
 # Copyright (c) 2000-2001 Jeffrey Hobbs.
 
@@ -270,7 +270,7 @@ proc collectData {iArray dArray oArray fileList} {
 		if {$opts(errors)} {
 		    error $::errorInfo
 		} else {
-		    puts stderr $patchlevel
+		    puts stderr $output
 		    continue
 		}
 	    }
