@@ -1764,6 +1764,8 @@ proc proc-5.1 {a} {
 proc proc-5.2 {a} {
 }
 
+proc proc-empty {args} {}
+
 bench -desc "PROC explicit return" -body {proc-1.1 abc}
 bench -desc "PROC implicit return" -body {proc-1.2 abc}
 bench -desc "PROC explicit return (2)" -body {proc-4.1 abc}
@@ -1775,6 +1777,8 @@ bench -desc "PROC heavily commented" -body {proc-2.1 bogus}
 bench -desc "PROC do-nothing, no args" -body {proc-2.2}
 bench -desc "PROC do-nothing, one arg" -body {proc-2.3 a}
 bench -desc "PROC do-nothing inline" -body {}
+bench -desc "PROC empty, no args" -body {proc-empty}
+bench -desc "PROC empty, use args" -body {proc-empty a b c}
 bench -desc "PROC local links with global" \
 	-body {proc-3.1 a b c d e f g}
 bench -desc "PROC local links with upvar" \
