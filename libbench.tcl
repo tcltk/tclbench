@@ -4,7 +4,7 @@
 # This file has to have code that works in any version of Tcl that
 # the user would want to benchmark.
 #
-# RCS: @(#) $Id: libbench.tcl,v 1.9 2001/05/23 05:37:11 hobbs Exp $
+# RCS: @(#) $Id: libbench.tcl,v 1.10 2001/06/03 20:37:37 hobbs Exp $
 #
 # Copyright (c) 2000-2001 Jeffrey Hobbs.
 
@@ -177,7 +177,12 @@ set BENCH(ERRORS)	1
 set BENCH(MATCH)	{}
 set BENCH(OUTFILE)	stdout
 set BENCH(FILES)	{}
-set BENCH(ITERS)	1000
+if {[info tclversion] < 8.0} {
+    # poor 7.x just takes too long otherwise...
+    set BENCH(ITERS)	500
+} else {
+    set BENCH(ITERS)	1000
+}
 
 if {[llength $argv]} {
     while {[llength $argv]} {
