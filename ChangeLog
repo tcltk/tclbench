@@ -1,3 +1,8 @@
+2001-08-29  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/methods.bench:
+	* tcl/vars.bench: added some more benchmarks
+
 2001-07-18  Andreas Kupries <andreas_kupries@users.sourceforge.net>
 
 	* tcl/read.bench: new "read" benchmarks detailing the effect of

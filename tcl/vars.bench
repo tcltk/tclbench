@@ -25,6 +25,15 @@ proc var-global {bogus} {
     set d $a
 }
 
+namespace eval ::foo::var { variable x 0 }
+proc ::foo::var::ref {val} {
+    variable x
+    while {$x < $val} { incr x }
+}
+proc ::foo::var::gref {val} {
+    while {$::foo::var::x < $val} { incr ::foo::var::x }
+}
+
 # Upvar variable access
 proc var-upvar {varname} {
     upvar 1 $varname a
@@ -112,3 +121,8 @@ bench -desc "VAR 100 'set's in array" \
 	-body {var-set-many 1}
 bench -desc "VAR 'array set' of 100 elems" \
 	-body {var-array-set 1}
+
+bench -desc "VAR ref variable" \
+	-body {::foo::var::ref 50}
+bench -desc "VAR ref absolute" \
+	-body {::foo::var::gref 50}

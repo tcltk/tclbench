@@ -87,3 +87,19 @@ set x 5
 
 bench -desc "MTHD inline call" \
 	-body {set x}
+
+proc foo {} { return 1 }
+
+namespace eval ::call {
+    proc bar {cmd} {$cmd}
+}
+
+proc call {cmd} {
+    ::call::bar $cmd
+    $cmd
+}
+
+bench -desc "MTHD call relative" \
+	-body {call foo}
+bench -desc "MTHD call absolute" \
+	-body {call ::foo}
