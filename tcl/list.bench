@@ -107,6 +107,29 @@ proc list-list {a b c} {
     }
 }
 
+proc SET             {l1 l2} { set l1 "$l1 $l2" }
+proc APPEND          {l1 l2} { append l1 " $l2" }
+proc CONCAT          {l1 l2} { set l1 [concat $l1 $l2] }
+proc EVAL/LAPPEND    {l1 l2} { eval [list lappend l1] $l2 }
+proc FOREACH/LAPPEND {l1 l2} { foreach i $l2 {lappend l1 $i} ; set l1 }
+
+proc makeList {len item} {
+    for {set i 0} {$i < $len} {incr i} {
+        lappend res $item
+    }
+    return $res
+}
+
+set types [list FOREACH/LAPPEND EVAL/LAPPEND CONCAT APPEND SET]
+foreach type $types {
+    foreach len {10 100 1000 10000} {
+	set l1 [makeList $len a]
+	set l2 [makeList $len b]
+	bench -desc "LIST concat $type 2x$len" -iter 200 \
+		-body [subst {llength \[$type \$l1 \$l2\]}]
+    }
+}
+
 proc makeLists {{size 500}} {
     global Sobj Lobj LSobj
     set Sobj ""
