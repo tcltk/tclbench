@@ -126,7 +126,25 @@ if { [catch {string repeat "abc" 10}] } {
 }
 
 proc str-append {s a} {
-     append $s $a
+    append out $s
+    append out $a
+}
+
+proc rev-full-compile {string} {
+    set len [string length $string]
+    set out {}
+    while {$len} {
+	set out $out[string index $string [incr len -1]]
+    }
+    return $out
+}
+proc rev {string} {
+    set len [string length $string]
+    set out {}
+    while {$len} {
+	append out [string index $string [incr len -1]]
+    }
+    return $out
 }
 
 # String comparisons
@@ -143,19 +161,23 @@ bench -desc "STR str \$a equal \"\"" \
 bench -desc "STR str num == \"\"" \
 	-body {str-==-null 12345}
 bench -desc "STR str \$a eq \$b" \
-	-body {str-eq $str1 $str1}
+	-body {str-eq $str1 $str2}
 bench -desc "STR str \$a ne \$b" \
 	-body {str-ne $str1 $str2}
+bench -desc "STR str \$a eq \$b (same obj)" \
+	-body {str-eq $str1 $str1}
+bench -desc "STR str \$a ne \$b (same obj)" \
+	-body {str-ne $str1 $str1}
 
 # String operations
 #
 
 set longString ""
-for {set i 0} {$i < 200} {incr i} {
+for {set i 0} {$i < 100} {incr i} {
     append longString "abcdefghijklmnopqrstuvwxyz01234567890123"
 }
-for {set i 0} {$i < 200} {incr i} {
-    append ustring "abcdefghijklmnopqrstuvwxyz0123456789012\374"
+for {set i 0} {$i < 100} {incr i} {
+    append ustring "abcdefghijk\369\370\371\372pqrs\373uvwxyz0123456789012\374"
 }
 append longString 0987654321
 
@@ -212,6 +234,21 @@ bench -desc "STR replace, longer replacement" \
 
 bench -desc "STR repeat, abcdefghij * 100" \
 	-body {str-repeat "abcdefghij" 100}
+
+set chars 100
+bench -desc "STR reverse-1, $chars chars" \
+	-pre {set string [string range $longString 0 $chars]} \
+	-body {rev $string}
+bench -desc "STR reverse-1, $chars unichars" \
+	-pre {set string [string range $ustring 0 $chars]} \
+	-body {rev $string}
+
+bench -desc "STR reverse-2, $chars chars" \
+	-pre {set string [string range $longString 0 $chars]} \
+	-body {rev-full-compile $string}
+bench -desc "STR reverse-2, $chars unichars" \
+	-pre {set string [string range $ustring 0 $chars]} \
+	-body {rev-full-compile $string}
 
 bench -desc "STR append" \
       -body {str-append $longString "01234567890123456789"}
