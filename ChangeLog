@@ -1,3 +1,18 @@
+2002-11-13  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/regexp.bench: added anchored re tests
+
+	* tcl/klist.bench: allow method filter from command lineinvocation.
+
+	* tcl/list.bench: add lset benchmarks
+
+	* tcl/md5.bench: correct to work with pre-8.2 interps
+
+	* tcl/string.bench: add string growth, remove split benchmarks
+	* tcl/split.bench: more split benchmarks
+
+	* runbench.tcl: allow tclsh*/wish* (no version required)
+
 2002-07-24  Miguel Sofer <msofer@users.sourceforge.net>
 
 	* tcl/base64.bench: added the current code from tcllib.

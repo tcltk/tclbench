@@ -4,7 +4,7 @@ exec tclsh "$0" ${1+"$@"}
 
 # runbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: runbench.tcl,v 1.14 2002/04/26 03:42:55 hobbs Exp $}
+set RCS {RCS: @(#) $Id: runbench.tcl,v 1.15 2002/11/14 01:56:48 hobbs Exp $}
 #
 # Copyright (c) 2000-2001 Jeffrey Hobbs.
 
@@ -63,8 +63,8 @@ array set opts {
     rmatch	{}
     tcllist	{}
     tklist	{}
-    tclsh	"tclsh?*"
-    wish	"wish?*"
+    tclsh	"tclsh*"
+    wish	"wish*"
     usetk	1
     usetcl	1
     usethreads	0
