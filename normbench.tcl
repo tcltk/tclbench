@@ -4,7 +4,7 @@ exec tclsh "$0" ${1+"$@"}
 
 # runbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: normbench.tcl,v 1.1 2001/05/23 00:35:17 hobbs Exp $}
+set RCS {RCS: @(#) $Id: normbench.tcl,v 1.2 2001/05/23 04:06:08 hobbs Exp $}
 #
 # Copyright (c) 2000-2001 Jeffrey Hobbs.
 
@@ -121,19 +121,26 @@ proc normalize-text {norm line} {
     set times [string range $line $start end]
     set ntime [lindex $times $col]
     if {![string is double -strict $ntime]} {
-	return $line
-    } else {
-	set out [string range $line 0 [expr {$start-1}]]
-	foreach t $times {
-	    if {[string is double -strict $t]} {
-		append out [format " %7.2f" \
-			[expr {double($t) / double($ntime)}]]
-	    } else {
-		append out [format " %7s" $t]
-	    }
+	# This didn't return valid data.  Try walking backwards to find
+	# a newer version that we can normalize this row on, since newer
+	# versions are to the left.
+	for {set i $col} {$i >= 0} {incr i -1} {
+	    set ntime [lindex $times $i]
+	    if {[string is double -strict $ntime]} { break }
 	}
-	return $out 
+	# Hmph.  No usable data.
+	if {$i == -1} { return $line }
     }
+    set out [string range $line 0 [expr {$start-1}]]
+    foreach t $times {
+	if {[string is double -strict $t]} {
+	    append out [format " %7.2f" \
+		    [expr {double($t) / double($ntime)}]]
+	} else {
+	    append out [format " %7s" $t]
+	}
+    }
+    return $out 
 }
 
 proc normalize-list {norm line} {
@@ -160,9 +167,7 @@ proc normalize-list {norm line} {
     }
 }
 
-proc normalize {optArray indata} {
-    upvar 1 $optArray opts
-
+proc normalize {norm indata} {
     set lines [split $indata \n]
     foreach line $lines {
 	if {![string match "\[0-9\]*" $line]} {
@@ -171,29 +176,27 @@ proc normalize {optArray indata} {
 	}
 	scan $line %d num
 	if {$num == 0} {
-	    if {$opts(format) == ""} {
-		# guess format based on first line of version input
-		if {[string match "0,VER*" $line]} {
-		    set opts(format) csv
-		} elseif {[string match "0 VER*" $line]} {
-		    set opts(format) list
-		} elseif {[string match "000*VER*" $line]} {
-		    set opts(format) text
-		} else {
-		    puts stderr "Unrecognized runbench format input file"
-		    exit
-		}
+	    # guess format based on first line of version input
+	    if {[string match "0,VER*" $line]} {
+		set format csv
+	    } elseif {[string match "0 VER*" $line]} {
+		set format list
+	    } elseif {[string match "000*VER*" $line]} {
+		set format text
+	    } else {
+		puts stderr "Unrecognized runbench format input file"
+		exit
 	    }
 	}
-	switch -exact -- $opts(format) {
-	    text { puts stdout [normalize-text $opts(norm) $line] }
-	    list { puts stdout [normalize-list $opts(norm) $line] }
+	switch -exact -- $format {
+	    text { puts stdout [normalize-text $norm $line] }
+	    list { puts stdout [normalize-list $norm $line] }
 	    csv  {
 		puts -nonewline stdout [list2csv [list \
-			[normalize-list $opts(norm) [csv2list $line]]]]
+			[normalize-list $norm [csv2list $line]]]]
 	    }
 	}
     }
 }
 
-normalize opts [read -nonewline $opts(fid)]
+normalize $opts(norm) [read -nonewline $opts(fid)]
