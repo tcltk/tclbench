@@ -4,7 +4,7 @@
 # This file has to have code that works in any version of Tcl that
 # the user would want to benchmark.
 #
-# RCS: @(#) $Id: libbench.tcl,v 1.8 2001/05/22 22:39:12 hobbs Exp $
+# RCS: @(#) $Id: libbench.tcl,v 1.9 2001/05/23 05:37:11 hobbs Exp $
 #
 # Copyright (c) 2000-2001 Jeffrey Hobbs.
 
@@ -26,18 +26,20 @@ global BENCH bench
 #   Returns file name
 #
 proc bench_tmpfile {} {
-    global tcl_platform env
+    global tcl_platform env BENCH
+    if {![info exists BENCH(uniqid)]} { set BENCH(uniqid) 0 }
+    set base "tclbench[incr BENCH(uniqid)].dat"
     if {[info exists tcl_platform(platform)]} {
 	if {$tcl_platform(platform) == "unix"} {
-	    return "/tmp/tclbench.dat"
+	    return "/tmp/$base"
 	} elseif {$tcl_platform(platform) == "windows"} {
-	    return [file join $env(TEMP) "tclbench.dat"]
+	    return [file join $env(TEMP) $base]
 	} else {
-	    return "tclbench.dat"
+	    return $base
 	}
     } else {
 	# The Good Ol' Days (?) when only Unix support existed
-	return "/tmp/tclbench.dat"
+	return "/tmp/$base"
     }
 }
 
@@ -199,15 +201,16 @@ if {[llength $argv]} {
     }
 }
 
+rename exit exit.true
+proc exit args {
+    error "called \"exit $args\" in benchmark test"
+}
+
+
 if {[string compare $BENCH(OUTFILE) stdout]} {
     set BENCH(OUTFID) [open $BENCH(OUTFILE) w]
 } else {
     set BENCH(OUTFID) stdout
-}
-
-rename exit exit.true
-proc exit args {
-    error "called \"exit $args\" in benchmark test"
 }
 
 #
@@ -215,10 +218,10 @@ proc exit args {
 # the data will be collected in via an 'array set'.
 #
 
-foreach file $BENCH(FILES) {
-    if {[file exists $file]} {
-	puts $BENCH(OUTFID) [list Sourcing $file]
-	source $file
+foreach BENCH(file) $BENCH(FILES) {
+    if {[file exists $BENCH(file)]} {
+	puts $BENCH(OUTFID) [list Sourcing $BENCH(file)]
+	source $BENCH(file)
     }
 }
 
