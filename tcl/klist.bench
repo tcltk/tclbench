@@ -1,3 +1,6 @@
+#
+# RCS: @(#) $Id: klist.bench,v 1.5 2001/05/22 22:30:42 hobbs Exp $
+#
 # From http://mini.net/cgi-bin/wikit/941
 # Procedure to generate a list of n numbers: 
 proc iota { n } {
@@ -7,28 +10,42 @@ proc iota { n } {
     return $retval
 }
 
+if {[catch {expr {rand()}}]} {
+    set IM 139968; set IA   3877; set IC  29573
+    set last 42
+    proc random {max} [subst {
+	global last
+	expr {(\$max*\[set last \[expr {(\$last * $IA + $IC) % $IM}\]\])/$IM}
+    }]
+
+    # shuffle0 requires both rand() and lsort -index
+    proc shuffle0 { list } { return -code 666 8.0+ }
+} else {
+    proc random {n} { expr {int(rand()*$n)} }
+
+    # shuffle0 is the obvious method of generating random keys, then sorting
+    # the list according to those keys.
+    proc shuffle0 { list } {
+	set newlist 0
+	foreach element $list {
+	    lappend newlist [list [expr {rand()}] $element]
+	}
+	foreach pair [lsort -real -index 0 $newlist] {
+	    foreach { random item } $pair {}
+	    lappend retval $item
+	}
+	return $retval
+    }
+}
+
 # Several of the procedures rely on Donal Fellows's K combinator: 
 proc K { x y } { set x }
-
-# shuffle0 is the obvious method of generating random keys, then sorting the
-# list according to those keys.
-proc shuffle0 { list } {
-    set newlist 0
-    foreach element $list {
-	lappend newlist [list [expr { rand() }] $element]
-    }
-    foreach pair [lsort -real -index 0 $newlist] {
-	foreach { random item } $pair {}
-	lappend retval $item
-    }
-    return $retval
-}
 
 # shuffle1 is Techentin's implementation of Bentley's method. 
 proc shuffle1-s { list } {
     set n [llength $list]
     for { set i 0 } { $i < $n } { incr i } {
-	set j [expr {int(rand()*$n)}]
+	set j [random $n]
 	set temp [lindex $list $j]
 	set list [lreplace $list $j $j [lindex $list $i]]
 	set list [lreplace $list $i $i $temp]
@@ -42,7 +59,7 @@ proc shuffle1-s { list } {
 proc shuffle1a { list } {
     set n [llength $list]
     for { set i 0 } { $i < $n } { incr i } {
-	set j [expr {int(rand()*$n)}]
+	set j [random $n]
 	set temp1 [lindex $list $j]
 	set temp2 [lindex $list $i]
 	set list [lreplace [K $list [set list {}]] $j $j $temp2]
@@ -59,7 +76,7 @@ proc shuffle2 { list } {
 	incr n
     }
     for { set i 0 } { $i < $n } { incr i } {
-	set j [expr {int(rand()*$n)}]
+	set j [random $n]
 	set temp $data($j)
 	set data($j) $data($i)
 	set data($i) $temp
@@ -75,7 +92,7 @@ proc shuffle2 { list } {
 proc shuffle3 { list } {
     set n [llength $list]
     while {$n>0} {
-	set j [expr {int(rand()*$n)}]
+	set j [random $n]
 	lappend slist [lindex $list $j]
 	set list [lreplace [K $list [set list {}]] $j $j]
 	incr n -1
@@ -87,7 +104,7 @@ proc shuffle3 { list } {
 proc shuffle4 { list } {
     set n [llength $list]
     while {$n>0} {
-	set j [expr {int(rand()*$n)}]
+	set j [random $n]
 	lappend slist [lindex $list $j]
 	incr n -1
 	set temp [lindex $list $n]
@@ -102,7 +119,7 @@ proc shuffle5-s { list } {
     set n 1
     set slist {}
     foreach item $list {
-	set index [expr {int(rand()*$n)}]
+	set index [random $n]
 	set slist [linsert $slist $index $item]
 	incr n
     }
@@ -113,7 +130,7 @@ proc shuffle5a { list } {
     set n 1
     set slist {}
     foreach item $list {
-	set index [expr {int(rand()*$n)}]
+	set index [random $n]
 	set slist [linsert [K $slist [set slist {}]] $index $item]
 	incr n
     }
@@ -122,8 +139,14 @@ proc shuffle5a { list } {
 
 # The test harness times the various methods and prints the results. 
 
-set LENGTHS	[list 1     10   100  1000 10000]
-set ITERS	[list 1600  800  400  200  10]
+if {[info tclversion] < 8.0} {
+    # 7.6 has some real timing short-comings for these tests
+    set LENGTHS	[list 1     10   100  1000]
+    set ITERS	[list 100   50   25   10]
+} else {
+    set LENGTHS	[list 1     10   100  1000 10000]
+    set ITERS	[list 1000  500  250  100  10]
+}
 set METHODS	[list shuffle0 shuffle1-s shuffle1a shuffle2 shuffle3 \
 	shuffle4 shuffle5-s shuffle5a]
 
