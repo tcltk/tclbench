@@ -4,6 +4,14 @@ proc str-cmp-null {a} {
     if {[string compare $a ""]} { set i 0 } else { set i 1 }
     if {[string compare $a ""]} { set i 0 } else { set i 1 }
 }
+proc str-cmp {a b} {
+    string compare $a $b
+    string compare $a $b
+    string compare $a $b
+    string compare $a $b
+    string compare $a $b
+    string compare $a $b
+}
 
 if { [catch {string equal "" ""}] } {
     proc str-equal-null {a} {
@@ -34,10 +42,10 @@ if { [catch {string equal "" ""}] } {
 }
 
 proc str-==-null {a} {
-    if { $a == "" } { set i 1 } else { set i 0 }
-    if { $a == "" } { set i 1 } else { set i 0 }
-    if { $a == "" } { set i 1 } else { set i 0 }
-    if { $a == "" } { set i 1 } else { set i 0 }
+    if {$a == ""} { set i 1 } else { set i 0 }
+    if {$a == ""} { set i 1 } else { set i 0 }
+    if {$a == ""} { set i 1 } else { set i 0 }
+    if {$a == ""} { set i 1 } else { set i 0 }
 }
 
 if { [catch {expr {"" eq ""}} nope] } {
@@ -143,7 +151,7 @@ proc str-append-2 {s small large count} {
     }
 }
 
-proc rev-full-compile {string} {
+proc rev-set {string} {
     set len [string length $string]
     set out {}
     while {$len} {
@@ -151,7 +159,7 @@ proc rev-full-compile {string} {
     }
     return $out
 }
-proc rev {string} {
+proc rev-append {string} {
     set len [string length $string]
     set out {}
     while {$len} {
@@ -174,14 +182,34 @@ proc str-split-iter {string} {
     }
 }
 
+# String operations
+#
+
+set longString ""
+for {set i 0} {$i < 100} {incr i} {
+    append longString "abcdefghijklmnopqrstuvwxyz01234567890123"
+}
+for {set i 0} {$i < 100} {incr i} {
+    append ustring "abcdefghijk\369\370\371\372pqrs\373uvwxyz0123456789012\374"
+}
+append longString 0987654321
+
 # String comparisons
 #
 set str1 "This is a string"
 set str2 "This is also a string"
 
-bench -desc "STR str \[string compare\]" \
+bench -desc "STR string compare" \
+	-body {str-cmp $str1 $str2}
+bench -desc "STR string compare long" \
+	-body {str-cmp $longString $longString}
+bench -desc "STR string compare mixed long" \
+	-body {str-cmp $longString "$longString\369"}
+bench -desc "STR string compare uni long" \
+	-body {str-cmp $ustring $ustring}
+bench -desc "STR string compare \"\"" \
 	-body {str-cmp-null 12345}
-bench -desc "STR str \[string equal\]" \
+bench -desc "STR string equal \"\"" \
 	-body {str-equal-null 12345}
 bench -desc "STR str \$a equal \"\"" \
 	-body {str-eq-null 12345}
@@ -195,18 +223,6 @@ bench -desc "STR str \$a eq \$b (same obj)" \
 	-body {str-eq $str1 $str1}
 bench -desc "STR str \$a ne \$b (same obj)" \
 	-body {str-ne $str1 $str1}
-
-# String operations
-#
-
-set longString ""
-for {set i 0} {$i < 100} {incr i} {
-    append longString "abcdefghijklmnopqrstuvwxyz01234567890123"
-}
-for {set i 0} {$i < 100} {incr i} {
-    append ustring "abcdefghijk\369\370\371\372pqrs\373uvwxyz0123456789012\374"
-}
-append longString 0987654321
 
 bench -desc "STR length (==[string length $longString])" \
 	-body {str-len $longString}
@@ -277,27 +293,28 @@ bench -desc "STR repeat, [string length $longString] chars * 10" \
 bench -desc "STR repeat, [string length $longString] chars * 100" \
 	-body {str-repeat $longString 100}
 
-set chars 100
-bench -desc "STR reverse iter1, $chars chars" \
-	-pre {set string [string range $longString 0 $chars]} \
-	-body {rev $string}
-bench -desc "STR reverse iter1, $chars uchars" \
-	-pre {set string [string range $ustring 0 $chars]} \
-	-body {rev $string}
+foreach chars {10 100 500} {
+    bench -desc "STR reverse iter/append, $chars c" \
+	    -pre {set string [string range $longString 0 $chars]} \
+	    -body {rev-append $string}
+    bench -desc "STR reverse iter/append, $chars uc" \
+	    -pre {set string [string range $ustring 0 $chars]} \
+	    -body {rev-append $string}
 
-bench -desc "STR reverse iter2, $chars chars" \
-	-pre {set string [string range $longString 0 $chars]} \
-	-body {rev-full-compile $string}
-bench -desc "STR reverse iter2, $chars uchars" \
-	-pre {set string [string range $ustring 0 $chars]} \
-	-body {rev-full-compile $string}
+    bench -desc "STR reverse iter/set, $chars c" \
+	    -pre {set string [string range $longString 0 $chars]} \
+	    -body {rev-set $string}
+    bench -desc "STR reverse iter/set, $chars uc" \
+	    -pre {set string [string range $ustring 0 $chars]} \
+	    -body {rev-set $string}
 
-bench -desc "STR reverse recur1, $chars chars" \
-	-pre {set string [string range $longString 0 $chars]} \
-	-body {rev-recursive $string}
-bench -desc "STR reverse recur1, $chars uchars" \
-	-pre {set string [string range $ustring 0 $chars]} \
-	-body {rev-recursive $string}
+    bench -desc "STR reverse recursive, $chars c" \
+	    -pre {set string [string range $longString 0 $chars]} \
+	    -body {rev-recursive $string}
+    bench -desc "STR reverse recursive, $chars uc" \
+	    -pre {set string [string range $ustring 0 $chars]} \
+	    -body {rev-recursive $string}
+}
 
 bench -desc "STR split, [string length $longString] chars" \
 	-body {str-split $longString} \
