@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: string.bench,v 1.18 2002/02/08 06:02:22 hobbs Exp $
+# RCS: @(#) $Id: string.bench,v 1.19 2002/05/29 09:16:49 hobbs Exp $
 #
 
 proc str-cmp-null {a} {
@@ -9,8 +9,6 @@ proc str-cmp-null {a} {
     if {[string compare $a ""]} { set i 0 } else { set i 1 }
 }
 proc str-cmp {a b} {
-    string compare $a $b
-    string compare $a $b
     string compare $a $b
     string compare $a $b
     string compare $a $b
@@ -53,17 +51,32 @@ proc str-==-null {a} {
 }
 
 if { [catch {expr {"" eq ""}} nope] } {
-    proc str-eq {a b} {
-	if {![string compare $a $b]} { set i 0 } else { set i 1 }
-	if {![string compare $a $b]} { set i 0 } else { set i 1 }
-	if {![string compare $a $b]} { set i 0 } else { set i 1 }
-	if {![string compare $a $b]} { set i 0 } else { set i 1 }
-    }
-    proc str-ne {a b} {
-	if {[string compare $a $b]} { set i 0 } else { set i 1 }
-	if {[string compare $a $b]} { set i 0 } else { set i 1 }
-	if {[string compare $a $b]} { set i 0 } else { set i 1 }
-	if {[string compare $a $b]} { set i 0 } else { set i 1 }
+    if { [catch {string equal "" ""}] } {
+	proc str-eq {a b} {
+	    if {![string compare $a $b]} { set i 0 } else { set i 1 }
+	    if {![string compare $a $b]} { set i 0 } else { set i 1 }
+	    if {![string compare $a $b]} { set i 0 } else { set i 1 }
+	    if {![string compare $a $b]} { set i 0 } else { set i 1 }
+	}
+	proc str-ne {a b} {
+	    if {[string compare $a $b]} { set i 0 } else { set i 1 }
+	    if {[string compare $a $b]} { set i 0 } else { set i 1 }
+	    if {[string compare $a $b]} { set i 0 } else { set i 1 }
+	    if {[string compare $a $b]} { set i 0 } else { set i 1 }
+	}
+    } else {
+	proc str-eq {a b} {
+	    if {[string equal $a $b]} { set i 0 } else { set i 1 }
+	    if {[string equal $a $b]} { set i 0 } else { set i 1 }
+	    if {[string equal $a $b]} { set i 0 } else { set i 1 }
+	    if {[string equal $a $b]} { set i 0 } else { set i 1 }
+	}
+	proc str-ne {a b} {
+	    if {![string equal $a $b]} { set i 0 } else { set i 1 }
+	    if {![string equal $a $b]} { set i 0 } else { set i 1 }
+	    if {![string equal $a $b]} { set i 0 } else { set i 1 }
+	    if {![string equal $a $b]} { set i 0 } else { set i 1 }
+	}
     }
 } else {
     proc str-eq {a b} {
@@ -216,17 +229,25 @@ proc str-split-iter {string} {
 }
 
 # String operations
+# It is important to have 2 of each type, to avoid optimizations
+# in the core made for comparing the same exact obj.
 #
 
 proc init {} {
-    global longString ustring
-    set longString ""
+    global longString longString2 ustring ustring2
     for {set i 0} {$i < 100} {incr i} {
 	append longString "abcdefghijklmnopqrstuvwxyz01234567890123"
     }
     append longString 0987654321
     for {set i 0} {$i < 100} {incr i} {
+	append longString2 "abcdefghijklmnopqrstuvwxyz01234567890123"
+    }
+    for {set i 0} {$i < 100} {incr i} {
 	append ustring "abcdefghijk\353\370\371\372pqrs\373uvwxyz0123456789012\374"
+    }
+    #set ustring2 "$ustring \369a"
+    for {set i 0} {$i < 100} {incr i} {
+	append ustring2 "abcdefghijk\353\370\371\372pqrs\373uvwxyz0123456789012\374"
     }
     if {[info tclversion] >= 8.0} {
 	global randString
@@ -246,13 +267,23 @@ set str2 "This is also a string"
 bench -desc "STR string compare" \
 	-body {str-cmp $str1 $str2}
 bench -desc "STR string compare long" \
+	-body {str-cmp $longString $longString2}
+bench -desc "STR string compare long (same obj)" \
 	-body {str-cmp $longString $longString}
 bench -desc "STR string compare mixed long" \
 	-body {str-cmp $longString "$longString\369"}
 bench -desc "STR string compare uni long" \
-	-body {str-cmp $ustring $ustring}
+	-body {str-cmp $ustring $ustring2}
 bench -desc "STR string compare \"\"" \
 	-body {str-cmp-null 12345}
+bench -desc "STR string equal long (same obj)" \
+	-body {str-eq $longString $longString2}
+bench -desc "STR string equal long" \
+	-body {str-eq $longString $longString2}
+bench -desc "STR string equal mixed long" \
+	-body {str-eq $longString "$longString\369"}
+bench -desc "STR string equal uni long" \
+	-body {str-eq $ustring $ustring2}
 bench -desc "STR string equal \"\"" \
 	-body {str-equal-null 12345}
 bench -desc "STR str \$a equal \"\"" \
@@ -339,6 +370,7 @@ bench -desc "STR repeat, [string length $longString] chars * 10" \
 	-body {str-repeat $longString 10}
 bench -desc "STR repeat, [string length $longString] chars * 100" \
 	-body {str-repeat $longString 100}
+return
 
 foreach chars {10 100 400} {
     bench -desc "STR reverse iter/append, $chars c" \
