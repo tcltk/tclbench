@@ -41,13 +41,23 @@ proc var-global {bogus} {
     set d $a
 }
 
-namespace eval ::foo::var { variable x 0 }
-proc ::foo::var::ref {val} {
-    variable x
-    while {$x < $val} { incr x }
-}
-proc ::foo::var::gref {val} {
-    while {$::foo::var::x < $val} { incr ::foo::var::x }
+if {[info tclversion] >= 8.0} {
+    namespace eval ::foo::var::ref { variable x }
+    proc ::foo::var::ref {val} {
+	variable x 0
+	while {$x < $val} { incr x }
+    }
+    proc ::foo::var::gref {val} {
+	set ::foo::var::x 0
+	while {$::foo::var::x < $val} { incr ::foo::var::x }
+    }
+} else {
+    proc ::foo::var::ref {val} {
+	return -code 666 "8.0+"
+    }
+    proc ::foo::var::gref {val} {
+	return -code 666 "8.0+"
+    }
 }
 
 # Upvar variable access
