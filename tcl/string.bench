@@ -87,6 +87,12 @@ proc str-len {a} {
     string length $a
 }
 
+proc str-len-static {bogusVar} {
+    string length {abcdefghijklmnopqrstuvwxyz0123456789}
+    string length {abcdefghijklmnopqrstuvwxyz01234567890123456789}
+    string length {abcdefghijklmnopqrstuvwxyz012345678901234567890123456789}
+}
+
 proc str-index {a i} {
     string index $a $i
 }
@@ -224,6 +230,8 @@ bench -desc "STR str \$a ne \$b (same obj)" \
 
 bench -desc "STR length (==[string length $longString])" \
 	-body {str-len $longString}
+bench -desc "STR length static str" \
+	-body {str-len-static dummy}
 
 foreach len {0 100 500} {
     bench -desc "STR index $len" \
