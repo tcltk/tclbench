@@ -4,7 +4,7 @@ exec tclsh "$0" ${1+"$@"}
 
 # runbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: runbench.tcl,v 1.12 2001/09/25 19:05:31 hobbs Exp $}
+set RCS {RCS: @(#) $Id: runbench.tcl,v 1.13 2002/02/08 06:05:38 hobbs Exp $}
 #
 # Copyright (c) 2000-2001 Jeffrey Hobbs.
 
@@ -35,6 +35,7 @@ proc usage {} {
 	    \n\t-notk			# do not run wish tests\
 	    \n\t-output <text|list|csv>	# style of output from program (default: text)\
 	    \n\t-paths <pathList>	# path or list of paths to search for interps\
+	    \n\t-threads		# use Thread where possible (*expiremental*)\
 	    \n\t-throwerrors		# propagate errors in benchmarks files\
 	    \n\t-verbose		# output interim status info\
 	    \n\tfileList		# files to source, files matching *tk*\
