@@ -1,3 +1,8 @@
+2002-03-15  Miguel Sofer <msofer@users.sourceforge.net>
+
+	* tcl/catch.bench: added benchmark for catch in a body with many
+	nested exception ranges.
+	
 2002-02-22  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tcl/loops.bench: added while 1 benchmark
