@@ -121,6 +121,8 @@ proc bench {args} {
 	set BENCH(index) 1
     }
     if {$opts(-body) != ""} {
+	# always run it once to remove compile phase confusion
+	catch {uplevel \#0 $opts(-body)}
 	set code [catch {uplevel \#0 \
 		[list time $opts(-body) $opts(-iter)]} res]
 	if {$code == 0} {
