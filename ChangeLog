@@ -1,3 +1,25 @@
+2002-02-07  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* runbench.tcl: noted thread option.
+
+	* libbench.tcl: added ability to check result of test
+
+	* tcl/base64.bench: stripped arg stuff out of code to make it work
+	in 8.0 as well.
+
+	* tcl/list.bench: corrected list-2.11 to append to simple var.
+
+	* tcl/map.bench: added http mapReply & simple regsubs benchmarks
+
+	* tcl/read.bench: commented out new changing buffersize benchmarks
+	as they do weird things to various interp versions.
+
+	* tcl/regexp.bench: added static regexp benchmarks
+
+	* tcl/string.bench: added string first utf benchmarks
+
+	* tcl/vars.bench: corrected namespace usage for pre-8 interps.
+
 2001-09-25  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tcl/string.bench: added exact string match benchmark and fixed
