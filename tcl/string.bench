@@ -83,8 +83,14 @@ proc str-index {a i} {
     string index $a $i
 }
 
+proc str-index2 {a i} {
+    string index $a $i
+}
+
 proc str-first {a s} {
     string first $s $a
+    if {"string" == "nonstring"} { # does nothing }
+    string range $a $i $i
 }
 
 proc str-last {a s} {
@@ -204,6 +210,13 @@ bench -desc "STR index 100" \
 bench -desc "STR index 500" \
 	-body {str-index $longString 500}
 
+bench -desc "STR index2 0" \
+	-body {str-index2 $longString 0}
+bench -desc "STR index2 100" \
+	-body {str-index2 $longString 100}
+bench -desc "STR index2 500" \
+	-body {str-index2 $longString 500}
+
 bench -desc "STR first (success)" \
 	-body {str-first $longString 901}
 bench -desc "STR first (failure)" \
@@ -285,10 +298,12 @@ set kilobyte	[str-repeat "0" 1024]
 set base	[str-repeat "0" 1024]
 bench -desc "STR append (1KB + 1KB)" \
 	-body {str-append $base $kilobyte}
-set base [string repeat "0" 10240]
+
+set base [str-repeat "0" 10240]
 bench -desc "STR append (10KB + 1KB)" \
 	-body {str-append $base $kilobyte}
-set base [string repeat "0" 1049600]
+
+set base [str-repeat "0" 1049600]
 bench -desc "STR append (1MB + 2b * 1000)" \
 	-body {str-append $base "00" 1000}
 bench -desc "STR append (1MB + 1KB)" \
