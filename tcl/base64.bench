@@ -8,7 +8,7 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 # 
-# RCS: @(#) $Id: base64.bench,v 1.1 2001/06/01 05:23:47 hobbs Exp $
+# RCS: @(#) $Id: base64.bench,v 1.2 2001/06/01 11:44:36 hobbs Exp $
 
 # Version 1.0 implemented Base64_Encode, Bae64_Decode
 # Version 2.0 uses the base64 namespace
@@ -266,9 +266,51 @@ proc base64::decode {string} {
     }
     return $output
 }
+proc base64::decode2 {string} {
+    variable base64
 
-foreach len  {10  50 100 500 1000 5000 10000} \
-	iter {100 50 40  30  20   15   10} {
+    set output {}
+    set group 0
+    set j 18
+    foreach char [split $string {}] {
+	if {[string equal $char "="]} {
+	    # = indicates end of data.  Output whatever chars are left.
+	    # The encoding algorithm dictates that we can only have 1 or 2
+	    # padding characters.  If j is 6, we have 12 bits of input 
+	    # (enough for 1 8-bit output).  If j is 0, we have 18 bits of
+	    # input (enough for 2 8-bit outputs).
+	    # It is crucial to scan three hex digits even though we
+	    # discard c - older code used %04x and scanned 2 hex digits
+	    # but really ended up generating 5 or 6 (not 4!) digits and
+	    # resulted in alignment errors.
+
+	    scan [format %06x $group] %2x%2x%2x a b c
+	    if {$j == 6} {
+		append output [format %c $a]
+	    } elseif {$j == 0} {
+		append output [format %c%c $a $b]
+	    }
+	    break
+	} elseif {[info exists base64($char)]} {
+	    # RFC 2045 says that line breaks and other characters not part
+	    # of the Base64 alphabet must be ignored, and that the decoder
+	    # can optionally emit a warning or reject the message.  We opt
+	    # not to do so, but to just ignore the character.
+
+	    set group [expr {$group | ($base64($char) << $j)}]
+	    if {[incr j -6] < 0} {
+		scan [format %06x $group] %2x%2x%2x a b c
+		append output [format %c%c%c $a $b $c]
+		set group 0
+		set j 18
+	    }
+	}
+    }
+    return $output
+}
+
+foreach len  {10  100 1000 10000} \
+	iter {100 40  20   10} {
     # works for 8.2+ only
     set str [string repeat a $len]
     set encstr [base64::encode $str]
@@ -279,5 +321,5 @@ foreach len  {10  50 100 500 1000 5000 10000} \
     bench -desc "BASE64 decode $len" -iter $iter  \
 	    -body {base64::decode $encstr}
     bench -desc "BASE64 decode2 $len" -iter $iter  \
-	    -body {base64::decode $encstr}
+	    -body {base64::decode2 $encstr}
 }
