@@ -1,0 +1,50 @@
+proc makeMatrix {rows cols} {
+    set count 1
+    set mx [list]
+    for { set i 0 } { $i < $rows } { incr i } {
+	set row [list]
+	for { set j 0 } { $j < $cols } { incr j } {
+	    lappend row $count
+	    incr count
+	}
+	lappend mx $row
+    }
+    return $mx
+}
+
+proc matrixTransp0 {m} {
+    set cols [llength [lindex $m 0]]
+
+    foreach row $m {
+	for {set ncol 0} {$ncol < $cols} {incr ncol} {
+	    lappend res($ncol) [lindex $row $ncol]
+	}
+    }
+
+    foreach row [array names res] {
+	lappend result $res($row)
+    }
+
+    set result
+}
+
+proc matrixTransp1 {m} {
+    set rows [llength $m]
+    set cols [llength [lindex $m 0]]
+
+    for {set c 0} {$c < $cols} {incr c} {
+	set nrow {}
+	for {set r 0} {$r < $rows} {incr r} {
+	    lappend nrow [lindex [lindex $m $r] $c]
+	}
+	lappend result $nrow
+    }
+    set result
+}
+
+set m [makeMatrix 20 50]
+set iter 400
+bench -desc "MATRIX transposition-0" -iter $iter \
+	-body {matrixTransp0 $m}
+bench -desc "MATRIX transposition-1" -iter $iter \
+	-body {matrixTransp1 $m}
