@@ -4,7 +4,7 @@ exec tclsh "$0" ${1+"$@"}
 
 # runbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: runbench.tcl,v 1.16 2004/12/20 22:29:55 hobbs Exp $}
+set RCS {RCS: @(#) $Id: runbench.tcl,v 1.17 2004/12/27 19:41:42 hobbs Exp $}
 #
 # Copyright (c) 2000-2001 Jeffrey Hobbs.
 
@@ -196,6 +196,7 @@ if {[info exists env(SNAME)]} {
 #
 proc getInterps {optArray pattern iArray} {
     upvar 1 $optArray opts $iArray var
+    set evalString {puts [info patchlevel] ; exit}
     foreach path $opts(paths) {
 	foreach interp [glob -nocomplain [file join $path $pattern]] {
 	    if {$::tcl_version > 8.4} {
@@ -211,8 +212,8 @@ proc getInterps {optArray pattern iArray} {
 		}
 	    }
 	    if {[file executable $interp] && ![info exists var($interp)]} {
-		if {[catch {exec echo "puts \[info patchlevel\] ; exit" | \
-			$interp} patchlevel]} {
+
+		if {[catch {exec $interp << $evalString} patchlevel]} {
 		    if {$opts(errors)} {
 			error $::errorInfo
 		    } else {
