@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: string.bench,v 1.14 2001/05/22 22:16:17 hobbs Exp $
+# RCS: @(#) $Id: string.bench,v 1.15 2001/06/03 20:37:03 hobbs Exp $
 #
 
 proc str-cmp-null {a} {
@@ -334,7 +334,7 @@ foreach chars {10 100 400} {
 	    -body {rev-recursive $string}
 }
 
-set iter 500
+set iter 400
 bench -desc "STR split, [string length $longString] chars" -iter $iter \
 	-body {str-split $longString}
 bench -desc "STR split, [string length $ustring] uchars" -iter $iter \
@@ -357,7 +357,7 @@ bench -desc "STR append (10KB + 1KB)" \
 	-body {str-append $base $kilobyte}
 
 set base [str-repeat "0" 1049600]
-set iters 300
+set iters 200
 bench -desc "STR append (1MB + 2b * 1000)" -iters $iters \
 	-body {str-append $base "00" 1000}
 bench -desc "STR append (1MB + 1KB)" -iters $iters \
@@ -368,7 +368,7 @@ bench -desc "STR append (1MB + 1KB * 1000)" -iters $iters \
 	-body {str-append $base $kilobyte 1000}
 bench -desc "STR append (1MB + (1b + 1K + 1b) * 100)" -iters $iters \
 	-body {str-append-2 $base "b" $kilobyte 100}
-set iters 100
+set iters 50
 bench -desc "STR append (1MB + 1MB * 3)" -iters $iters \
 	-body {str-append $base $base 3}
 bench -desc "STR append (1MB + 1MB * 5)" -iters $iters \

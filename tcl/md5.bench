@@ -378,8 +378,8 @@ if {[info commands bench] == ""} {
     puts "Tcl [info patchlevel]"
     md5::time
 } else {
-    foreach len  {10  50 100 500 1000 5000 10000} \
-	    iter {100 50 40  30  20   15   10} {
+    foreach len  {10  100 1000 10000} \
+	    iter {100 40  20   10} {
 	set str [str-repeat a $len]
 	bench -desc "MD5 msg len $len" -iter $iter \
 		-body {md5::md5 $str}
