@@ -25,7 +25,8 @@ proc catch-none {a} {
 # catch with error condition, complex body with many nested ranges
 set nestedRanges {set a 0; while {$a} {nestedRanges}}
 for {set i 0} {$i < 3} {incr i} {
-    set nestedRanges [string map "nestedRanges \{$nestedRanges\}" $nestedRanges]
+    # use regsub for compatability
+    regsub -all nestedRanges $nestedRanges "\{$nestedRanges\}" nestedRanges
 }
 for {set i 0} {$i < 4} {incr i} {
     append nestedRanges "\n$nestedRanges"
@@ -36,7 +37,6 @@ set body {
 }	  
 
 proc catch-ranges {a} [append body $nestedRanges]
-
 
 
 bench -body {catch-error arg} -desc "CATCH return ok"

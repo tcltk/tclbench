@@ -38,7 +38,16 @@ proc expr-strneq {a b} {
     expr {$a != $b}; expr {$a != $b}; expr {$a != $b}; expr {$a != $b}
 }
 
-set base [string repeat a 100]
+if { [catch {string repeat "abc" 10}] } {
+    proc str-repeat {str num} {
+	set val {}
+	for {set i 0} {$i < $num} {incr i} { append val $str }
+	return $val
+    }
+} else {
+    proc str-repeat {str num} { string repeat $str $num }
+}
+set base [str-repeat a 100]
 set str1 "$base abc"
 set str2 "$base cde"
 set str3 "$base f"
