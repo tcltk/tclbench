@@ -105,25 +105,28 @@ bench -iter $iters -desc "READ bin $small, read" \
 bench -iter $iters -desc "READ bin $small, read & size" \
 	-body {read-read-size $smallFile binary}
 
-# New benchmarks, affect of buffersize on timing
 
-bench -iter $iters -desc "READ $large, read & small buffer" \
-	-body {read-read-10 $largeFile}
-bench -iter $iters -desc "READ $small, read & small buffer" \
-	-body {read-read-10 $smallFile}
-bench -iter $iters -desc "READ bin $large, read & small buffer" \
-	-body {read-read-10 $largeFile binary}
-bench -iter $iters -desc "READ bin $small, read & small buffer" \
-	-body {read-read-10 $smallFile binary}
+if {0} {
+    # New benchmarks, affect of buffersize on timing
+    # From aku, removed by hobbs - they send 8.0 into an endless loop,
+    # and 8.2 crashes on them.
+    bench -iter $iters -desc "READ $large, read & small buffer" \
+	    -body {read-read-10 $largeFile}
+    bench -iter $iters -desc "READ $small, read & small buffer" \
+	    -body {read-read-10 $smallFile}
+    bench -iter $iters -desc "READ bin $large, read & small buffer" \
+	    -body {read-read-10 $largeFile binary}
+    bench -iter $iters -desc "READ bin $small, read & small buffer" \
+	    -body {read-read-10 $smallFile binary}
 
-bench -iter $iters -desc "READ $large, read & dyn buffer" \
-	-body {read-read-dyn $largeFile}
-bench -iter $iters -desc "READ $small, read & dyn buffer" \
-	-body {read-read-dyn $smallFile}
-bench -iter $iters -desc "READ bin $large, read & dyn buffer" \
-	-body {read-read-dyn $largeFile binary}
-bench -iter $iters -desc "READ bin $small, read & dyn buffer" \
-	-body {read-read-dyn $smallFile binary}
-
+    bench -iter $iters -desc "READ $large, read & dyn buffer" \
+	    -body {read-read-dyn $largeFile}
+    bench -iter $iters -desc "READ $small, read & dyn buffer" \
+	    -body {read-read-dyn $smallFile}
+    bench -iter $iters -desc "READ bin $large, read & dyn buffer" \
+	    -body {read-read-dyn $largeFile binary}
+    bench -iter $iters -desc "READ bin $small, read & dyn buffer" \
+	    -body {read-read-dyn $smallFile binary}
+}
 
 bench_rm $largeFile $smallFile
