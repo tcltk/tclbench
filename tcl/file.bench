@@ -35,13 +35,18 @@ proc checkone {dir cmd} {
 proc checkstat {dir} {
     foreach f [listfiles $dir *] { file stat $f var }
 }
+
+set FCMDS [list \
+	       atime dirname executable exists extension isdirectory \
+	       isfile mtime owned readable rootname size tail writable \
+	       ]
+if {[info tclversion] >= 8.0} {
+    lappend FCMDS attributes
+}
 proc checkall {dir} {
+    global FCMDS
     foreach f [listfiles $dir *] {
-	foreach fcmd {
-	    atime attributes dirname executable exists extension
-	    isdirectory isfile mtime owned readable rootname size
-	    tail writable
-	} { file $fcmd $f }
+	foreach fcmd $FCMDS { file $fcmd $f }
 	file stat $f var
     }
 }
@@ -80,10 +85,7 @@ set num [llength [listfiles $dir *]]
 bench -desc "FILE glob  tmpdir ($num entries)" -iter 100 \
 	-body {listfiles $dir *}
 
-foreach fcmd {
-    atime attributes dirname executable exists extension isdirectory
-    isfile mtime owned readable rootname size tail writable
-} {
+foreach fcmd $FCMDS {
     bench -desc "FILE glob / $fcmd" -iter 100 \
 	    -body {checkone $dir $fcmd}
 }
