@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: string.bench,v 1.20 2002/05/29 09:51:25 hobbs Exp $
+# RCS: @(#) $Id: string.bench,v 1.21 2002/05/29 10:07:56 hobbs Exp $
 #
 
 proc str-cmp-null {a} {
@@ -242,6 +242,7 @@ proc init {} {
     for {set i 0} {$i < 100} {incr i} {
 	append longString2 "abcdefghijklmnopqrstuvwxyz01234567890123"
     }
+    append longString2 0987654321
     for {set i 0} {$i < 100} {incr i} {
 	append ustring "abcdefghijk\353\370\371\372pqrs\373uvwxyz0123456789012\374"
     }
@@ -278,8 +279,10 @@ bench -desc "STR string compare \"\"" \
 	-body {str-cmp-null 12345}
 bench -desc "STR string equal long (same obj)" \
 	-body {str-eq $longString $longString2}
-bench -desc "STR string equal long" \
+bench -desc "STR string equal long (== len)" \
 	-body {str-eq $longString $longString2}
+bench -desc "STR string equal long (!= len)" \
+	-body {str-eq $longString "$longString2 a"}
 bench -desc "STR string equal mixed long" \
 	-body {str-eq $longString "$longString\369"}
 bench -desc "STR string equal uni long" \
