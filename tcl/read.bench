@@ -66,17 +66,17 @@ bench -iter $iters -desc "READ $small, read" \
 	-body {read-read $smallFile}
 bench -iter $iters -desc "READ $small, read & size" \
 	-body {read-read-size $smallFile}
-bench -iter $iters -desc "BREAD $large, gets" \
+bench -iter $iters -desc "READ bin $large, gets" \
 	-body {read-gets $largeFile binary}
-bench -iter $iters -desc "BREAD $large, read" \
+bench -iter $iters -desc "READ bin $large, read" \
 	-body {read-read $largeFile binary}
-bench -iter $iters -desc "BREAD $large, read & size" \
+bench -iter $iters -desc "READ bin $large, read & size" \
 	-body {read-read-size $largeFile binary}
-bench -iter $iters -desc "BREAD $small, gets" \
+bench -iter $iters -desc "READ bin $small, gets" \
 	-body {read-gets $smallFile binary}
-bench -iter $iters -desc "BREAD $small, read" \
+bench -iter $iters -desc "READ bin $small, read" \
 	-body {read-read $smallFile binary}
-bench -iter $iters -desc "BREAD $small, read & size" \
+bench -iter $iters -desc "READ bin $small, read & size" \
 	-body {read-read-size $smallFile binary}
 
 bench_rm $largeFile $smallFile
