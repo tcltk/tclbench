@@ -1,0 +1,50 @@
+
+# Put data in a list
+proc data-create-list {size} {
+    for {set i 0} {$i < $size} {incr i} {
+	lappend list $i
+    }
+}
+
+# Put data in an array
+proc data-create-array {size} {
+    for {set i 0} {$i < $size} {incr i} {
+	set array($i) $i
+    }
+}
+
+# Access data in a list
+proc data-access-list {listVar size} {
+    upvar 1 $listVar list
+    for {set i 0} {$i < $size} {incr i} {
+	set bogus [lindex $list $i]
+    }
+}
+
+# Access data in an array
+proc data-access-array {arrayVar size} {
+    upvar 1 $arrayVar array
+    for {set i 0} {$i < $size} {incr i} {
+	set bogus $array($i)
+    }
+}
+
+set size 500
+set list {}
+for {set i 0} {$i < $size} {incr i} {
+    lappend list $i
+}
+
+for {set i 0} {$i < $size} {incr i} {
+    set array($i) $i
+}
+
+bench -desc "DATA create in a list" \
+	-body {data-create-list $size}
+bench -desc "DATA create in an array" \
+	-body {data-create-array $size}
+
+bench -desc "DATA access in a list" \
+	-body {data-access-list list $size}
+bench -desc "DATA access in an array" \
+	-body {data-access-array array $size}

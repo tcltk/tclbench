@@ -1,0 +1,182 @@
+proc list-1.1 {l1} {
+    string length $l1
+    string length $l1
+    llength $l1
+    llength $l1
+}
+
+proc list-1.2 {lst} {
+    llength $lst
+    llength $lst
+}
+
+proc list-1.3 {s} {
+    string length $s
+}
+
+proc list-2.1 {s t} {
+    lsearch -exact $s $t
+}
+
+# The -sorted and -integer flags do not exist in versions of Tcl <= 8.3.1,
+# so if we [catch {lsearch -sorted}], we stub out the -sorted, et al, procs
+# with compatible (but less efficient) functions
+
+if { [catch {lsearch -sorted [list a b c] b}] } {
+    proc list-2.2 {s t} {
+	lsearch -exact $s $t
+    }
+    proc list-2.3 {s t} {
+	lsearch -exact $s $t
+    }
+    proc list-2.4 {s t} {
+	lsearch -exact $s $t
+    }
+} else {
+    proc list-2.2 {s t} {
+	lsearch -sorted $s $t
+    }
+    proc list-2.3 {s t} {
+	lsearch -exact -integer $s $t
+    }
+    proc list-2.4 {s t} {
+	lsearch -sorted -integer $s $t
+    }
+}
+
+proc list-2.5 {s} {
+    lsort $s
+}
+
+proc list-2.5.1 {s} {
+    lsort -integer $s
+}
+
+proc list-2.6 {s i} {
+    # remove
+    lreplace $s $i $i
+}
+
+proc list-2.7 {s i r} {
+    # replace
+    lreplace $s $i $i $r
+}
+
+proc list-2.8 {s i} {
+    # retrieve
+    lindex $s $i
+}
+
+proc list-2.9 {s i w} {
+    # insert
+    linsert $s $i $w
+}
+
+proc list-2.10 {s i j} {
+    lrange $s $i $j
+}
+
+proc list-2.11 {s w} {
+    lappend $s $w
+}
+
+proc list-2.12 {l j} {
+    join $l $j
+}
+
+proc makeLists {{size 500}} {
+    global Sobj Lobj LSobj
+    set Sobj ""
+    set Lobj [list]
+    set LSobj [list]
+    for {set i 0} {$i < $size} {incr i} {
+	append Sobj "$i "
+	lappend Lobj $i
+	lappend LSobj $i
+    }
+    string length $LSobj
+}
+makeLists 300
+
+bench -desc "STR/LIST length, obj shimmer" \
+	-body {list-1.1 $LSobj}
+bench -desc "LIST length, pure list"  \
+	-body {list-1.2 $Lobj}
+bench -desc "STR length of a LIST"  \
+	-body {list-1.3 $LSobj}
+
+# List searches (-exact versus -sorted)
+#
+
+bench -desc "LIST exact search, first item" \
+	-body {list-2.1 $Lobj 1}
+bench -desc "LIST exact search, middle item" \
+	-body {list-2.1 $Lobj 100}
+bench -desc "LIST exact search, last item" \
+	-body {list-2.1 $Lobj 199}
+bench -desc "LIST exact search, non-item" \
+	-body {list-2.1 $Lobj 500}
+bench -desc "LIST sorted search, first item" \
+	-body {list-2.2 $Lobj 1}
+bench -desc "LIST sorted search, middle item" \
+	-body {list-2.2 $Lobj 100}
+bench -desc "LIST sorted search, last item" \
+	-body {list-2.2 $Lobj 199}
+bench -desc "LIST sorted search, non-item" \
+	-body {list-2.2 $Lobj 500}
+
+# List searches (-integer)
+
+bench -desc "LIST exact search, untyped item" \
+	-body {list-2.1 $Lobj 199}
+bench -desc "LIST exact search, typed item" \
+	-body {list-2.3 $Lobj 199}
+bench -desc "LIST sorted search, typed item" \
+	-body {list-2.4 $Lobj 199}
+
+# Other list operations
+
+bench -desc "LIST sort" \
+	-body {list-2.5 $Lobj}
+bench -desc "LIST typed sort" \
+	-body {list-2.5.1 $Lobj}
+bench -desc "LIST remove first element" \
+	-body {list-2.6 $Lobj 0}
+bench -desc "LIST remove middle element" \
+	-body {list-2.6 $Lobj 100}
+bench -desc "LIST remove last element" \
+	-body {list-2.6 $Lobj 199}
+bench -desc "LIST replace first element" \
+	-body {list-2.7 $Lobj 0 10}
+bench -desc "LIST replace middle element" \
+	-body {list-2.7 $Lobj 100 10}
+bench -desc "LIST replace last element" \
+	-body {list-2.7 $Lobj 199 10}
+bench -desc "LIST remove in mixed list" \
+	-body {list-2.6 $LSobj 100}
+bench -desc "LIST replace in mixed list" \
+	-body {list-2.7 $LSobj 100 10}
+bench -desc "LIST index first element" \
+	-body {list-2.8 $Lobj 0}
+bench -desc "LIST index middle element" \
+	-body {list-2.8 $Lobj 100}
+bench -desc "LIST index last element" \
+	-body {list-2.8 $Lobj 199}
+bench -desc "LIST insert an item at start" \
+	-body {list-2.9 $Lobj 0 10}
+bench -desc "LIST insert an item at middle" \
+	-body {list-2.9 $Lobj 100 10}
+bench -desc "LIST insert an item at \"end\"" \
+	-body {list-2.9 $Lobj end 10}
+bench -desc "LIST small, early range" \
+	-body {list-2.10 $Lobj 0 10}
+bench -desc "LIST small, late range" \
+	-body {list-2.10 $Lobj 180 190}
+bench -desc "LIST large, early range" \
+	-body {list-2.10 $Lobj 0 150}
+bench -desc "LIST large, late range" \
+	-body {list-2.10 $Lobj 50 199}
+bench -desc "LIST append to list" \
+      -body {list-2.11 $Lobj 10}
+bench -desc "LIST join list" \
+      -body {list-2.12 $Lobj ","}

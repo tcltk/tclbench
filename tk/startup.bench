@@ -1,0 +1,11 @@
+set file $TMPFILE
+set fp [open $file w]
+puts $fp "exit"
+close $fp
+
+bench -desc "STARTUP time to launch wish" -iter 100 \
+	-body {exec $MY_INTERP $file}
+
+if {[catch {file delete $file}]} {
+    exec $deleteCommand $file
+}

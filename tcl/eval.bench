@@ -1,0 +1,180 @@
+proc e-cmd {val} {
+    set cmd [list set val $val]
+    eval $cmd
+}
+
+proc e-list val {
+    eval [list set val $val]
+}
+
+proc e-str val {
+    eval set val [list $val]
+}
+
+proc eval-std {l1} {
+    eval list $l1
+}
+
+proc eval-list {l1} {
+    eval [list list] $l1
+}
+
+proc uplevel-std {l1} {
+    uplevel 1 list $l1
+}
+
+proc uplevel-list {l1} {
+    uplevel 1 [list list] $l1
+}
+
+proc makeLists {{size 1000}} {
+    global Sobj Lobj LSobj
+    set Sobj ""
+    set Lobj [list]
+    set LSobj [list]
+    for {set i 0} {$i < $size} {incr i} {
+	append Sobj "$i "
+	lappend Lobj $i
+	lappend LSobj $i
+    }
+    string length $LSobj
+}
+
+proc makeListOfLists {{size 1000}} {
+    set LLobj [list]
+    for {set i 0} {$i<$size} {incr i} {
+	lappend LLobj [list $i $i]
+    }
+    return $LLobj
+}
+
+set iter 1000
+bench -iter $iter -desc "EVAL cmd eval in list obj var" \
+	-body {e-cmd val}
+bench -iter $iter -desc "EVAL cmd eval as list" \
+	-body {e-list val}
+bench -iter $iter -desc "EVAL cmd eval as string" \
+	-body {e-str val}
+
+set iter 300
+makeLists
+bench -iter $iter -desc "EVAL cmd and mixed lists" \
+	-body {eval-std $LSobj}
+bench -iter $iter -desc "EVAL list cmd and mixed lists" \
+	-body {eval-list $LSobj}
+bench -iter $iter -desc "EVAL list cmd and pure lists" \
+	-body {eval-list $Lobj}
+
+return
+
+set ll [makeListOfLists]
+time {eval [list concat] $ll} 1000
+
+proc lassign {valueList args} {
+    if {[llength $valueList] == 0} {
+	set valueList [list {}]
+    }
+    uplevel 1 [list foreach $args $valueList {break}]
+    return [lrange $valueList [llength $args] end]
+}
+proc makeList {{size 10000}} {
+    for {set i 0} {$i<$size} {incr i} {lappend l $i}
+}
+catch {makeList 100} list
+time {lassign $list a b c d e f g h i j k l m n o p q} 1000
+
+proc do {body while cond} {
+    if {[string compare while $while]} {
+	return -code error "usage: do body while condition"
+    }
+    while {1} {
+	uplevel 1 $body	
+	if {![uplevel 1 [list expr $cond]]} { break }
+    }
+}
+
+proc foo {i} {
+    do { set a $i } while { [incr i] < 1000 }
+}
+
+time {set i 0; do { set a $i } while { [incr i] < 1000 }} 100
+time {foo 0} 100
+
+% time {eval $cmd} 50000
+12 microseconds per iteration
+% time {eval set a 0} 10000
+40 microseconds per iteration
+% time {eval set a 0} 50000
+79 microseconds per iteration
+% time {eval set a 0} 40000
+78 microseconds per iteration
+% time {eval set a 0} 40000
+73 microseconds per iteration
+% time {eval [list set a 0]} 40000
+84 microseconds per iteration
+% set cmd {set a 0}
+set a 0
+% time {eval $cmd} 40000
+13 microseconds per iteration
+% time {eval [list set a 0]} 40000
+91 microseconds per iteration
+% time {eval $cmd} 40000
+12 microseconds per iteration
+% time {eval $cmd} 40000
+12 microseconds per iteration
+% time {eval {set a 0}} 40000
+9 microseconds per iteration
+% time {eval {set a 0}} 40000
+9 microseconds per iteration
+% time [list eval {set a 0}] 40000
+9 microseconds per iteration
+% time [list eval [list set a 0]] 40000
+9 microseconds per iteration
+% time {eval {set a 0}} 40000
+9 microseconds per iteration
+% time {eval [list set a 0]} 40000
+48 microseconds per iteration
+% time {eval [list set a 0]} 40000
+48 microseconds per iteration
+% proc e {cmd} { eval $cmd }
+% proc e args { eval $args }
+% time {e set a 0} 10000
+
+% for {set i 0} {$i<10000} {incr i} {lappend l $i}; llength $l
+10000
+### The first case shows the power of the Tcl_EvalObjEx recognizing
+### the list by itself.  Yet's, that's a 40x speed increase.
+% time {eval [linsert $l 0 list]} 1000
+3477 microseconds per iteration
+### This case shows the advantage of making Tcl_ConcatObj list aware.
+### 'eval' will pass multiple args through it before passing them on
+### to Tcl_EvalObjEx.
+% time {eval [list list] $l} 1000
+3490 microseconds per iteration
+### The next case shows the advantage of Tcl_EvalObjEx for 'uplevel'.
+### Note that this only works in the case where uplevel is used like:
+###      uplevel <level> <cmdAsListObj>
+### because the first arg will be checked as a string anyway for
+### getting the optional level (this could possibly be further opt'ed)
+### and if you pass more args, it uses TCL_EVAL_DIRECT, which is a
+### special case that doesn't gen byte code and makes it a string anyway
+% proc foo {l} { uplevel 1 [linsert $l 0 list] }
+% time {foo $l} 1000
+3338 microseconds per iteration
+### Here's a simple case where the eval breaks down again.  This will
+### go through Tcl_ConcatObj, but the first item is a string, so we
+### get a string obj back
+% time {eval list $l} 100
+122301 microseconds per iteration
+### So here's the case we used above.  But why doesn't it work this
+### time?  Because now $l has a string rep (due to last case), and
+### this opt is not valid in such cases (because we can't tell from
+### an object whether it started off as a string or a list).
+% time {eval [list list] $l} 100
+116890 microseconds per iteration
+### But convert it back to a list and you see the speed demons at
+### work again.
+% catch {lappend l b}
+0
+% time {eval [list list] $l} 100
+3513 microseconds per iteration

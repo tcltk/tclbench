@@ -1,0 +1,19 @@
+
+# catch with no error condition
+proc catch-error {a} {
+    catch {set a}
+}
+
+# catch with error condition
+proc catch-ok {a} {
+    catch {set b}
+}
+
+# no catch
+proc catch-none {a} {
+    set a 0
+}
+
+bench -body {catch-error arg} -desc "CATCH without error condition"
+bench -body {catch-ok arg} -desc "CATCH with error condition"
+bench -body {catch-none arg} -desc "CATCH command with no catch"

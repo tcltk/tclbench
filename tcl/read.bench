@@ -1,0 +1,62 @@
+# Read a file using gets
+proc read-gets {filename} {
+    set fp [open $filename r]
+    while {[gets $fp line] != -1} {}
+    close $fp
+}
+
+# Read a file using read only
+proc read-read {filename} {
+    set fp [open $filename r]
+    read $fp
+    close $fp
+}
+
+# Read a file using read and [file size]
+proc read-read-size {filename} {
+    set fp [open $filename r]
+    read $fp [file size $filename]
+    close $fp
+}
+
+proc makeFiles {largeFile smallFile} {
+    # 60 chars
+    set line "012345678901234567890123456789012345678901234567890123456789"
+
+    set largeFid [open $largeFile w]
+    # 60 * 10000 = 595K
+    for {set i 0} {$i < 10000} {incr i} {
+	puts $largeFid $line
+    }
+    close $largeFid
+
+    set smallFid [open $smallFile w]
+    # 60 * 50 = <3K
+    for {set i 0} {$i < 50} {incr i} {
+	puts $smallFid $line
+    }
+    close $smallFid
+}
+set largeFile $TMPFILE.lrg
+set smallFile $TMPFILE.sml
+makeFiles $largeFile $smallFile
+set large "[expr {[file size $largeFile]/1024}]K"
+set small "[file size $smallFile]b"
+
+set iters 10
+bench -iter $iters -desc "READ $large file with gets" \
+	-body {read-gets $largeFile}
+bench -iter $iters -desc "READ $large file with read" \
+	-body {read-read $largeFile}
+bench -iter $iters -desc "READ $large file with read & size" \
+	-body {read-read-size $largeFile}
+bench -iter $iters -desc "READ $small file with gets" \
+	-body {read-gets $smallFile}
+bench -iter $iters -desc "READ $small file with read" \
+	-body {read-read $smallFile}
+bench -iter $iters -desc "READ $small file with read & size" \
+	-body {read-read-size $smallFile}
+
+foreach file [list $largeFile $smallFile] {
+    if {[catch {file delete $file}]} { exec $deleteCommand $file }
+}

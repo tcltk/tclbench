@@ -1,0 +1,1768 @@
+#
+#
+#
+
+# Explicit return at the end of a proc
+proc proc-1.1 {foo} {
+    set bar $foo
+    return $bar
+}
+
+# Implicit return at the end of a proc
+proc proc-1.2 {foo} {
+    set bar $foo
+}
+
+# Empty procedure with mondo comments
+proc proc-2.1 {bogusarg} {
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+    # This proc contains a whole lot of comments!!!!
+}
+
+# Empty procedure, no comments
+proc proc-2.2 {} {
+}
+
+# Empty procedure, no comments, an arg
+proc proc-2.3 {a} {
+}
+
+# Global with multiple locals
+proc proc-3.1 {arg1 arg2 arg3 arg4 arg5 arg6 arg7 } {
+    set 0000 1
+    set 0001 1
+    set 0002 1
+    set 0003 1  
+    set 0004 1
+    set 0005 1
+    set 0006 1
+    set 0007 1
+    set 0008 1
+    set 0009 1
+    set 0010 1
+    set 0011 1
+    set 0012 1
+    set 0013 1
+    set 0014 1
+    set 0015 1
+    set 0016 1
+    set 0017 1
+    set 0018 1
+    set 0019 1
+    set 0020 1
+    set 0021 1
+    set 0022 1
+    set 0023 1
+    set 0024 1
+    set 0025 1
+    set 0026 1
+    set 0027 1
+    set 0028 1
+    set 0029 1
+    set 0030 1
+    set 0031 1
+    set 0032 1
+    set 0033 1
+    set 0034 1
+    set 0035 1
+    set 0036 1
+    set 0037 1
+    set 0038 1
+    set 0039 1
+    set 0040 1
+    set 0041 1
+    set 0042 1
+    set 0043 1
+    set 0044 1
+    set 0045 1
+    set 0046 1
+    set 0047 1
+    set 0048 1
+    set 0049 1
+    set 0050 1
+    set 0051 1
+    set 0052 1
+    set 0053 1
+    set 0054 1
+    set 0055 1
+    set 0056 1
+    set 0057 1
+    set 0058 1
+    set 0059 1
+    set 0060 1
+    set 0061 1
+    set 0062 1
+    set 0063 1
+    set 0064 1
+    set 0065 1
+    set 0066 1
+    set 0067 1
+    set 0068 1
+    set 0069 1
+    set 0070 1
+    set 0071 1
+    set 0072 1
+    set 0073 1
+    set 0074 1
+    set 0075 1
+    set 0076 1
+    set 0077 1
+    set 0078 1
+    set 0079 1
+    set 0080 1
+    set 0081 1
+    set 0082 1
+    set 0083 1
+    set 0084 1
+    set 0085 1
+    set 0086 1
+    set 0087 1
+    set 0088 1
+    set 0089 1
+    set 0090 1
+    set 0091 1
+    set 0092 1
+    set 0093 1
+    set 0094 1
+    set 0095 1
+    set 0096 1
+    set 0097 1
+    set 0098 1
+    set 0099 1
+    set 0100 1
+    set 0101 1
+    set 0102 1
+    set 0103 1
+    set 0104 1
+    set 0105 1
+    set 0106 1
+    set 0107 1
+    set 0108 1
+    set 0109 1
+    set 0110 1
+    set 0111 1
+    set 0112 1
+    set 0113 1
+    set 0114 1
+    set 0115 1
+    set 0116 1
+    set 0117 1
+    set 0118 1
+    set 0119 1
+    set 0120 1
+    set 0121 1
+    set 0122 1
+    set 0123 1
+    set 0124 1
+    set 0125 1
+    set 0126 1
+    set 0127 1
+    set 0128 1
+    set 0129 1
+    set 0130 1
+    set 0131 1
+    set 0132 1
+    set 0133 1
+    set 0134 1
+    set 0135 1
+    set 0136 1
+    set 0137 1
+    set 0138 1
+    set 0139 1
+    set 0140 1
+    set 0141 1
+    set 0142 1
+    set 0143 1
+    set 0144 1
+    set 0145 1
+    set 0146 1
+    set 0147 1
+    set 0148 1
+    set 0149 1
+    set 0150 1
+    set 0151 1
+    set 0152 1
+    set 0153 1
+    set 0154 1
+    set 0155 1
+    set 0156 1
+    set 0157 1
+    set 0158 1
+    set 0159 1
+    set 0160 1
+    set 0161 1
+    set 0162 1
+    set 0163 1
+    set 0164 1
+    set 0165 1
+    set 0166 1
+    set 0167 1
+    set 0168 1
+    set 0169 1
+    set 0170 1
+    set 0171 1
+    set 0172 1
+    set 0173 1
+    set 0174 1
+    set 0175 1
+    set 0176 1
+    set 0177 1
+    set 0178 1
+    set 0179 1
+    set 0180 1
+    set 0181 1
+    set 0182 1
+    set 0183 1
+    set 0184 1
+    set 0185 1
+    set 0186 1
+    set 0187 1
+    set 0188 1
+    set 0189 1
+    set 0190 1
+    set 0191 1
+    set 0192 1
+    set 0193 1
+    set 0194 1
+    set 0195 1
+    set 0196 1
+    set 0197 1
+    set 0198 1
+    set 0199 1
+    set 0200 1
+    set 0201 1
+    set 0202 1
+    set 0203 1
+    set 0204 1
+    set 0205 1
+    set 0206 1
+    set 0207 1
+    set 0208 1
+    set 0209 1
+    set 0210 1
+    set 0211 1
+    set 0212 1
+    set 0213 1
+    set 0214 1
+    set 0215 1
+    set 0216 1
+    set 0217 1
+    set 0218 1
+    set 0219 1
+    set 0220 1
+    set 0221 1
+    set 0222 1
+    set 0223 1
+    set 0224 1
+    set 0225 1
+    set 0226 1
+    set 0227 1
+    set 0228 1
+    set 0229 1
+    set 0230 1
+    set 0231 1
+    set 0232 1
+    set 0233 1
+    set 0234 1
+    set 0235 1
+    set 0236 1
+    set 0237 1
+    set 0238 1
+    set 0239 1
+    set 0240 1
+    set 0241 1
+    set 0242 1
+    set 0243 1
+    set 0244 1
+    set 0245 1
+    set 0246 1
+    set 0247 1
+    set 0248 1
+    set 0249 1
+    set 0250 1
+    set 0251 1
+    set 0252 1
+    set 0253 1
+    set 0254 1
+    set 0255 1
+    set 0256 1
+    set 0257 1
+    set 0258 1
+    set 0259 1
+    set 0260 1
+    set 0261 1
+    set 0262 1
+    set 0263 1
+    set 0264 1
+    set 0265 1
+    set 0266 1
+    set 0267 1
+    set 0268 1
+    set 0269 1
+    set 0270 1
+    set 0271 1
+    set 0272 1
+    set 0273 1
+    set 0274 1
+    set 0275 1
+    set 0276 1
+    set 0277 1
+    set 0278 1
+    set 0279 1
+    set 0280 1
+    set 0281 1
+    set 0282 1
+    set 0283 1
+    set 0284 1
+    set 0285 1
+    set 0286 1
+    set 0287 1
+    set 0288 1
+    set 0289 1
+    set 0290 1
+    set 0291 1
+    set 0292 1
+    set 0293 1
+    set 0294 1
+    set 0295 1
+    set 0296 1
+    set 0297 1
+    set 0298 1
+    set 0299 1
+    set 0300 1
+    set 0301 1
+    set 0302 1
+    set 0303 1
+    set 0304 1
+    set 0305 1
+    set 0306 1
+    set 0307 1
+    set 0308 1
+    set 0309 1
+    set 0310 1
+    set 0311 1
+    set 0312 1
+    set 0313 1
+    set 0314 1
+    set 0315 1
+    set 0316 1
+    set 0317 1
+    set 0318 1
+    set 0319 1
+    set 0320 1
+    set 0321 1
+    set 0322 1
+    set 0323 1
+    set 0324 1
+    set 0325 1
+    set 0326 1
+    set 0327 1
+    set 0328 1
+    set 0329 1
+    set 0330 1
+    set 0331 1
+    set 0332 1
+    set 0333 1
+    set 0334 1
+    set 0335 1
+    set 0336 1
+    set 0337 1
+    set 0338 1
+    set 0339 1
+    set 0340 1
+    set 0341 1
+    set 0342 1
+    set 0343 1
+    set 0344 1
+    set 0345 1
+    set 0346 1
+    set 0347 1
+    set 0348 1
+    set 0349 1
+    set 0350 1
+    set 0351 1
+    set 0352 1
+    set 0353 1
+    set 0354 1
+    set 0355 1
+    set 0356 1
+    set 0357 1
+    set 0358 1
+    set 0359 1
+    set 0360 1
+    set 0361 1
+    set 0362 1
+    set 0363 1
+    set 0364 1
+    set 0365 1
+    set 0366 1
+    set 0367 1
+    set 0368 1
+    set 0369 1
+    set 0370 1
+    set 0371 1
+    set 0372 1
+    set 0373 1
+    set 0374 1
+    set 0375 1
+    set 0376 1
+    set 0377 1
+    set 0378 1
+    set 0379 1
+    set 0380 1
+    set 0381 1
+    set 0382 1
+    set 0383 1
+    set 0384 1
+    set 0385 1
+    set 0386 1
+    set 0387 1
+    set 0388 1
+    set 0389 1
+    set 0390 1
+    set 0391 1
+    set 0392 1
+    set 0393 1
+    set 0394 1
+    set 0395 1
+    set 0396 1
+    set 0397 1
+    set 0398 1
+    set 0399 1
+    set 0400 1
+    set 0401 1
+    set 0402 1
+    set 0403 1
+    set 0404 1
+    set 0405 1
+    set 0406 1
+    set 0407 1
+    set 0408 1
+    set 0409 1
+    set 0410 1
+    set 0411 1
+    set 0412 1
+    set 0413 1
+    set 0414 1
+    set 0415 1
+    set 0416 1
+    set 0417 1
+    set 0418 1
+    set 0419 1
+    set 0420 1
+    set 0421 1
+    set 0422 1
+    set 0423 1
+    set 0424 1
+    set 0425 1
+    set 0426 1
+    set 0427 1
+    set 0428 1
+    set 0429 1
+    set 0430 1
+    set 0431 1
+    set 0432 1
+    set 0433 1
+    set 0434 1
+    set 0435 1
+    set 0436 1
+    set 0437 1
+    set 0438 1
+    set 0439 1
+    set 0440 1
+    set 0441 1
+    set 0442 1
+    set 0443 1
+    set 0444 1
+    set 0445 1
+    set 0446 1
+    set 0447 1
+    set 0448 1
+    set 0449 1
+    set 0450 1
+    set 0451 1
+    set 0452 1
+    set 0453 1
+    set 0454 1
+    set 0455 1
+    set 0456 1
+    set 0457 1
+    set 0458 1
+    set 0459 1
+    set 0460 1
+    set 0461 1
+    set 0462 1
+    set 0463 1
+    set 0464 1
+    set 0465 1
+    set 0466 1
+    set 0467 1
+    set 0468 1
+    set 0469 1
+    set 0470 1
+    set 0471 1
+    set 0472 1
+    set 0473 1
+    set 0474 1
+    set 0475 1
+    set 0476 1
+    set 0477 1
+    set 0478 1
+    set 0479 1
+    set 0480 1
+    set 0481 1
+    set 0482 1
+    set 0483 1
+    set 0484 1
+    set 0485 1
+    set 0486 1
+    set 0487 1
+    set 0488 1
+    set 0489 1
+    set 0490 1
+    set 0491 1
+    set 0492 1
+    set 0493 1
+    set 0494 1
+    set 0495 1
+    set 0496 1
+    set 0497 1
+    set 0498 1
+    set 0499 1
+    set 0500 1
+    global abc1 abc2 abc3 abc4 abc5 abc6 abc7 abc8 abc9 abca abcb
+    # nothing
+}
+# Upvar with multiple locals
+proc proc-3.2 { 1 2 3 4 5 6 7 } {
+    set 0000 1
+    set 0001 1
+    set 0002 1
+    set 0003 1  
+    set 0004 1
+    set 0005 1
+    set 0006 1
+    set 0007 1
+    set 0008 1
+    set 0009 1
+    set 0010 1
+    set 0011 1
+    set 0012 1
+    set 0013 1
+    set 0014 1
+    set 0015 1
+    set 0016 1
+    set 0017 1
+    set 0018 1
+    set 0019 1
+    set 0020 1
+    set 0021 1
+    set 0022 1
+    set 0023 1
+    set 0024 1
+    set 0025 1
+    set 0026 1
+    set 0027 1
+    set 0028 1
+    set 0029 1
+    set 0030 1
+    set 0031 1
+    set 0032 1
+    set 0033 1
+    set 0034 1
+    set 0035 1
+    set 0036 1
+    set 0037 1
+    set 0038 1
+    set 0039 1
+    set 0040 1
+    set 0041 1
+    set 0042 1
+    set 0043 1
+    set 0044 1
+    set 0045 1
+    set 0046 1
+    set 0047 1
+    set 0048 1
+    set 0049 1
+    set 0050 1
+    set 0051 1
+    set 0052 1
+    set 0053 1
+    set 0054 1
+    set 0055 1
+    set 0056 1
+    set 0057 1
+    set 0058 1
+    set 0059 1
+    set 0060 1
+    set 0061 1
+    set 0062 1
+    set 0063 1
+    set 0064 1
+    set 0065 1
+    set 0066 1
+    set 0067 1
+    set 0068 1
+    set 0069 1
+    set 0070 1
+    set 0071 1
+    set 0072 1
+    set 0073 1
+    set 0074 1
+    set 0075 1
+    set 0076 1
+    set 0077 1
+    set 0078 1
+    set 0079 1
+    set 0080 1
+    set 0081 1
+    set 0082 1
+    set 0083 1
+    set 0084 1
+    set 0085 1
+    set 0086 1
+    set 0087 1
+    set 0088 1
+    set 0089 1
+    set 0090 1
+    set 0091 1
+    set 0092 1
+    set 0093 1
+    set 0094 1
+    set 0095 1
+    set 0096 1
+    set 0097 1
+    set 0098 1
+    set 0099 1
+    set 0100 1
+    set 0101 1
+    set 0102 1
+    set 0103 1
+    set 0104 1
+    set 0105 1
+    set 0106 1
+    set 0107 1
+    set 0108 1
+    set 0109 1
+    set 0110 1
+    set 0111 1
+    set 0112 1
+    set 0113 1
+    set 0114 1
+    set 0115 1
+    set 0116 1
+    set 0117 1
+    set 0118 1
+    set 0119 1
+    set 0120 1
+    set 0121 1
+    set 0122 1
+    set 0123 1
+    set 0124 1
+    set 0125 1
+    set 0126 1
+    set 0127 1
+    set 0128 1
+    set 0129 1
+    set 0130 1
+    set 0131 1
+    set 0132 1
+    set 0133 1
+    set 0134 1
+    set 0135 1
+    set 0136 1
+    set 0137 1
+    set 0138 1
+    set 0139 1
+    set 0140 1
+    set 0141 1
+    set 0142 1
+    set 0143 1
+    set 0144 1
+    set 0145 1
+    set 0146 1
+    set 0147 1
+    set 0148 1
+    set 0149 1
+    set 0150 1
+    set 0151 1
+    set 0152 1
+    set 0153 1
+    set 0154 1
+    set 0155 1
+    set 0156 1
+    set 0157 1
+    set 0158 1
+    set 0159 1
+    set 0160 1
+    set 0161 1
+    set 0162 1
+    set 0163 1
+    set 0164 1
+    set 0165 1
+    set 0166 1
+    set 0167 1
+    set 0168 1
+    set 0169 1
+    set 0170 1
+    set 0171 1
+    set 0172 1
+    set 0173 1
+    set 0174 1
+    set 0175 1
+    set 0176 1
+    set 0177 1
+    set 0178 1
+    set 0179 1
+    set 0180 1
+    set 0181 1
+    set 0182 1
+    set 0183 1
+    set 0184 1
+    set 0185 1
+    set 0186 1
+    set 0187 1
+    set 0188 1
+    set 0189 1
+    set 0190 1
+    set 0191 1
+    set 0192 1
+    set 0193 1
+    set 0194 1
+    set 0195 1
+    set 0196 1
+    set 0197 1
+    set 0198 1
+    set 0199 1
+    set 0200 1
+    set 0201 1
+    set 0202 1
+    set 0203 1
+    set 0204 1
+    set 0205 1
+    set 0206 1
+    set 0207 1
+    set 0208 1
+    set 0209 1
+    set 0210 1
+    set 0211 1
+    set 0212 1
+    set 0213 1
+    set 0214 1
+    set 0215 1
+    set 0216 1
+    set 0217 1
+    set 0218 1
+    set 0219 1
+    set 0220 1
+    set 0221 1
+    set 0222 1
+    set 0223 1
+    set 0224 1
+    set 0225 1
+    set 0226 1
+    set 0227 1
+    set 0228 1
+    set 0229 1
+    set 0230 1
+    set 0231 1
+    set 0232 1
+    set 0233 1
+    set 0234 1
+    set 0235 1
+    set 0236 1
+    set 0237 1
+    set 0238 1
+    set 0239 1
+    set 0240 1
+    set 0241 1
+    set 0242 1
+    set 0243 1
+    set 0244 1
+    set 0245 1
+    set 0246 1
+    set 0247 1
+    set 0248 1
+    set 0249 1
+    set 0250 1
+    set 0251 1
+    set 0252 1
+    set 0253 1
+    set 0254 1
+    set 0255 1
+    set 0256 1
+    set 0257 1
+    set 0258 1
+    set 0259 1
+    set 0260 1
+    set 0261 1
+    set 0262 1
+    set 0263 1
+    set 0264 1
+    set 0265 1
+    set 0266 1
+    set 0267 1
+    set 0268 1
+    set 0269 1
+    set 0270 1
+    set 0271 1
+    set 0272 1
+    set 0273 1
+    set 0274 1
+    set 0275 1
+    set 0276 1
+    set 0277 1
+    set 0278 1
+    set 0279 1
+    set 0280 1
+    set 0281 1
+    set 0282 1
+    set 0283 1
+    set 0284 1
+    set 0285 1
+    set 0286 1
+    set 0287 1
+    set 0288 1
+    set 0289 1
+    set 0290 1
+    set 0291 1
+    set 0292 1
+    set 0293 1
+    set 0294 1
+    set 0295 1
+    set 0296 1
+    set 0297 1
+    set 0298 1
+    set 0299 1
+    set 0300 1
+    set 0301 1
+    set 0302 1
+    set 0303 1
+    set 0304 1
+    set 0305 1
+    set 0306 1
+    set 0307 1
+    set 0308 1
+    set 0309 1
+    set 0310 1
+    set 0311 1
+    set 0312 1
+    set 0313 1
+    set 0314 1
+    set 0315 1
+    set 0316 1
+    set 0317 1
+    set 0318 1
+    set 0319 1
+    set 0320 1
+    set 0321 1
+    set 0322 1
+    set 0323 1
+    set 0324 1
+    set 0325 1
+    set 0326 1
+    set 0327 1
+    set 0328 1
+    set 0329 1
+    set 0330 1
+    set 0331 1
+    set 0332 1
+    set 0333 1
+    set 0334 1
+    set 0335 1
+    set 0336 1
+    set 0337 1
+    set 0338 1
+    set 0339 1
+    set 0340 1
+    set 0341 1
+    set 0342 1
+    set 0343 1
+    set 0344 1
+    set 0345 1
+    set 0346 1
+    set 0347 1
+    set 0348 1
+    set 0349 1
+    set 0350 1
+    set 0351 1
+    set 0352 1
+    set 0353 1
+    set 0354 1
+    set 0355 1
+    set 0356 1
+    set 0357 1
+    set 0358 1
+    set 0359 1
+    set 0360 1
+    set 0361 1
+    set 0362 1
+    set 0363 1
+    set 0364 1
+    set 0365 1
+    set 0366 1
+    set 0367 1
+    set 0368 1
+    set 0369 1
+    set 0370 1
+    set 0371 1
+    set 0372 1
+    set 0373 1
+    set 0374 1
+    set 0375 1
+    set 0376 1
+    set 0377 1
+    set 0378 1
+    set 0379 1
+    set 0380 1
+    set 0381 1
+    set 0382 1
+    set 0383 1
+    set 0384 1
+    set 0385 1
+    set 0386 1
+    set 0387 1
+    set 0388 1
+    set 0389 1
+    set 0390 1
+    set 0391 1
+    set 0392 1
+    set 0393 1
+    set 0394 1
+    set 0395 1
+    set 0396 1
+    set 0397 1
+    set 0398 1
+    set 0399 1
+    set 0400 1
+    set 0401 1
+    set 0402 1
+    set 0403 1
+    set 0404 1
+    set 0405 1
+    set 0406 1
+    set 0407 1
+    set 0408 1
+    set 0409 1
+    set 0410 1
+    set 0411 1
+    set 0412 1
+    set 0413 1
+    set 0414 1
+    set 0415 1
+    set 0416 1
+    set 0417 1
+    set 0418 1
+    set 0419 1
+    set 0420 1
+    set 0421 1
+    set 0422 1
+    set 0423 1
+    set 0424 1
+    set 0425 1
+    set 0426 1
+    set 0427 1
+    set 0428 1
+    set 0429 1
+    set 0430 1
+    set 0431 1
+    set 0432 1
+    set 0433 1
+    set 0434 1
+    set 0435 1
+    set 0436 1
+    set 0437 1
+    set 0438 1
+    set 0439 1
+    set 0440 1
+    set 0441 1
+    set 0442 1
+    set 0443 1
+    set 0444 1
+    set 0445 1
+    set 0446 1
+    set 0447 1
+    set 0448 1
+    set 0449 1
+    set 0450 1
+    set 0451 1
+    set 0452 1
+    set 0453 1
+    set 0454 1
+    set 0455 1
+    set 0456 1
+    set 0457 1
+    set 0458 1
+    set 0459 1
+    set 0460 1
+    set 0461 1
+    set 0462 1
+    set 0463 1
+    set 0464 1
+    set 0465 1
+    set 0466 1
+    set 0467 1
+    set 0468 1
+    set 0469 1
+    set 0470 1
+    set 0471 1
+    set 0472 1
+    set 0473 1
+    set 0474 1
+    set 0475 1
+    set 0476 1
+    set 0477 1
+    set 0478 1
+    set 0479 1
+    set 0480 1
+    set 0481 1
+    set 0482 1
+    set 0483 1
+    set 0484 1
+    set 0485 1
+    set 0486 1
+    set 0487 1
+    set 0488 1
+    set 0489 1
+    set 0490 1
+    set 0491 1
+    set 0492 1
+    set 0493 1
+    set 0494 1
+    set 0495 1
+    set 0496 1
+    set 0497 1
+    set 0498 1
+    set 0499 1
+    set 0500 1
+    upvar a a b b c c d d e e f f g g h h i i
+    # nothing
+}
+# Variable with multiple locals
+proc proc-3.3 {arg1 arg2 arg3 arg4 arg5 arg6 arg7} {
+    set 0000 1
+    set 0001 1
+    set 0002 1
+    set 0003 1  
+    set 0004 1
+    set 0005 1
+    set 0006 1
+    set 0007 1
+    set 0008 1
+    set 0009 1
+    set 0010 1
+    set 0011 1
+    set 0012 1
+    set 0013 1
+    set 0014 1
+    set 0015 1
+    set 0016 1
+    set 0017 1
+    set 0018 1
+    set 0019 1
+    set 0020 1
+    set 0021 1
+    set 0022 1
+    set 0023 1
+    set 0024 1
+    set 0025 1
+    set 0026 1
+    set 0027 1
+    set 0028 1
+    set 0029 1
+    set 0030 1
+    set 0031 1
+    set 0032 1
+    set 0033 1
+    set 0034 1
+    set 0035 1
+    set 0036 1
+    set 0037 1
+    set 0038 1
+    set 0039 1
+    set 0040 1
+    set 0041 1
+    set 0042 1
+    set 0043 1
+    set 0044 1
+    set 0045 1
+    set 0046 1
+    set 0047 1
+    set 0048 1
+    set 0049 1
+    set 0050 1
+    set 0051 1
+    set 0052 1
+    set 0053 1
+    set 0054 1
+    set 0055 1
+    set 0056 1
+    set 0057 1
+    set 0058 1
+    set 0059 1
+    set 0060 1
+    set 0061 1
+    set 0062 1
+    set 0063 1
+    set 0064 1
+    set 0065 1
+    set 0066 1
+    set 0067 1
+    set 0068 1
+    set 0069 1
+    set 0070 1
+    set 0071 1
+    set 0072 1
+    set 0073 1
+    set 0074 1
+    set 0075 1
+    set 0076 1
+    set 0077 1
+    set 0078 1
+    set 0079 1
+    set 0080 1
+    set 0081 1
+    set 0082 1
+    set 0083 1
+    set 0084 1
+    set 0085 1
+    set 0086 1
+    set 0087 1
+    set 0088 1
+    set 0089 1
+    set 0090 1
+    set 0091 1
+    set 0092 1
+    set 0093 1
+    set 0094 1
+    set 0095 1
+    set 0096 1
+    set 0097 1
+    set 0098 1
+    set 0099 1
+    set 0100 1
+    set 0101 1
+    set 0102 1
+    set 0103 1
+    set 0104 1
+    set 0105 1
+    set 0106 1
+    set 0107 1
+    set 0108 1
+    set 0109 1
+    set 0110 1
+    set 0111 1
+    set 0112 1
+    set 0113 1
+    set 0114 1
+    set 0115 1
+    set 0116 1
+    set 0117 1
+    set 0118 1
+    set 0119 1
+    set 0120 1
+    set 0121 1
+    set 0122 1
+    set 0123 1
+    set 0124 1
+    set 0125 1
+    set 0126 1
+    set 0127 1
+    set 0128 1
+    set 0129 1
+    set 0130 1
+    set 0131 1
+    set 0132 1
+    set 0133 1
+    set 0134 1
+    set 0135 1
+    set 0136 1
+    set 0137 1
+    set 0138 1
+    set 0139 1
+    set 0140 1
+    set 0141 1
+    set 0142 1
+    set 0143 1
+    set 0144 1
+    set 0145 1
+    set 0146 1
+    set 0147 1
+    set 0148 1
+    set 0149 1
+    set 0150 1
+    set 0151 1
+    set 0152 1
+    set 0153 1
+    set 0154 1
+    set 0155 1
+    set 0156 1
+    set 0157 1
+    set 0158 1
+    set 0159 1
+    set 0160 1
+    set 0161 1
+    set 0162 1
+    set 0163 1
+    set 0164 1
+    set 0165 1
+    set 0166 1
+    set 0167 1
+    set 0168 1
+    set 0169 1
+    set 0170 1
+    set 0171 1
+    set 0172 1
+    set 0173 1
+    set 0174 1
+    set 0175 1
+    set 0176 1
+    set 0177 1
+    set 0178 1
+    set 0179 1
+    set 0180 1
+    set 0181 1
+    set 0182 1
+    set 0183 1
+    set 0184 1
+    set 0185 1
+    set 0186 1
+    set 0187 1
+    set 0188 1
+    set 0189 1
+    set 0190 1
+    set 0191 1
+    set 0192 1
+    set 0193 1
+    set 0194 1
+    set 0195 1
+    set 0196 1
+    set 0197 1
+    set 0198 1
+    set 0199 1
+    set 0200 1
+    set 0201 1
+    set 0202 1
+    set 0203 1
+    set 0204 1
+    set 0205 1
+    set 0206 1
+    set 0207 1
+    set 0208 1
+    set 0209 1
+    set 0210 1
+    set 0211 1
+    set 0212 1
+    set 0213 1
+    set 0214 1
+    set 0215 1
+    set 0216 1
+    set 0217 1
+    set 0218 1
+    set 0219 1
+    set 0220 1
+    set 0221 1
+    set 0222 1
+    set 0223 1
+    set 0224 1
+    set 0225 1
+    set 0226 1
+    set 0227 1
+    set 0228 1
+    set 0229 1
+    set 0230 1
+    set 0231 1
+    set 0232 1
+    set 0233 1
+    set 0234 1
+    set 0235 1
+    set 0236 1
+    set 0237 1
+    set 0238 1
+    set 0239 1
+    set 0240 1
+    set 0241 1
+    set 0242 1
+    set 0243 1
+    set 0244 1
+    set 0245 1
+    set 0246 1
+    set 0247 1
+    set 0248 1
+    set 0249 1
+    set 0250 1
+    set 0251 1
+    set 0252 1
+    set 0253 1
+    set 0254 1
+    set 0255 1
+    set 0256 1
+    set 0257 1
+    set 0258 1
+    set 0259 1
+    set 0260 1
+    set 0261 1
+    set 0262 1
+    set 0263 1
+    set 0264 1
+    set 0265 1
+    set 0266 1
+    set 0267 1
+    set 0268 1
+    set 0269 1
+    set 0270 1
+    set 0271 1
+    set 0272 1
+    set 0273 1
+    set 0274 1
+    set 0275 1
+    set 0276 1
+    set 0277 1
+    set 0278 1
+    set 0279 1
+    set 0280 1
+    set 0281 1
+    set 0282 1
+    set 0283 1
+    set 0284 1
+    set 0285 1
+    set 0286 1
+    set 0287 1
+    set 0288 1
+    set 0289 1
+    set 0290 1
+    set 0291 1
+    set 0292 1
+    set 0293 1
+    set 0294 1
+    set 0295 1
+    set 0296 1
+    set 0297 1
+    set 0298 1
+    set 0299 1
+    set 0300 1
+    set 0301 1
+    set 0302 1
+    set 0303 1
+    set 0304 1
+    set 0305 1
+    set 0306 1
+    set 0307 1
+    set 0308 1
+    set 0309 1
+    set 0310 1
+    set 0311 1
+    set 0312 1
+    set 0313 1
+    set 0314 1
+    set 0315 1
+    set 0316 1
+    set 0317 1
+    set 0318 1
+    set 0319 1
+    set 0320 1
+    set 0321 1
+    set 0322 1
+    set 0323 1
+    set 0324 1
+    set 0325 1
+    set 0326 1
+    set 0327 1
+    set 0328 1
+    set 0329 1
+    set 0330 1
+    set 0331 1
+    set 0332 1
+    set 0333 1
+    set 0334 1
+    set 0335 1
+    set 0336 1
+    set 0337 1
+    set 0338 1
+    set 0339 1
+    set 0340 1
+    set 0341 1
+    set 0342 1
+    set 0343 1
+    set 0344 1
+    set 0345 1
+    set 0346 1
+    set 0347 1
+    set 0348 1
+    set 0349 1
+    set 0350 1
+    set 0351 1
+    set 0352 1
+    set 0353 1
+    set 0354 1
+    set 0355 1
+    set 0356 1
+    set 0357 1
+    set 0358 1
+    set 0359 1
+    set 0360 1
+    set 0361 1
+    set 0362 1
+    set 0363 1
+    set 0364 1
+    set 0365 1
+    set 0366 1
+    set 0367 1
+    set 0368 1
+    set 0369 1
+    set 0370 1
+    set 0371 1
+    set 0372 1
+    set 0373 1
+    set 0374 1
+    set 0375 1
+    set 0376 1
+    set 0377 1
+    set 0378 1
+    set 0379 1
+    set 0380 1
+    set 0381 1
+    set 0382 1
+    set 0383 1
+    set 0384 1
+    set 0385 1
+    set 0386 1
+    set 0387 1
+    set 0388 1
+    set 0389 1
+    set 0390 1
+    set 0391 1
+    set 0392 1
+    set 0393 1
+    set 0394 1
+    set 0395 1
+    set 0396 1
+    set 0397 1
+    set 0398 1
+    set 0399 1
+    set 0400 1
+    set 0401 1
+    set 0402 1
+    set 0403 1
+    set 0404 1
+    set 0405 1
+    set 0406 1
+    set 0407 1
+    set 0408 1
+    set 0409 1
+    set 0410 1
+    set 0411 1
+    set 0412 1
+    set 0413 1
+    set 0414 1
+    set 0415 1
+    set 0416 1
+    set 0417 1
+    set 0418 1
+    set 0419 1
+    set 0420 1
+    set 0421 1
+    set 0422 1
+    set 0423 1
+    set 0424 1
+    set 0425 1
+    set 0426 1
+    set 0427 1
+    set 0428 1
+    set 0429 1
+    set 0430 1
+    set 0431 1
+    set 0432 1
+    set 0433 1
+    set 0434 1
+    set 0435 1
+    set 0436 1
+    set 0437 1
+    set 0438 1
+    set 0439 1
+    set 0440 1
+    set 0441 1
+    set 0442 1
+    set 0443 1
+    set 0444 1
+    set 0445 1
+    set 0446 1
+    set 0447 1
+    set 0448 1
+    set 0449 1
+    set 0450 1
+    set 0451 1
+    set 0452 1
+    set 0453 1
+    set 0454 1
+    set 0455 1
+    set 0456 1
+    set 0457 1
+    set 0458 1
+    set 0459 1
+    set 0460 1
+    set 0461 1
+    set 0462 1
+    set 0463 1
+    set 0464 1
+    set 0465 1
+    set 0466 1
+    set 0467 1
+    set 0468 1
+    set 0469 1
+    set 0470 1
+    set 0471 1
+    set 0472 1
+    set 0473 1
+    set 0474 1
+    set 0475 1
+    set 0476 1
+    set 0477 1
+    set 0478 1
+    set 0479 1
+    set 0480 1
+    set 0481 1
+    set 0482 1
+    set 0483 1
+    set 0484 1
+    set 0485 1
+    set 0486 1
+    set 0487 1
+    set 0488 1
+    set 0489 1
+    set 0490 1
+    set 0491 1
+    set 0492 1
+    set 0493 1
+    set 0494 1
+    set 0495 1
+    set 0496 1
+    set 0497 1
+    set 0498 1
+    set 0499 1
+    set 0500 1
+    if {[info tclversion] > 8} {
+	variable abc1
+	variable abc2
+	variable abc3
+	variable abc4
+	variable abc5
+	variable abc6
+	variable abc7
+    }
+    # nothing
+}
+
+bench -desc "PROC explicit return" -body {proc-1.1 abc}
+bench -desc "PROC implicit return" -body {proc-1.2 abc}
+
+bench -desc "PROC heavily commented" -body {proc-2.1 bogus}
+bench -desc "PROC do-nothing, no args" -body {proc-2.2}
+bench -desc "PROC do-nothing, one arg" -body {proc-2.3 a}
+bench -desc "PROC do-nothing inline" -body {}
+bench -desc "PROC local links with global" \
+	-body {proc-3.1 a b c d e f g}
+bench -desc "PROC local links with upvar" \
+	-body {proc-3.2 a b c d e f g}
+bench -desc "PROC local links with variable" \
+	-body {proc-3.3 a b c d e f g}

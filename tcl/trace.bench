@@ -1,0 +1,34 @@
+proc trace-bogus {name1 name2 op} {
+    # just check existence
+    upvar $name1 var
+    info exists var
+}
+
+proc trace-var {def} {
+    global a
+    # 2 reps of write, read, unset
+    set a $def
+    set b $a
+    unset a
+    set a $def
+    set b $a
+    unset a
+}
+
+bench -desc "TRACE no trace set" -body {trace-var blah}
+
+trace variable a r trace-bogus
+bench -desc "TRACE read" -body {trace-var blah}
+trace vdelete a r trace-bogus
+
+trace variable a w trace-bogus
+bench -desc "TRACE write" -body {trace-var blah}
+trace vdelete a w trace-bogus
+
+trace variable a u trace-bogus
+bench -desc "TRACE unset" -body {trace-var blah}
+trace vdelete a u trace-bogus
+
+trace variable a rwu trace-bogus
+bench -desc "TRACE all set (rwu)" -body {trace-var blah}
+trace vdelete a rwu trace-bogus

@@ -1,0 +1,65 @@
+# Literal regular expresion 
+proc regexp-1.1 {string} {
+    regexp "^abc(.*)jkl(.*)" $string
+}
+
+# Variable based regexp
+proc regexp-1.2 {string exp} {
+    regexp $exp $string
+}
+
+if { [catch {regexp -all "abc" "abc"}] } {
+    proc regexp-2.1 {string exp} {
+	set len [string len $string]
+	set ind 0
+	set count 0
+	while { $ind < $len } {
+	    if { [regexp -indices $exp \
+		    [string range $string $ind end] res] } {
+		set start [lindex $res 0]
+		set end [lindex $res 1]
+		if { $end < $start } {
+		    set end $start
+		}
+		set ind [expr {$end + 1 + $ind}]
+		incr count
+	    }
+	}
+	set count
+    }
+    proc regexp-2.2 {string exp} {
+	set len [string len $string]
+	set ind 0
+	set result {}
+	while { $ind < $len } {
+	    if { [regexp -indices $exp \
+		    [string range $string $ind end] res] } {
+		set start [lindex $res 0]
+		set end [lindex $res 1]
+		if { $end < $start } {
+		    set end $start
+		}
+		lappend result [string range $string \
+			[expr {$start + $ind}] [expr {$end + $ind}]]
+		set ind [expr {$end + 1 + $ind}]
+	    }
+	}
+	set result
+    }
+} else {
+    proc regexp-2.1 {string exp} {
+	regexp -all $exp $string
+    }
+    proc regexp-2.2 {string exp} {
+	regexp -all -inline $exp $string
+    }
+}
+
+set string "abcdefghijklmnopqrstuvwxyz"
+set exp "^abc(.*)jkl(.*)"
+bench -desc "REGEXP literal regexp" -body {regexp-1.1 $string}
+bench -desc "REGEXP var-based regexp" -body {regexp-1.2 $string $exp}
+bench -desc "REGEXP count all matches" \
+	-body {regexp-2.1 "abcabcabcabcabcabc" "abc"}
+bench -desc "REGEXP extract all matches" \
+	-body {regexp-2.2 "abcabcabcabcabcabc" "abc"}

@@ -1,0 +1,49 @@
+proc expr-unbraced {a} {
+    set b 23
+    set c 4
+    set d 6
+    set e 7
+    expr $a*$b+log($c)-pow($d,$e)
+    expr $a*$b+log($c)-pow($d,$e)
+}
+proc expr-braced {a} {
+    set b 23
+    set c 4
+    set d 6
+    set e 7
+    expr {$a*$b+log($c)-pow($d,$e)}
+    expr {$a*$b+log($c)-pow($d,$e)}
+}
+
+proc expr-3.1 {a} {
+    expr {$a}
+}
+proc expr-3.2 {a} {
+    expr {$a + $a + $a + $a + $a + $a + $a + $a + $a + $a}
+}
+proc expr-3.3 {a} {
+    expr {$a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a + $a +  $a + $a + $a + $a}
+}
+
+proc expr-incr-incr {value} {
+    incr value
+}
+proc expr-incr-expr {value} {
+    expr {$value + 1}
+}
+
+bench -desc "EXPR unbraced" -body {expr-unbraced 12}
+bench -desc "EXPR braced" -body {expr-braced 12}
+bench -desc "EXPR inline" -body {
+    set a 12
+    set b 23
+    set c 4
+    set d 6
+    set e 7
+    expr {$a*$b+log($c)-pow($d,$e)}
+}
+bench -body {expr-3.1 1} -desc "EXPR one operand"
+bench -body {expr-3.2 1} -desc "EXPR ten operands"
+bench -body {expr-3.3 1} -desc "EXPR fifty operands"
+bench -body {expr-incr-incr 1} -desc "EXPR incr with incr"
+bench -body {expr-incr-expr 1} -desc "EXPR incr with expr"

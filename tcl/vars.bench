@@ -1,0 +1,47 @@
+# Local set variable access
+proc vars-local-set {a} {
+    set z 1
+    set b $z
+    set c $z
+    set d $z
+}
+
+# Local input variable access
+proc vars-local-input {a} {
+    set z 1
+    set b $a
+    set c $a
+    set d $a
+}
+
+# Global variable access
+# This takes a bogus input var to avoid proc compilation slowdown
+# (8.[12]) from skewing point of this test
+proc vars-global {bogus} {
+    global a
+    set z 1
+    set b $a
+    set c $a
+    set d $a
+}
+
+# Upvar variable access
+proc vars-upvar {varname} {
+    upvar 1 $varname a
+    set z 1
+    set b $a
+    set c $a
+    set d $a
+}
+
+bench -iter 10000 -desc "VAR access locally set" \
+	-body {vars-local-set abc}
+bench -iter 10000 -desc "VAR access local proc arg" \
+	-body {vars-local-input abc}
+set a 1
+bench -iter 10000 -desc "VAR access global" \
+	-body {vars-global abc}
+unset a
+set a 1
+bench -iter 10000 -desc "VAR access upvar" \
+	-body {vars-upvar a}
