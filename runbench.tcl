@@ -316,7 +316,7 @@ proc list2csv {list} {
     foreach l $list {
 	set sep {}
 	foreach val $l {
-	    if {[string match -nocase "*\[\",\]*" $val]} {
+	    if {[string match "*\[\",\]*" $val]} {
 		append out $sep\"[string map [list \" \"\"] $val]\"
 	    } else {
 		append out $sep$val
