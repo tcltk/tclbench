@@ -1,3 +1,7 @@
+2003-02-11  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/file.bench: updated with more benchmarks
+
 2003-02-08  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tcl/startup.bench: replaced by file benchmarks

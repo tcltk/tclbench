@@ -9,7 +9,6 @@ proc contents {file str} {
 }
 
 proc setup {dir size} {
-    global tcl_platform
     for {set i 0} {$i < $size} {incr i} {
 	file mkdir [file join $dir _benchdir.$i]
 	contents [file join $dir _benchdir.$i _benchfile.$i] "delete me"
@@ -24,24 +23,30 @@ setup $dir 30
 
 # test procs
 
-proc checkone {dir cmd} {
-    foreach f [glob -directory $dir -nocomplain *] { file $cmd $f }
-}
-proc checkstat {dir} {
-    foreach f [glob -directory $dir -nocomplain *] { file stat $f var }
+if {$tcl_version >= 8.3} {
+    proc listfiles {dir ptn} { glob -nocomplain -directory $dir $ptn }
+} else {
+    proc listfiles {dir ptn} { glob -nocomplain $dir/$ptn }
 }
 
+proc checkone {dir cmd} {
+    foreach f [listfiles $dir *] { file $cmd $f }
+}
+proc checkstat {dir} {
+    foreach f [listfiles $dir *] { file stat $f var }
+}
 proc checkall {dir} {
-    foreach f [glob -directory $dir -nocomplain *] {
+    foreach f [listfiles $dir *] {
 	foreach fcmd {
-	    atime attributes dirname executable exists extension isdirectory
-	    isfile mtime owned readable rootname size tail writable
+	    atime attributes dirname executable exists extension
+	    isdirectory isfile mtime owned readable rootname size
+	    tail writable
 	} { file $fcmd $f }
 	file stat $f var
     }
 }
 proc recurseAndExamine {dir recurse} {
-    foreach f [glob -directory $dir -nocomplain *] {
+    foreach f [listfiles $dir *] {
 	file stat $f arr
 	if {$recurse && [file isdirectory $f]} {
 	    recurseAndExamine $f $recurse
@@ -71,9 +76,9 @@ bench -desc "FILE exists! tmpfile (str)" -iter 100 \
 bench -desc "FILE exists! tmpfile (obj)" -iter 100 \
 	-body {file exists $fileBogusAsObj}
 
-set num [llength [glob -directory $dir *]]
+set num [llength [listfiles $dir *]]
 bench -desc "FILE glob  tmpdir ($num entries)" -iter 100 \
-	-body {glob -directory $dir *}
+	-body {listfiles $dir *}
 
 foreach fcmd {
     atime attributes dirname executable exists extension isdirectory
