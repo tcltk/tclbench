@@ -4,7 +4,7 @@
 # This file has to have code that works in any version of Tcl that
 # the user would want to benchmark.
 #
-# RCS: @(#) $Id: libbench.tcl,v 1.13 2002/02/08 06:05:50 hobbs Exp $
+# RCS: @(#) $Id: libbench.tcl,v 1.14 2002/04/26 03:42:55 hobbs Exp $
 #
 # Copyright (c) 2000-2001 Jeffrey Hobbs.
 
@@ -133,25 +133,29 @@ proc bench {args} {
     }
     if {$opts(-body) != ""} {
 	# always run it once to remove compile phase confusion
-	catch {uplevel \#0 $opts(-body)} res
-	if {[info exists opts(-res)] && [string compare $opts(-res) $res]} {
+	set code [catch {uplevel \#0 $opts(-body)} res]
+	if {!$code && [info exists opts(-res)] \
+		&& [string compare $opts(-res) $res]} {
 	    if {$BENCH(ERRORS)} {
-		return -code error -errorinfo "Result was:\n$res\nResult\
+		return -code error "Result was:\n$res\nResult\
 			should have been:\n$opts(-res)"
 	    } else {
 		set res "BAD_RES"
 	    }
+	    set bench($opts(-desc)) $res
+	    puts $BENCH(OUTFID) [list Sourcing "$opts(-desc): $res"]
 	} else {
 	    set code [catch {uplevel \#0 \
 		    [list time $opts(-body) $opts(-iter)]} res]
-	    if {!$BENCH(THREADED)} {
+	    if {!$BENCH(THREADS)} {
 		if {$code == 0} {
 		    # Get just the microseconds value from the time result
 		    set res [lindex $res 0]
 		} elseif {$code != 666} {
-		    # A 666 result code means pass it through to the bench suite.
-		    # Otherwise throw errors all the way out, unless we specified
-		    # not to throw errors (option -errors 0 to libbench).
+		    # A 666 result code means pass it through to the bench
+		    # suite. Otherwise throw errors all the way out, unless
+		    # we specified not to throw errors (option -errors 0 to
+		    # libbench).
 		    if {$BENCH(ERRORS)} {
 			return -code $code -errorinfo $errorInfo \
 				-errorcode $errorCode
@@ -170,7 +174,7 @@ proc bench {args} {
     }
     if {($opts(-post) != "") && [catch {uplevel \#0 $opts(-post)} err] \
 	    && $BENCH(ERRORS)} {
-	return -code error -errorinfo "post code threw error:\n$err"
+	return -code error "post code threw error:\n$err"
     }
     return
 }
@@ -192,13 +196,21 @@ proc usage {} {
 if {[catch {set BENCH(INTERP) [info nameofexec]}]} {
     set BENCH(INTERP) $argv0
 }
-set BENCH(ERRORS)	1
-set BENCH(MATCH)	{}
-set BENCH(RMATCH)	{}
-set BENCH(OUTFILE)	stdout
-set BENCH(FILES)	{}
-set BENCH(ITERS)	1000
-set BENCH(THREADED)	0
+foreach {var val} {
+	ERRORS		1
+	MATCH		{}
+	RMATCH		{}
+	OUTFILE		stdout
+	FILES		{}
+	ITERS		1000
+	THREADS		0
+	EXIT		"[info exists tk_version]"
+} {
+    if {![info exists BENCH($var)]} {
+	set BENCH($var) [subst $val]
+    }
+}
+set BENCH(EXIT) 1
 
 if {[llength $argv]} {
     while {[llength $argv]} {
@@ -206,11 +218,11 @@ if {[llength $argv]} {
 	switch -glob -- $key {
 	    -help*	{ usage }
 	    -err*	{ set BENCH(ERRORS)  [lindex $argv 1] }
-	    -int*	{ set BENCH(INTERP) [lindex $argv 1] }
-	    -rmat*	{ set BENCH(RMATCH) [lindex $argv 1] }
-	    -mat*	{ set BENCH(MATCH) [lindex $argv 1] }
-	    -iter*	{ set BENCH(ITERS) [lindex $argv 1] }
-	    -thr*	{ set BENCH(THREADED) [lindex $argv 1] }
+	    -int*	{ set BENCH(INTERP)  [lindex $argv 1] }
+	    -rmat*	{ set BENCH(RMATCH)  [lindex $argv 1] }
+	    -mat*	{ set BENCH(MATCH)   [lindex $argv 1] }
+	    -iter*	{ set BENCH(ITERS)   [lindex $argv 1] }
+	    -thr*	{ set BENCH(THREADS) [lindex $argv 1] }
 	    default {
 		foreach arg $argv {
 		    if {![file exists $arg]} { usage }
@@ -223,9 +235,14 @@ if {[llength $argv]} {
     }
 }
 
-if {$BENCH(THREADED)} {
-    # We have to be able to load threads if we want to use threads.
-    set BENCH(THREADED) [expr {![catch {package require Thread}]}]
+if {$BENCH(THREADS)} {
+    # We have to be able to load threads if we want to use threads, and
+    # we don't want to create more threads than we have files.
+    if {[catch {package require Thread}]} {
+	set BENCH(THREADS) 0
+    } elseif {[llength $BENCH(FILES)] < $BENCH(THREADS)} {
+	set BENCH(THREADS) [llength $BENCH(FILES)]
+    }
 }
 
 rename exit exit.true
@@ -244,16 +261,20 @@ if {[string compare $BENCH(OUTFILE) stdout]} {
 # the data will be collected in via an 'array set'.
 #
 
-if {$BENCH(THREADED)} {
+if {$BENCH(THREADS)} {
     # Each file must run in it's own thread because of all the extra
     # header stuff they have.
-    proc thread_em {} {
+    #set DEBUG 1
+    proc thread_one {{id 0}} {
 	global BENCH
-	set BENCH(us) [thread::id]
-	puts $BENCH(OUTFID) [list __THREADED [package provide Thread]]
-	foreach BENCH(file) $BENCH(FILES) {
-	    if {[file exists $BENCH(file)]} {
-		puts $BENCH(OUTFID) [list Sourcing $BENCH(file)]
+	set file [lindex $BENCH(FILES) 0]
+	set BENCH(FILES) [lrange $BENCH(FILES) 1 end]
+	if {[file exists $file]} {
+	    incr BENCH(inuse)
+	    puts $BENCH(OUTFID) [list Sourcing $file]
+	    if {$id} {
+		set them $id
+	    } else {
 		set them [thread::create]
 		thread::send -async $them { load {} Thread }
 		thread::send -async $them \
@@ -264,9 +285,45 @@ if {$BENCH(THREADED)} {
 			[list proc bench_rm {args} [info body bench_rm]]
 		thread::send -async $them \
 			[list proc bench {args} [info body bench]]
-		thread::send -async $them [list source $BENCH(file)]
-		thread::send -async $them { thread::unwind }
 	    }
+	    if {[info exists ::DEBUG]} {
+		puts stderr "SEND [clock seconds] thread $them $file INUSE\
+		$BENCH(inuse) of $BENCH(THREADS)"
+	    }
+	    thread::send -async $them [list source $file]
+	    thread::send -async $them \
+		    [list thread::send $BENCH(us) [list thread_ready $them]]
+	    #thread::send -async $them { thread::unwind }
+	}
+    }
+
+    proc thread_em {} {
+	global BENCH
+	while {[llength $BENCH(FILES)]} {
+	    if {[info exists ::DEBUG]} {
+		puts stderr "THREAD ONE [lindex $BENCH(FILES) 0]"
+	    }
+	    thread_one
+	    if {$BENCH(inuse) >= $BENCH(THREADS)} {
+		break
+	    }
+	}
+    }
+
+    proc thread_ready {id} {
+	global BENCH
+
+	incr BENCH(inuse) -1
+	if {[llength $BENCH(FILES)]} {
+	    if {[info exists ::DEBUG]} {
+		puts stderr "SEND ONE [clock seconds] thread $id"
+	    }
+	    thread_one $id
+	} else {
+	    if {[info exists ::DEBUG]} {
+		puts stderr "UNWIND thread $id"
+	    }
+	    thread::send -async $id { thread::unwind }
 	}
     }
 
@@ -290,17 +347,25 @@ if {$BENCH(THREADED)} {
 	set bench($desc) $res
     }
 
-    proc thread_finish {{delay 2000}} {
-	if {[llength [thread::names]] > 1} {
+    proc thread_finish {{delay 4000}} {
+	global BENCH bench
+	set val [expr {[llength [thread::names]] > 1}]
+	#set val [expr {$BENCH(inuse)}]
+	if {$val} {
 	    after $delay [info level 0]
 	} else {
-	    global BENCH bench
 	    foreach desc [array names bench] {
 		puts $BENCH(OUTFID) [list $desc $bench($desc)]
 	    }
-	    exit.true ; # needed for Tk tests
+	    if {$BENCH(EXIT)} {
+		exit.true ; # needed for Tk tests
+	    }
 	}
     }
+
+    set BENCH(us) [thread::id]
+    set BENCH(inuse) 0 ; # num threads in use
+    puts $BENCH(OUTFID) [list __THREADED [package provide Thread]]
 
     thread_em
     thread_finish
@@ -317,5 +382,7 @@ if {$BENCH(THREADED)} {
 	puts $BENCH(OUTFID) [list $desc $bench($desc)]
     }
 
-    exit.true ; # needed for Tk tests
+    if {$BENCH(EXIT)} {
+	exit.true ; # needed for Tk tests
+    }
 }

@@ -1,3 +1,16 @@
+2002-04-25  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* runbench.tcl:
+	* libbench.tcl: added ability to set # threads to use if Thread
+	package can be loaded.
+	improved -result error checking
+
+	* tcl/base64.bench: verify result of encode/decode
+
+	* tcl/proc.bench: added empty proc benchmarks
+
+	* tcl/list.bench: added LIST concat benchmarks (hartweg)
+
 2002-03-27  Miguel Sofer <msofer@users.sourceforge.net>
 
 	* tcl/catch.bench: modified the catch benchmarks to allow

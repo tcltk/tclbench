@@ -4,7 +4,7 @@ exec tclsh "$0" ${1+"$@"}
 
 # runbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: runbench.tcl,v 1.13 2002/02/08 06:05:38 hobbs Exp $}
+set RCS {RCS: @(#) $Id: runbench.tcl,v 1.14 2002/04/26 03:42:55 hobbs Exp $}
 #
 # Copyright (c) 2000-2001 Jeffrey Hobbs.
 
@@ -25,7 +25,7 @@ set ME [file tail [info script]]
 proc usage {} {
     puts stderr "Usage (v$::VERSION): $::ME ?options?\
 	    \n\t-help			# print out this message\
-	    \n\t-iterations <#>		# max # of iterations to run a benchmark\
+	    \n\t-iterations <#>		# max # of iterations to run any benchmark\
 	    \n\t-minversion <version>	# minimum interp version to use\
 	    \n\t-maxversion <version>	# maximum interp version to use\
 	    \n\t-match <glob>		# only run tests matching this pattern\
@@ -35,7 +35,7 @@ proc usage {} {
 	    \n\t-notk			# do not run wish tests\
 	    \n\t-output <text|list|csv>	# style of output from program (default: text)\
 	    \n\t-paths <pathList>	# path or list of paths to search for interps\
-	    \n\t-threads		# use Thread where possible (*expiremental*)\
+	    \n\t-threads <numThreads>	# num of threads to use (where possible)\
 	    \n\t-throwerrors		# propagate errors in benchmarks files\
 	    \n\t-verbose		# output interim status info\
 	    \n\tfileList		# files to source, files matching *tk*\
@@ -86,8 +86,8 @@ if {[llength $argv]} {
 		set argv [lreplace $argv 0 0]
 	    }
 	    -thread*	{
-		set opts(usethreads) 1
-		set argv [lreplace $argv 0 0]
+		set opts(usethreads) [lindex $argv 1]
+		set argv [lreplace $argv 0 1]
 	    }
 	    -iter*	{
 		# Maximum iters to run a test
@@ -270,7 +270,7 @@ proc collectData {iArray dArray oArray fileList} {
     foreach label $ivar(VERSION) {
 	set interp $ivar($label)
 	vputs stdout "Benchmark $label $interp"
-	set cmd [list $interp libbench.tcl \
+	set cmd [list $interp [file join $::MYDIR libbench.tcl] \
 		-match $opts(match) \
 		-rmatch $opts(rmatch) \
 		-iters $opts(iters) \
