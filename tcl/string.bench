@@ -125,9 +125,11 @@ if { [catch {string repeat "abc" 10}] } {
     }
 }
 
-proc str-append {s a} {
+proc str-append {s a {count 1}} {
     append out $s
-    append out $a
+    for {set i 0} {$i < $count} {incr i} {
+	append out $a
+    }
 }
 
 proc rev-full-compile {string} {
@@ -252,6 +254,25 @@ bench -desc "STR reverse-2, $chars unichars" \
 
 bench -desc "STR append" \
       -body {str-append $longString "01234567890123456789"}
+
+set kilobyte [string repeat "0" 1024]
+set base [string repeat "0" 1024]
+bench -desc "STR append (1KB + 1KB)" \
+	-body {str-append $base $kilobyte}
+set base [string repeat "0" 10240]
+bench -desc "STR append (10KB + 1KB)" \
+	-body {str-append $base $kilobyte}
+set base [string repeat "0" 1049600]
+bench -desc "STR append (1MB + 2b * 1000)" \
+	-body {str-append $base "00" 1000}
+bench -desc "STR append (1MB + 1KB)" \
+	-body {str-append $base $kilobyte}
+bench -desc "STR append (1MB + 1KB * 20)" \
+	-body {str-append $base $kilobyte 20}
+bench -desc "STR append (1MB + 1MB * 3)" \
+	-body {str-append $base $base 3} -iters 100
+bench -desc "STR append (1MB + 1MB * 5)" \
+	-body {str-append $base $base 4} -iters 100
 
 proc proc-locals {404040} {
     set 0000 1;  set 0001 1;  set 0002 1;  set 0003 1;  set 0004 1;  set 0005 1
