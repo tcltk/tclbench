@@ -1,3 +1,17 @@
+2002-06-12  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/catch.bench: corrected use of string map in toplevel code
+
+	* tcl/expr.bench: corrected use of string repeat in toplevel code
+
+	* tcl/sha1.bench: correct wideint problem for 8.4 in sha1DF
+
+	* tcl/string.bench: corrected string equality checks to use
+	different variables (objects)
+
+	* tcl/gccont.bench: new benchmark that does some bioinformatics
+	manipulation on dna sequences
+
 2002-06-12  Miguel Sofer <msofer@users.sourceforge.net>
 
 	* tcl/klist.bench:

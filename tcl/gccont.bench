@@ -1,0 +1,812 @@
+# Compiled by Bastien Chevreux (bach@mwgdna.com)
+#  with help and a lot of suggestions from the Tcl'ers Chat crowd
+#
+
+if {[catch {package require Tcl 8}]} {
+    return
+}
+
+if { [catch {string repeat "abc" 10}] } {
+    proc str-repeat {str num} {
+	set val {}
+	for {set i 0} {$i < $num} {incr i} { append val $str }
+	return $val
+    }
+} else {
+    proc str-repeat {str num} { string repeat $str $num }
+}
+
+# One nice thing with Tcl is the ability to make prototypes completely
+# in Tcl in very short time. On the other hand, even seemingly simple
+# algorithms can turn into a nightmare when ported without thinking as
+# Tcl hides the costs of most of its operations very well and most
+# programers simply don't know them.
+# 
+# While often speed is not an issue, it may become one when procs get
+# called tens of thousands of times. There definitively *is* a
+# difference when one has to wait 10 seconds in an interactive
+# application instead of 5 minutes. This section shows an example how
+# algorithms have sometimes to be rethought when used in Tcl.
+# 
+# It is also an excellent example on how hard it sometimes is to do the
+# things 'right' in Tcl -- knowledge of internal working mechanisms is
+# needed. Additionally, this knowledge can become obsolete when a new
+# version of Tcl comes out.
+#
+# The algorithms also use a lot of different methods to get the job done
+# and are therefore a good testbed for searching improvements between
+# different Tcl versions
+
+# The GC problem
+# 
+# DNA is organisms consists of four bases -- Adenin, Cytosin, Guanin,
+# Thymin -- which are abbreviated A, C, G and T. Those four bases
+# concatened form a sequence like, e.g.,
+# 
+#    CATGCAgtcatgTTtggtacTTGTTGttactactTGCATGCTgtactgGA
+# 
+# Different measures can now be calculated on those sequence, one of
+# these measures being the GC content, i.e. the percentage of G and C
+# bases in the sequence. The GC content for the sequence above would be
+# 0.42 (or 42%).
+# 
+# Unfortunately, there are not only ACGT in sequences, but sometimes
+# also other characters like U (Uracil, which replaces Thymin in RNA) or
+# so called wobbles: bases which consist not only of one type of ACGT
+# but represent a mix of 2, 3 or all four bases. The coding for this is
+# called IUPAC and is an international standard.
+#    
+#    A=A         C=C        G=G        T=T       U=U
+#    N=A,C,G,T   
+#    V=A,C,G     H=A,C,T    D=A,G,T    B=C,G,T
+#    M=A,C       R=A,G      W=A,T      S=C,G     Y=C,T    K=G,T
+# 
+# It might also happen that other characters appear in the sequence, but
+# although these count as base, they have no G or C content.
+# 
+# As a side condition, we expect that in more than 95% of the cases,
+# the sequence will contain only ACG and T, and only in 0.1% we will
+# have sequences that contain characters that are not in the IUPAC code.
+# 
+# The question is: how does one calculate the GC content of a given
+# sequence in the fastest possible but safe way?
+
+
+# This function is almost directly ported from C except that the C code
+# would work with a static array of 256 bytes and would not need error
+# checking comparable to [info exists], thus running reasonably fast
+# as both the algorithm and the data structure would easily fit into any
+# processor cache.
+
+namespace eval GCCont_r1 {
+    array set gc "
+    A 0.0 T 0.0 U 0.0 W 0.0 G 1.0 C 1.0 N 0.5
+    V [expr {2.0/3}] M 0.5 D [expr {1.0/3}] R 0.5
+    B [expr {1.0/3}] K 0.5 H [expr {1.0/3}] S 1.0 Y 0.5
+    a 0.0 t 0.0 u 0.0 w 0.0 g 1.0 c 1.0 n 0.5
+    v [expr {2.0/3}] m 0.5 d [expr {1.0/3}] r 0.5
+    b [expr {1.0/3}] k 0.5 h [expr {1.0/3}] s 1.0 y 0.5"
+}
+
+proc GCCont_r1::cGCC { sequence } {
+    variable gc
+    
+    set sl [string length $sequence]
+    if { $sl ==0 } {return 0}
+    
+    set sum 0.0
+    for {set i 0} {$i < $sl} {incr i} {
+	set c [string index $sequence $i]
+	if {[info exists gc($c)]} {
+	    set sum [expr {$sum + $gc($c)}]
+	}
+    }
+    
+    return [expr {$sum / $sl}]
+}
+
+
+# Something C programers will find curious is that the repeated 
+# [string index] in the function above is comparably slow. It is
+# actually faster to convert the string to a list of characters and
+# then iterate over this list with a foreach loop:
+#
+# Generating the list, storing it and recalling it from
+# memory is faster than ``direct'' string indexing. How is this
+# possible. Well, one reason for that is that Tcl stores its string
+# internally in UTF-8 format, i.e., some characters may be represented
+# by 2 bytes instead of one. Therefore, Tcl must always iterate through
+# the whole string when searching a specific index, because direct
+# string access by index could lead to a wrong result.
+
+namespace eval GCCont_r2 {
+    array set gc "
+    A 0.0 T 0.0 U 0.0 W 0.0 G 1.0 C 1.0 N 0.5
+    V [expr {2.0/3}] M 0.5 D [expr {1.0/3}] R 0.5
+    B [expr {1.0/3}] K 0.5 H [expr {1.0/3}] S 1.0 Y 0.5
+    a 0.0 t 0.0 u 0.0 w 0.0 g 1.0 c 1.0 n 0.5
+    v [expr {2.0/3}] m 0.5 d [expr {1.0/3}] r 0.5
+    b [expr {1.0/3}] k 0.5 h [expr {1.0/3}] s 1.0 y 0.5"
+}
+
+proc GCCont_r2::cGCC { sequence } {
+    variable gc
+    
+    set seqlist [split $sequence "" ]
+    set sl [llength $seqlist]
+    if { $sl ==0 } {return 0}
+    
+    set sum 0.0
+    foreach c $seqlist {
+	if {[info exists gc($c)]} {
+	    set sum [expr {$sum + $gc($c)}]
+	}
+    }
+    
+    return [expr {$sum / $sl}]
+}
+
+
+
+# Another astounding fact for people accustomed to C is that string
+# operations are actually faster than using arrays, the less elements a
+# Tcl array has the faster it will work. This is because Tcl doesn't
+# know any 'real' arrays and uses hashes for this, involving hash and
+# binary search operations. So, we're cutting the array size by half by
+# removing the lower case bases from it and adding a [string
+# toupper] to the proc.
+
+namespace eval GCCont_r3 {
+    array set gc "
+    A 0.0
+    T 0.0
+    U 0.0
+    W 0.0
+    G 1.0
+    C 1.0
+    N 0.5
+    V [expr {2.0/3}]
+    M 0.5
+    D [expr {1.0/3}]
+    R 0.5
+    B [expr {1.0/3}]
+    K 0.5
+    H [expr {1.0/3}]
+    S 1.0
+    Y 0.5"
+}
+
+proc GCCont_r3::cGCC { sequence } {
+    variable gc
+    
+    set seqlist [split [string toupper $sequence] "" ]
+    set sl [llength $seqlist]
+    if { $sl ==0 } {return 0}
+    
+    set sum 0.0
+    foreach c $seqlist {
+	if {[info exists gc($c)]} {
+	    set sum [expr {$sum + $gc($c)}]
+	}
+    }
+    
+    return [expr {$sum / $sl}]
+}
+
+
+
+
+# This is a step that most computer scientist will see as ``normal'',
+# especially when having some experience in C or assembler. Using
+# integer is almost always faster than floating point arithmetics. The
+# weights for the bases can all be multiplied by 6 to bring them into
+# integer, the result will have to be divided by 6 before returning to
+# get the correct GC content though.
+# 
+# While the runtime is not the great breakthrough one could hope for, it
+# still ist 10\% faster than the previous version. The speedup itself
+# is not due to integer arithmetic itself though, it is due to the 
+# 'expr' being replaced by a faster 'incr' statement.
+
+namespace eval GCCont_i {
+    array set gc { A 0 T 0 U 0 W 0 G 6 C 6 N 3 V 4 M 3 D 2 R 3 B 2 K 3 H 2 S 6 Y 3}
+}
+
+proc GCCont_i::cGCC1 { sequence } {
+    variable gc
+    
+    set seqlist [split [string toupper $sequence] "" ]
+    set sl [llength $seqlist]
+    if { $sl ==0 } {return 0}
+
+    set sum 0
+    foreach c $seqlist {
+	if {[info exists gc($c)]} {
+	    incr sum $gc($c)
+	}
+    }
+    
+    return [expr {($sum / 6.0) / $sl}]
+}
+
+
+# Looking closer at our proc and the side conditions set, one can see
+# that the 'info exists' is called for every base though we expect
+# to have valid characters, i.e. characters that are present in the
+# array, in almost 99.9\% of all sequences. 
+# 
+# Alas the 'info exist' command is extremely costly when used on
+# arrays, because the complete search mechanism for hashes in arrays has
+# to be activated just to check if one certain element exists.
+# 
+# There is one trick to be known for cases like these: using a 
+# catch { ... } is about 10 times faster than its 'info exists'
+# counterpart !!!when the catch does not fire!!! If the catch fires,
+# then the overhead for this is about 10 times greater than for the
+# equivalent catch. As we don't expect it to fire much often, we're
+# giving it a try, although it is looking a bit ugly and certainly does
+# not belong to the highlights of good programming
+
+proc GCCont_i::cGCC2 { sequence } {
+    variable gc
+    
+    set seqlist [split [string toupper $sequence] "" ]
+    set sl [llength $seqlist]
+    if { $sl ==0 } {return 0}
+
+    set sum 0
+    foreach c $seqlist {
+	catch {incr sum $gc($c)}
+    }
+    
+    return [expr {($sum / 6.0) / $sl}]
+}
+
+
+# There is still room for improvements in the exception handling. Like
+# exposed in the problem text above, in practice most sequences will
+# behave nicely, i.e. they will not contain 'illegal' characters. We can
+# use such a condition to further optimize the exception handling by
+# catching the whole loop and reacting only in error cases:
+
+proc GCCont_i::cGCC3 { sequence } {
+    variable gc
+    
+    set seqlist [split [string toupper $sequence] "" ]
+    set sl [llength $seqlist]
+    if { $sl ==0 } {return 0}
+
+    set sum 0
+    if {[catch {
+	foreach c $seqlist {
+	    incr sum $gc($c)
+	}
+    }]} {
+	set sum 0
+	foreach c $seqlist {
+	    catch {incr sum $gc($c)}
+	}
+    }
+    
+    return [expr {($sum / 6.0) / $sl}]
+}
+
+
+# In the algorithmic improvements above, one step was to convert
+# floating point numbers to integers. One observation to be made is
+# this: all numbers are >= 0 and <= 9, that is, these are single
+# character numbers. Another observation made was that the cost for
+# accessing Tcl arrays seems to be relatively high. So, is there a
+# possibility to eliminate the array and still retain the original
+# algorithm? 
+# 
+# After a bit of thinking, there is one elegant solution that will
+# appear: replace all the characters by their numbered weight equivalent
+# and iterate over the resulting string list, just adding the numbers!
+# Substitution is done via 'string map', which is a very fast
+# command for this kind of operation, where one wants to replace
+# fixed substrings with other substrings (or nothing). Exceptions, i.e.,
+# characters that are not expected in the sequence, get eliminated first
+# by a 'regsub' command, another powerful command that substitutes
+# substrings, but this one is able to work with regular
+# expressions. Here we go:
+
+namespace eval GCCont_rsf1 {
+    variable gcs {A 0 T 0 U 0 W 0 G 6 C 6 N 3 V 4 M 3 
+    D 2 R 3 B 2 K 3 H 2 S 6 Y 3}
+    variable gc
+    array set gc $gcs
+    variable re "\[^[join [array names gc] ""]\]"
+}
+
+proc GCCont_rsf1::cGCC sequence {
+    set sl [string length $sequence]
+    if { $sl ==0 } {return 0}
+
+    variable gcs
+    variable re
+    regsub -all $re [string toupper $sequence] "" sequence
+    set sum 0
+    foreach c [split [string map $gcs $sequence] ""] {incr sum $c}
+    return [expr {($sum / 6.0) / $sl}]
+}
+
+
+# There's also another nice trick to be shown in this routine: looking
+# at the namespace variable 'gcs', one can see that 4 characters are
+# being replaced by the value 0. This value will lateron be used in the
+# foreach loop to increment a sum ... but why bothering to increment
+# something by 0 at all? In a daring move, we will now replace
+# the characters A, T, U and W with an empty string! 
+
+namespace eval GCCont_rsf2 {
+    variable gcs {A "" T "" U "" W "" 
+    G 6 C 6 N 3 V 4 M 3 D 2 R 3 B 2 K 3 H 2 S 6 Y 3}
+    variable gc
+    array set gc $gcs
+    variable re "\[^[join [array names gc] ""]\]"
+}
+
+proc GCCont_rsf2::cGCC1 sequence {
+    set sl [string length $sequence]
+    if { $sl ==0 } {return 0}
+
+    variable gcs
+    variable re
+    regsub -all $re [string toupper $sequence] "" sequence
+    set sum 0
+    foreach c [split [string map $gcs $sequence] ""] {incr sum $c}
+    return [expr {($sum / 6.0) / $sl}]
+}
+
+
+# The routine above always runs through the 'regsub' command to
+# handle exceptions that we expect to happen only very, very
+# rarely. Here again we could shave of some time by dropping the 
+# 'regsub' command from the normal operation, just reacting to error
+# situation via 'catch'. There is, however, one important drawback
+# apart from the fact that it uglifies the routine a lot. But first have
+# a look at that routine:
+
+proc GCCont_rsf2::cGCC2 sequence {
+    set sl [string length $sequence]
+    if { $sl ==0 } {return 0}
+
+    variable gcs
+    set sum 0
+    if {[catch {
+	foreach c [split [string map $gcs [string toupper $sequence]] ""] {
+	    incr sum $c
+	}
+    }]} {
+	variable re
+	set sum 0
+	regsub -all $re [string toupper $sequence] "" sequence
+	foreach c [split [string map $gcs $sequence] ""] {incr sum $c}
+    }
+    return [expr {($sum / 6.0) / $sl}]
+}
+
+
+# So, where's the snag? Simply put: that proc will
+# return !!!wrong!!! results should there ever by numbers in our
+# original input sequence (which are not disallowed). Those numbers
+# won't be substituted away by a regsub command runnung in front of the
+# foreach loop, and the 'incr' command will happily use any number
+# found in the stringlist to add, resulting on a wrong GC content.
+# 
+# But we can still save that approach by enlargung the substitution set
+# for the 'string map' command, replacing any number found in the
+# sequence by an empty sequence. 
+
+namespace eval GCCont_rsf3 {
+    variable gcs {
+	A "" T "" U "" W "" G 6 C 6 N 3 V 4 M 3 
+	D 2 R 3 B 2 K 3 H 2 S 6 Y 3
+	0 "" 1 "" 2 "" 3 "" 4 "" 5 "" 6 "" 7 "" 8 "" 9 ""
+    }
+    variable gc
+    array set gc $gcs
+    variable re "\[^[join [array names gc] ""]\]"
+}
+
+proc GCCont_rsf3::cGCC sequence {
+    set sl [string length $sequence]
+    if { $sl ==0 } {return 0}
+
+    variable gcs
+    set sum 0
+    if {[catch {
+	foreach c [split [string map $gcs [string toupper $sequence]] ""] {incr sum $c}
+    }]} {
+	variable re
+	set sum 0
+	regsub -all $re [string toupper $sequence] "" sequence
+	foreach c [split [string map $gcs $sequence] ""] {incr sum $c}
+    }
+    return [expr {($sum / 6.0) / $sl}]
+}
+
+
+# Tcl has become extremely efficient when it comes to transforming
+# strings according to given rulesets -- a domain where Perl until now
+# had always an advantage -- the keyword for this being 'regular expressions'.
+# 
+# So it might be a good idea inspect the problem to see whether it can
+# be reformulated to fit string transformation possibilities of
+# Tcl. 
+# 
+# The basic idea of those algorithms is not to iterate over the string
+# and add corresponding weights for characters, but to transform the
+# problem into a _counting_ problem. Let's have a look at how to do
+# that.
+# 
+
+
+# We'll start first by looking how one would tackle this problem in
+# C. What we would use there would likely be an array of 256 counters
+# (probably unsigend int32) initialized to 0 and then go through our
+# sequence, icreasing the counters in the array at the ASCII position of
+# the character encountered. In the end, we'd multiply each counter with
+# the weight of the corresponding base, add everything together and
+# would have our GC content.
+# 
+# This first shot in Tcl already considers some of the insights we
+# gained up to this point, using a 'string toupper' instead of a
+# larger array and programming for the expected 99.9\% of the sequences
+# where we do not expect 'invalid' characters to appear.
+
+namespace eval GCCont_cpb {
+    variable countzero { A 0 T 0 U 0 W 0 G 0 C 0 N 0 V 0 M 0 D 0 R 0 B 0 K 0 H 0 S 0 Y 0}
+    array set gc       { A 0 T 0 U 0 W 0 G 6 C 6 N 3 V 4 M 3 D 2 R 3 B 2 K 3 H 2 S 6 Y 3}
+}
+
+proc GCCont_cpb::cGCC sequence {
+    set seqlist [split [string toupper $sequence] "" ]
+    set sl [llength $seqlist]
+    if { $sl ==0 } {return 0}
+    variable countzero
+    variable gc
+    if {[catch {
+	foreach c $seqlist { incr count($c) }
+    }]} {
+	array set count $countzero
+	foreach c $seqlist { catch {incr count($c)} }
+    }
+    set sum 0 
+    foreach {n x} $countzero {
+	incr sum [expr {$count($n)*$gc($n)}]
+    }
+    return [expr {($sum / 6.0) / $sl}]
+} 
+
+
+# When it comes to counting characters -- or, btw, complete regular
+# expressions -- Tcl has some nice and highly optimized commands for
+# that, one of them being 'regexp -all' which will return the number
+# of occurences of a regular expression in a string. A simple character
+# being an extremely easy regular expression, we'll give it a shot. 
+# 
+# Note that this time, only characters that really add to the GC content
+# are counted, which makes exception handling of characters that are not
+# expected unnecessary. The array has also been transformed into a list,
+# this time it doesn't gain very much because each element is only
+# accessed once, but anyway it looks nicer.
+
+namespace eval GCCont_cpbre1 {
+    variable gclist { G 6 C 6 S 6 V 4 N 3 M 3 R 3 Y 3 K 3 B 2 D 2 H 2 }
+}
+
+proc GCCont_cpbre1::cGCC sequence {
+    set sl [string length $sequence]
+    if { $sl ==0 } {return 0}
+    set sequence [string toupper $sequence]
+    variable gclist
+    set sum 0
+    foreach {b w} $gclist {
+	set num [regexp -all $b $sequence]
+	incr sum [expr {$num*$w}]
+    }
+    return [expr {($sum / 6.0) / $sl}]
+}
+
+
+# Having a number of regular expressions that trigger exactly the same
+# actions -- in this case, add the same value to a variable -- gives the
+# opportunity to pool those regular expressions. Again, this is done to
+# shift work from a comparably slow Tcl command sequence (foreach loop
+# with incr) to a relatively fast and highly optimized Tcl command (the
+# regexp). The following proc pools all characters that have the same
+# weight and lets 'regexp' count these simultaneously.
+
+namespace eval GCCont_cpbre2 {
+    variable gclist {GCS 6 V 4 NMRYK 3 BDH 2}
+}
+
+proc GCCont_cpbre2::cGCC sequence {
+    set sl [string length $sequence]
+    if { $sl ==0 } {return 0}
+    set sequence [string toupper $sequence]
+    variable gclist
+    set sum 0
+    foreach {b w} $gclist {
+	set num [regexp -all \[$b\] $sequence]
+	incr sum [expr {$num*$w}]
+    }
+    return [expr {($sum / 6.0) / $sl}]
+} 
+
+# The 'regsub' command also provides the ability to count how many
+# expressions it has substituted. The proc below uses 'regsub -all'
+# command just to count the occurences of the character, the resulting
+# substituted string is discarded (for now). Let's see how it compares
+# to regexp.
+
+namespace eval GCCont_cpbrs_trap {
+    variable gclist {GCS 6 V 4 NMRYK 3 BDH 2}
+}
+
+proc GCCont_cpbrs_trap::cGCC sequence {
+    set sl [string length $sequence]
+    if { $sl ==0 } {return 0}
+    set sequence [string toupper $sequence]
+    variable gclist
+    set sum 0
+    foreach {b w} $gclist {
+	set num [regsub -all \[$b\] $sequence "" bla]
+	incr sum [expr {$num*$w}]
+    }
+    return [expr {($sum / 6.0) / $sl}]
+} 
+
+
+# The resulting run time of the change above is not quite convincing, but
+# understandably a bit slower than the regexp example as it has to build
+# and save a string each time it goes through. Even when reusing the new
+# string as shorter sequence for each iteration, the runtime is stil
+# slower than the regexp version.
+# 
+# Taking a step back in our thoughts, we're going to try the same proc
+# again, this time with each character having again it's own weight.
+# The result from running this proc will be mixed: for the Tcl 8.3
+# branch, the runtime will be even slower than the previous version. The
+# astonishment will come when running an 8.4 branch: the runtime against
+# the regexp version will be divided by at least a factor of 2 for short
+# sequences and and will go well beyond a factor of 5 for somewhat
+# longer sequences.
+
+namespace eval GCCont_cpbrs {
+    variable gclist { G 6 C 6 N 3 V 4 M 3 D 2 R 3 B 2 K 3 H 2 S 6 Y 3}
+}
+
+proc GCCont_cpbrs::cGCC1 sequence {
+    set sl [string length $sequence]
+    if { $sl ==0 } {return 0}
+    set sequence [string toupper $sequence]
+    variable gclist
+    set sum 0
+    foreach {b w} $gclist {
+	set num [regsub -all $b $sequence "" bla]
+	incr sum [expr {$num*$w}]
+    }
+    return [expr {($sum / 6.0) / $sl}]
+} 
+
+# We can improve the runtime even further a little bit by reusing the
+# regsub sequence in each iteration, the shortened strings gets made
+# anyway
+
+proc GCCont_cpbrs::cGCC2 sequence {
+    set sl [string length $sequence]
+    if { $sl ==0 } {return 0}
+    set sequence [string toupper $sequence]
+    variable gclist
+    set sum 0
+    foreach {b w} $gclist {
+	set num [regsub -all $b $sequence "" sequence]
+	incr sum [expr {$num*$w}]
+    }
+    return [expr {($sum / 6.0) / $sl}]
+} 
+
+
+# As last optimization in this branch, we reuse our knowledge of the
+# expected data, namely that the bases A, C, G and T will appear
+# predominantly and that we should try to concentrate on these. Two
+# things change for that in the following proc: 1) the input
+# sequence gets cleaned via the fast {\tt string map} from the frequent
+# A and T bases (taking U and W with does not harm the runtime
+# performance noticably) and 2) we have 2 lists with weights for the GC
+# content, the first containing only the weights for G and C, so that we
+# hope that after this step we won't need to go through the second list
+# as the sequence will be completely worked through if it contained only
+# A, C, G and T.
+
+namespace eval GCCont_cpbrs2 {
+    variable gclist1 { G 6 C 6 }
+    variable gclist2 { N 3 V 4 M 3 D 2 R 3 B 2 K 3 H 2 S 6 Y 3}
+}
+proc GCCont_cpbrs2::cGCC sequence {
+    set sl [string length $sequence]
+    if { $sl ==0 } {return 0}
+    set sequence [string map {A "" T "" U "" W ""} [string toupper $sequence]]
+    variable gclist1
+    variable gclist2
+    set sum 0
+    foreach {b w} $gclist1 {
+	set num [regsub -all $b $sequence "" sequence]
+	incr sum [expr {$num*$w}]
+    }
+    if {[string length $sequence]} {
+	foreach {b w} $gclist2 {
+	    set num [regsub -all $b $sequence "" sequence]
+	    incr sum [expr {$num*$w}]
+	}
+    }
+    return [expr {($sum / 6.0) / $sl}]
+} 
+
+
+# The following examples are examples on how thinking on sidetracks can
+# sometimes lead to some astonishing results, beside the fact that these
+# algorithms work, that is.
+
+
+# I'm a Turing Machine ... sort of
+# 
+# It is sometimes quite easy to transform parts of an algorithm in its
+# equivalent Turing automaton. For example, all what we really want to
+# know from the sequence is the (weighted) number of Gs and Cs compared
+# to other bases. In the process of optimizing all those algorithms
+# above, we already collected all the ingredients needed to simulate the
+# output of a simple Turing machine on the sequence: we work with
+# weights that are integer and have a method to replace characters in a
+# string with other characters.
+# 
+# Imagine the base sequence to be our input alphabet. Now let the TM
+# start at the beginning of the sequence and give it the command to
+# replace every letter of the defined input sequence by the number of
+# characters of the equivalent weight, don't care about unknown
+# characters. The just count the length of the resulting string of the
+# output sequence.
+# 
+# For reasons explained a bit later, we'll take the character > as
+# output character. Let's look at the translation table
+# 
+# Input     Output
+# 
+# A         
+# C         >>>>>>
+# G         >>>>>>
+# T        
+# V         >>>>
+# M         >>>
+# D         >>
+# ...
+# etc.   
+# 
+# Here is one example how the translation would be made (spaces added
+# for better readability, empty replacements shown by ``''):
+# 
+# ACCTMGAD =  "" >>>>>> >>>>>> "" >>> >>>>>> "" >>
+# 
+# which results into a string with a length of 23 characters, so that
+# 23 / 6 / len_{input} = 23 / 6 / 8 \approx 0.479
+# 
+# Our real world implementation will work with a subtle difference
+# because of the limitations of the {\tt string map} command that is
+# used: there is no way to to tell string map to replace unknown
+# characters with nothing, it just leaves them untouched. The algorithm
+# will therefor first simulate a Touring Machine that leaves unkown
+# characters untouched just to eliminate them in the following 
+# 'regsub' command.
+
+# When comparing the runtime of this algorithm to the previous designed
+# ones in Tcl, one will probably get the shock of the life: it's
+# actually faster that any other presented above (especially with the
+# Tcl 8.4) branch.
+
+namespace eval GCCont_turing {
+    set list { A 0 T 0 G 6 C 6 U 0 N 3 W 0 V 4 M 3 D 2 R 3 B 2 K 3 H 2 S 6 Y 3}
+    variable map ""
+    variable mapnc ""
+    foreach {letter num} $list {
+	set code [str-repeat > $num]
+	lappend mapnc $letter $code 
+	lappend map $letter $code [string tolower $letter] $code
+    }
+}
+
+proc GCCont_turing::cGCC { sequence } {
+    variable map
+    set sl [string length $sequence]
+    if {$sl == 0} {return 0}
+    set pstr [string map $map $sequence]
+    regsub -all {[^>]} $pstr "" pstr2
+    set sum [string length $pstr2]
+    return [expr {($sum / 6.0) / $sl}]
+}
+
+
+# A nice substitution could be to replace the whole sequence of letters
+# so that a mathematical expression arises that can be evaluated by 
+# 'expr'. The following code will do just that, it is small and nice
+# and deals with unknown characters via 'regsub'.
+# 
+# Unfortunately, the runtime is well below acceptable terms, especially
+# for longer input sequences. This is because internally, 'expr' has
+# to build an expression tree for determining how to interpret the
+# expression, and this gets quickly ugly for long expressions, the
+# runtime grows exponentially.
+
+# be cautious with that beast, it gets _slow_ for sequences above
+#  ~ 1600 bases!
+namespace eval GCCont_expr {
+    variable gclist {A "" T "" U "" W "" G 6+ C 6+ N 3+ V 4+
+    M 3+ D 2+ R 3+ B 2+ K 3+ H 2+ S 6+ Y 3+}
+}
+proc GCCont_expr::cGCC seq {
+    set l [string length $seq]
+    if {!$l} {return 0}
+    set ns [string map $GCCont_expr::gclist [string toupper $seq]0]
+    regsub -all {[^0-9+]} $ns "" ns2
+    return [expr ($ns2)/($l*6.0)]
+}
+
+##
+## from here on, it's just the code to run the benchmark
+##
+set tstfunc ""
+lappend tstfunc \
+	GCCont_r1::cGCC GCCont_r2::cGCC GCCont_r3::cGCC \
+	GCCont_i::cGCC1 GCCont_i::cGCC2 GCCont_i::cGCC3 \
+	GCCont_cpb::cGCC GCCont_cpbrs_trap::cGCC \
+	GCCont_cpbrs::cGCC1 GCCont_cpbrs::cGCC2 
+if {$::tcl_version >= 8.1} {
+    # for string map
+    lappend tstfunc \
+	    GCCont_rsf1::cGCC GCCont_rsf2::cGCC1 GCCont_rsf2::cGCC2 \
+	    GCCont_rsf3::cGCC GCCont_cpbrs2::cGCC GCCont_turing::cGCC \
+	    GCCont_expr::cGCC
+}
+if {$::tcl_version >= 8.3} {
+    # for regexp -all
+    lappend tstfunc \
+	    GCCont_cpbre1::cGCC GCCont_cpbre2::cGCC
+}
+
+set tststr CATGCAgtcatgTTtggtacTTGTTGttactactTGCATGCTgtactgGA
+set tststr2 _$tststr
+
+# reduce this to 1024 or 512 to get faster results that are not as precise
+set iter 5000
+
+proc go {} {
+    global tststr tststr2 tstfunc iter
+    set ok [GCCont_r1::cGCC $tststr]
+    foreach f $tstfunc {
+	if { $ok != [$f $tststr]} {
+	    return -code error "Test1: $f returned [$f $tststr],\
+		    not the same value $ok as reference function!"
+	}
+    }
+    set ok [GCCont_r1::cGCC $tststr2]
+    foreach f $tstfunc {
+	if { $ok != [$f $tststr2]} {
+	    return -code error "Test2: $f returned [$f $tststr2],\
+		    not the same value $ok as reference function!"
+	}
+    }
+
+    for {set i 0} {$i < 3} {incr i} {
+	foreach f $tstfunc {
+	    bench -desc "$f [string length $tststr]" \
+		    -iter $iter -body [list $f $tststr]
+	}
+
+	set tststr [str-repeat $tststr 10]
+	set iter [expr {$iter / 10}]
+	if {$iter < 1} {set iter 3}
+    }
+}
+go
