@@ -1,0 +1,19 @@
+if {[info tclversion] < 8.0} { return }
+
+namespace eval a {
+    proc aa {} {
+	format %x 100
+    }
+}
+namespace eval b {
+    proc bb {} {
+	format %x 100
+    }
+}
+
+bench -desc "NS alternating" -body {
+    for {set x 50} {[incr x -1]} {} {
+	::a::aa
+	::b::bb
+    }
+}
