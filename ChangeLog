@@ -1,5 +1,8 @@
 2001-05-22  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* normbench.tcl: new file that allows for post-process
+	normalization of the benchmark data.
+
 	* tcl/libbench.tcl:
 	* tcl/runbench.tcl: changed -iterations to be a maximum number for
 	timings, to override any larger number the benchmark may set for
