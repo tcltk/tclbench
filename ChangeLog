@@ -1,3 +1,9 @@
+2002-02-22  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/loops.bench: added while 1 benchmark
+
+	* tcl/conditional.bench: added if 1/0 benchmark
+
 2002-02-07  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* runbench.tcl: noted thread option.
