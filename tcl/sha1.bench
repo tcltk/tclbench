@@ -336,7 +336,11 @@ proc sha1pure::sha1DF {msg} {
 	incr H4 $E
     }
 
-    return [format %0.8x%0.8x%0.8x%0.8x%0.8x $H0 $H1 $H2 $H3 $H4]
+    # Cause truncation to int - 8.4 will handle wide, but this doesn't
+    # account for that anyway
+    return [format %0.8x%0.8x%0.8x%0.8x%0.8x \
+	    [expr {int($H0)}] [expr {int($H1)}] [expr {int($H2)}] \
+	    [expr {int($H3)}] [expr {int($H4)}]]
 }
 
 # test sha1pure
