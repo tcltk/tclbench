@@ -1,3 +1,11 @@
+2002-06-11  Miguel Sofer <msofer@users.sourceforge.net>
+
+	* tcl/regexp.bench: made the bench access the match variables, to
+	benchmark also the read access to them.
+	* tcl/vars.bench: added a "VAR ref local" benchmark, to be able to
+	compare the access times of linked variables to those of local
+	variables. 
+
 2002-05-29  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tcl/parse.bench: more complex string parsing benchmark (8.0+)

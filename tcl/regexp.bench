@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: regexp.bench,v 1.4 2002/02/08 06:02:36 hobbs Exp $
+# RCS: @(#) $Id: regexp.bench,v 1.5 2002/06/11 14:44:54 msofer Exp $
 #
 
 # Literal regular expresion 
@@ -19,7 +19,9 @@ proc regexp-str-static {string} {
 
 # Variable based regexp with catching
 proc regexp-catch {string exp} {
-    regexp $exp $string match one two three
+    if {[regexp $exp $string match one two three]} {
+	list $match $one $two $three   
+    }
 }
 
 if { [catch {regexp -all "abc" "abc"}] } {

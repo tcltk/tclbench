@@ -51,11 +51,18 @@ if {[info tclversion] >= 8.0} {
 	set ::foo::var::x 0
 	while {$::foo::var::x < $val} { incr ::foo::var::x }
     }
+    proc ::foo::var::lref {val} {
+	set x 0
+	while {$x < $val} { incr x }
+    }
 } else {
     proc ::foo::var::ref {val} {
 	return -code 666 "8.0+"
     }
     proc ::foo::var::gref {val} {
+	return -code 666 "8.0+"
+    }
+    proc ::foo::var::lref {val} {
 	return -code 666 "8.0+"
     }
 }
@@ -152,6 +159,8 @@ bench -desc "VAR ref variable" \
 	-body {::foo::var::ref 50}
 bench -desc "VAR ref absolute" \
 	-body {::foo::var::gref 50}
+bench -desc "VAR ref local" \
+	-body {::foo::var::lref 50}
 
 bench -desc "VAR mset" \
 	-body [list var-mset [list a b c d e f g h]]
