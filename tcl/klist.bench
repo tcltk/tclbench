@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: klist.bench,v 1.6 2002/06/12 19:10:06 msofer Exp $
+# RCS: @(#) $Id: klist.bench,v 1.7 2002/11/14 01:55:50 hobbs Exp $
 #
 # From http://mini.net/cgi-bin/wikit/941
 # Procedure to generate a list of n numbers: 
@@ -193,7 +193,6 @@ proc doShuffle0 {} {
     foreach n $LENGTHS {
 	set LISTS($n) [iota $n]
     }
-
     fconfigure stdout -buffering none
     puts "  Tcl[info patchlevel]      Times in usec for shuffle methods"
     puts "  Method                    List length"
@@ -201,6 +200,9 @@ proc doShuffle0 {} {
     puts " --------------------------------------------------"
     # do the benchmarking
     foreach method $METHODS {
+	if {$::argc && ![string match $method [lindex $::argv 0]]} {
+	    continue
+	}
 	puts  -nonewline [format " %-10s" $method]
 	foreach n $LENGTHS iter $ITERS {
 	    if {[string match "*-s" $method] && ($n > 1000)} {
