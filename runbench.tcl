@@ -165,7 +165,12 @@ proc getInterps {optArray pattern iArray} {
 	    if {[file executable $interp] && ![info exists var($interp)]} {
 		if {[catch {exec echo "puts \[info patchlevel\] ; exit" | \
 			$interp} patchlevel]} {
-		    error $::errorInfo
+		    if {$opts(errors)} {
+			error $::errorInfo
+		    } else {
+			puts stderr $patchlevel
+			continue
+		    }
 		}
 		# Lame package mechanism doesn't understand [abp]
 		set ver [convertVersion $patchlevel]
@@ -226,7 +231,12 @@ proc collectData {iArray dArray oArray fileList} {
 		-errors $opts(errors) \
 		]
 	if {[catch {eval exec $cmd $fileList} output]} {
-	    error $::errorInfo
+	    if {$opts(errors)} {
+		error $::errorInfo
+	    } else {
+		puts stderr $patchlevel
+		continue
+	    }
 	}
 	#vputs $output ; continue
 	array set tmp $output
