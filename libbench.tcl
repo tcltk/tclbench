@@ -120,9 +120,6 @@ proc bench {args} {
     if {$opts(-pre) != ""} {
 	uplevel \#0 $opts(-pre)
     }
-    if {![info exists BENCH(index)]} {
-	set BENCH(index) 1
-    }
     if {$opts(-body) != ""} {
 	# always run it once to remove compile phase confusion
 	catch {uplevel \#0 $opts(-body)}
@@ -141,8 +138,7 @@ proc bench {args} {
 		set res "ERR"
 	    }
 	}
-	set bench([format "%.3d" $BENCH(index)]) [list $opts(-desc) $res]
-	incr BENCH(index)
+	set bench($opts(-desc)) $res
     }
     if {$opts(-post) != ""} {
 	uplevel \#0 $opts(-post)
@@ -218,8 +214,8 @@ foreach file $BENCH(FILES) {
     }
 }
 
-foreach i [array names bench] {
-    puts $BENCH(OUTFID) [list $i $bench($i)]
+foreach desc [array names bench] {
+    puts $BENCH(OUTFID) [list $desc $bench($desc)]
 }
 
 exit.true ; # needed for Tk tests

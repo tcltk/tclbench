@@ -3,11 +3,11 @@
 exec tclsh "$0" ${1+"$@"}
 
 #
-# Run the main script from an 8.1.1+ interp
+# Run the main script from an 8.2+ interp
 #
-if {[catch {package require Tcl 8.1.1}]} {
+if {[catch {package require Tcl 8.2}]} {
     set me [file tail [info script]]
-    puts stderr "$me requires 8.1.1+ to run, although it can benchmark\
+    puts stderr "$me requires 8.2+ to run, although it can benchmark\
 	    any Tcl v7+ interpreter"
     exit 1
 }
@@ -24,6 +24,7 @@ proc usage {} {
 	    \n\t-maxversion <version>	# maximum interp version to use\
 	    \n\t-rmatch <regexp>	# only run tests matching this pattern\
 	    \n\t-match <glob>		# only run tests matching this pattern\
+	    \n\t-normalize <version>	# normalize numbers to given version\
 	    \n\t-notcl			# do not run tclsh tests\
 	    \n\t-notk			# do not run wish tests\
 	    \n\t-output <text|list|csv>	# style of output from program\
@@ -62,6 +63,7 @@ array set opts {
     verbose	0
     output	text
     iters	2000
+    norm	{}
 }
 if {[llength $argv]} {
     while {[llength $argv]} {
@@ -96,6 +98,10 @@ if {[llength $argv]} {
 	    }
 	    -rmatch*	{
 		set opts(rmatch) [lindex $argv 1]
+		set argv [lreplace $argv 0 1]
+	    }
+	    -norm*	{
+		set opts(norm) [lindex $argv 1]
 		set argv [lreplace $argv 0 1]
 	    }
 	    -notcl	{
@@ -193,6 +199,31 @@ proc getInterps {optArray pattern iArray} {
 	    }
 	}
     }
+
+    #
+    # Post process ordering of the interpreters for output
+    #
+    set i 0
+    foreach ipair $var(ORDERED) {
+	set label  [incr i]:[lindex $ipair 0]
+	set interp [lindex $ipair 1]
+	if {[string equal "$i:$opts(norm)" $label]} {
+	    set opts(norm) $label
+	    set ok 1
+	} elseif {$opts(norm) != "" && [string match "*$opts(norm)" $interp]} {
+	    set opts(norm) $label
+	    set ok 1
+	}
+	lappend var(VERSION) $label
+	set var($label)      $interp
+    }
+    if {$opts(norm) != "" && ![info exists ok]} {
+	puts stderr "Unable to normalize \"$opts(norm)\":\
+		must be patchlevel or name of executable"
+	set opts(norm) {}
+	if {$opts(errors)} { exit }
+    }
+    vputs stdout "$iArray: $var(VERSION)"
 }
 
 #
@@ -203,21 +234,6 @@ proc vputs {args} {
     if {$opts(verbose)} {
 	uplevel 1 [list puts] $args
     }
-}
-
-#
-# Post processing
-#
-proc orderInterps {iArray} {
-    upvar 1 $iArray var
-    set i 0
-    foreach ipair $var(ORDERED) {
-	set label  [incr i]:[lindex $ipair 0]
-	set interp [lindex $ipair 1]
-	lappend var(VERSION)	$label
-	set var($label)		$interp
-    }
-    vputs stdout "$iArray: $var(VERSION)"
 }
 
 #
@@ -237,51 +253,78 @@ proc collectData {iArray dArray oArray fileList} {
 		-interp $interp \
 		-errors $opts(errors) \
 		]
-	if {[catch {eval exec $cmd $fileList} output]} {
-	    if {$opts(errors)} {
-		error $::errorInfo
-	    } else {
-		puts stderr $patchlevel
-		continue
+	set start [clock seconds]
+	foreach file $fileList {
+	    vputs -nonewline stdout [string index [file tail $file] 0]
+	    flush stdout
+	    if {[catch {eval exec $cmd [list $file]} output]} {
+		if {$opts(errors)} {
+		    error $::errorInfo
+		} else {
+		    puts stderr $patchlevel
+		    continue
+		}
 	    }
-	}
-	vputs stdout "MIDPOINT [now]"
-	#vputs $output ; continue
-	array set tmp $output
-	catch {unset tmp(Sourcing)}
-	foreach i [array names tmp] {
-	    set DATA($i,desc)   [lindex $tmp($i) 0]
-	    set DATA($i,$label) [lindex $tmp($i) 1]
-	    if {[string length $i$DATA($i,desc)] > $DATA(MAXLEN)} {
-		set DATA(MAXLEN) [string length $i$DATA($i,desc)]
+	    #vputs $output ; continue
+	    array set tmp $output
+	    catch {unset tmp(Sourcing)}
+	    foreach desc [array names tmp] {
+		set DATA(desc:${desc}) {}
+		set DATA(:$desc$label) $tmp($desc)
+		if {[string length $desc] > $DATA(MAXLEN)} {
+		    set DATA(MAXLEN) [string length $desc]
+		}
 	    }
+	    unset tmp
 	}
+	set elapsed [expr {[clock seconds] - $start}]
+	set hour [expr {$elapsed / 3600}]
+	set min [expr {$elapsed / 60}]
+	set sec [expr {$elapsed % 60}]
+	vputs stdout " [format %.2d:%.2d:%.2d $hour $min $sec] elapsed"
     }
 }
 
 #
 # Various data output styles
 #
-proc outputData-text {iArray dArray} {
+proc outputData-text {iArray dArray {norm {}}} {
     upvar 1 $iArray ivar $dArray DATA
 
-    set fmt "%-[expr {$DATA(MAXLEN) + 1}]s"
-    set out [format $fmt "000 VERSIONS:"]
+    set fmt "%.3d %-$DATA(MAXLEN)s"
+    set i 0
+    set out [format $fmt $i "VERSIONS:"]
     foreach lbl $ivar(VERSION) { append out [format " %7s" $lbl] }
     append out \n
 
-    foreach elem [lsort -dictionary [array names DATA {*desc}]] {
-	set name [lindex [split $elem ,] 0]
-	append out [format $fmt "$name $DATA($elem)"]
+    foreach elem [lsort -dictionary [array names DATA {desc*}]] {
+	set desc [string range $elem 5 end]
+	append out [format $fmt [incr i] $desc]
 	foreach lbl $ivar(VERSION) {
-	    # not %d to allow non-int result codes
-	    if {![info exists DATA($name,$lbl)]} { set DATA($name,$lbl) "-=-" }
-	    append out [format " %7s" $DATA($name,$lbl)]
+	    # establish a default for tests that didn't exist for this interp
+	    if {![info exists DATA(:$desc$lbl)]} { set DATA(:$desc$lbl) "-=-" }
+	}
+	if {[info exists DATA(:$desc$norm)] && \
+		[string is double -strict $DATA(:$desc$norm)]} {
+	    foreach lbl $ivar(VERSION) {
+		if {[string is double -strict $DATA(:$desc$lbl)]} {
+		    append out [format " %7.2f" \
+			    [expr {double($DATA(:$desc$lbl)) / \
+			    double($DATA(:$desc$norm))}]]
+		} else {
+		    append out [format " %7s" $DATA(:$desc$lbl)]
+		}
+	    }
+	} else {
+	    foreach lbl $ivar(VERSION) {
+		# not %d to allow non-int result codes
+		append out [format " %7s" $DATA(:$desc$lbl)]
+	    }
 	}
 	append out "\n"
     }
 
-    append out [format $fmt "END VERSIONS:"]
+    append out [format $fmt $i "BENCHMARKS"]
     foreach lbl $ivar(VERSION) { append out [format " %7s" $lbl] }
     append out \n
     return $out
@@ -291,23 +334,38 @@ proc outputData-text {iArray dArray} {
 # List format is:
 #  <num> <desc> <val1> <val2> ...
 #
-proc outputData-list {iArray dArray} {
+proc outputData-list {iArray dArray {norm {}}} {
     upvar 1 $iArray ivar $dArray DATA
 
-    set out [list [concat [list 000 VERSIONS:] $ivar(VERSION)]]
+    set i 0
+    set out [list [concat [list $i VERSIONS:] $ivar(VERSION)]]
 
-    foreach elem [lsort -dictionary [array names DATA {*desc}]] {
-	set name [lindex [split $elem ,] 0]
-	set line [list $name $DATA($elem)]
+    foreach elem [lsort -dictionary [array names DATA {desc*}]] {
+	set desc [string range $elem 5 end]
+	set name [incr i]
+	set line [list [incr i] $desc]
 	foreach lbl $ivar(VERSION) {
-	    # not %d to allow non-int result codes
-	    if {![info exists DATA($name,$lbl)]} { set DATA($name,$lbl) "-=-" }
-	    lappend line $DATA($name,$lbl)
+	    # establish a default for tests that didn't exist for this interp
+	    if {![info exists DATA(:$desc$lbl)]} { set DATA(:$desc$lbl) "-=-" }
+	}
+	if {[info exists DATA(:$desc$norm)] && \
+		[string is double -strict $DATA(:$desc$norm)]} {
+	    foreach lbl $ivar(VERSION) {
+		if {[string is double -strict $DATA(:$desc$lbl)]} {
+		    lappend line [format "%.2f" \
+			    [expr {double($DATA(:$desc$lbl)) / \
+			    double($DATA(:$desc$norm))}]]
+		} else {
+		    lappend line $DATA(:$desc$lbl)
+		}
+	    }
+	} else {
+	    foreach lbl $ivar(VERSION) { lappend line $DATA(:$desc$lbl) }
 	}
 	lappend out $line
     }
 
-    lappend out [concat [list END VERSIONS:] $ivar(VERSION)]
+    lappend out [concat [list $i BENCHMARKS] $ivar(VERSION)]
     return $out
 }
 
@@ -328,18 +386,19 @@ proc list2csv {list} {
     return $out
 }
 
-proc outputData {type iArray dArray} {
-    upvar 1 $iArray ivar $dArray DATA
+proc outputData {optArray iArray dArray} {
+    upvar 1 $optArray opts $iArray ivar $dArray DATA
 
-    switch -exact -- $type {
+    switch -exact -- $opts(output) {
 	text {
-	    puts -nonewline stdout [outputData-text ivar DATA]
+	    puts -nonewline stdout [outputData-text ivar DATA $opts(norm)]
 	}
 	list {
-	    puts -nonewline stdout [join [outputData-list ivar DATA] \n]\n
+	    puts stdout [join [outputData-list ivar DATA $opts(norm)] \n]
 	}
 	csv {
-	    puts -nonewline stdout [list2csv [outputData-list ivar DATA]]
+	    puts -nonewline stdout \
+		    [list2csv [outputData-list ivar DATA $opts(norm)]]
 	}
     }
 }
@@ -351,10 +410,9 @@ proc now {} {
 if {[llength $opts(tcllist)] && $opts(usetcl)} {
     array set TCL_INTERP {ORDERED {} VERSION {}}
     getInterps opts $opts(tclsh) TCL_INTERP
-    orderInterps TCL_INTERP
     vputs stdout "STARTED [now]"
     collectData TCL_INTERP TCL_DATA opts $opts(tcllist)
-    outputData $opts(output) TCL_INTERP TCL_DATA
+    outputData opts TCL_INTERP TCL_DATA
     vputs stdout "FINISHED [now]"
 }
 
@@ -362,9 +420,8 @@ if {[llength $opts(tklist)] && $opts(usetk)} {
     vputs stdout ""
     array set TK_INTERP {ORDERED {} VERSION {}}
     getInterps opts $opts(wish) TK_INTERP
-    orderInterps TK_INTERP
     vputs stdout "STARTED [now]"
     collectData TK_INTERP TK_DATA opts $opts(tklist)
-    outputData $opts(output) TK_INTERP TK_DATA
+    outputData opts TK_INTERP TK_DATA
     vputs stdout "FINISHED [now]"
 }
