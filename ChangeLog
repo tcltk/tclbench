@@ -1,3 +1,7 @@
+2002-07-24  Miguel Sofer <msofer@users.sourceforge.net>
+
+	* tcl/base64.bench: added the current code from tcllib.
+	
 2002-06-20  Miguel Sofer <msofer@users.sourceforge.net>
 
 	* tcl/read.bench: modified to actually "use" the data being read
