@@ -19,46 +19,50 @@ proc if-3.1 {val} {
     if {$val == "abcde"} { set i 0 } elseif {$val == "fghij"} { set i 0 } else { set i 0 }
 }
 
+proc if-4.1 {val} {
+    if {$val == 0} { set i 0 } elseif {$val == 1} {
+	set i 0
+    } elseif {$val == 2} { set i 0 } elseif {$val == 3} {
+	set i 0
+    } elseif {$val == 4} { set i 0 } elseif {$val == 5} {
+	set i 0
+    } elseif {$val == 6} { set i 0 } elseif {$val == 7} {
+	set i 0
+    } elseif {$val == 8} { set i 0 } elseif {$val == 9} {
+	set i 0
+    } else {
+	set i 0
+    }
+    if {$val == 0} { set i 0 } elseif {$val == 1} {
+	set i 0
+    } elseif {$val == 2} { set i 0 } elseif {$val == 3} {
+	set i 0
+    } elseif {$val == 4} { set i 0 } elseif {$val == 5} {
+	set i 0
+    } elseif {$val == 6} { set i 0 } elseif {$val == 7} {
+	set i 0
+    } elseif {$val == 8} { set i 0 } elseif {$val == 9} {
+	set i 0
+    } else {
+	set i 0
+    }
+}
+
 # Test cases with switch/case
 proc switch-1.1 {val} {
     switch -exact -- $val {
-        0 { set i 0 }
-        1 { set i 0 }
-        2 { set i 0 }
-        3 { set i 0 }
-        4 { set i 0 }
-        5 { set i 0 }
-        6 { set i 0 }
-        7 { set i 0 }
-        8 { set i 0 }
-        9 { set i 0 }
-        default { set i 0 }
+	0 { set i 0 } 1 { set i 0 } 2 { set i 0 }
+	3 { set i 0 } 4 { set i 0 } 5 { set i 0 }
+	6 { set i 0 } 7 { set i 0 } 8 { set i 0 }
+	9 { set i 0 }
+	default { set i 0 }
     }
     switch -exact -- $val {
-        0 { set i 0 }
-        1 { set i 0 }
-        2 { set i 0 }
-        3 { set i 0 }
-        4 { set i 0 }
-        5 { set i 0 }
-        6 { set i 0 }
-        7 { set i 0 }
-        8 { set i 0 }
-        9 { set i 0 }
-        default { set i 0 }
-    }
-    switch -exact -- $val {
-        0 { set i 0 }
-        1 { set i 0 }
-        2 { set i 0 }
-        3 { set i 0 }
-        4 { set i 0 }
-        5 { set i 0 }
-        6 { set i 0 }
-        7 { set i 0 }
-        8 { set i 0 }
-        9 { set i 0 }
-        default { set i 0 }
+	0 { set i 0 } 1 { set i 0 } 2 { set i 0 }
+	3 { set i 0 } 4 { set i 0 } 5 { set i 0 }
+	6 { set i 0 } 7 { set i 0 } 8 { set i 0 }
+	9 { set i 0 }
+	default { set i 0 }
     }
 }
 
@@ -76,7 +80,12 @@ bench -desc "IF if true al" -body {if-3.1 abcde}
 bench -desc "IF elseif true al" -body {if-3.1 fghij}
 bench -desc "IF else true al" -body {if-3.1 klmno}
 
-bench -desc "SWITCH first true" -body {switch-1.1 1}
-bench -desc "SWITCH second true" -body {switch-1.1 2}
-bench -desc "SWITCH ninth true" -body {switch-1.1 9}
-bench -desc "SWITCH default true" -body {switch-1.1 3}
+bench -desc "IF multi 1st true" -body {if-4.1 1}
+bench -desc "IF multi 2nd true" -body {if-4.1 2}
+bench -desc "IF multi 9th true" -body {if-4.1 9}
+bench -desc "IF multi default true" -body {if-4.1 99}
+
+bench -desc "SWITCH 1st true" -body {switch-1.1 1}
+bench -desc "SWITCH 2nd true" -body {switch-1.1 2}
+bench -desc "SWITCH 9th true" -body {switch-1.1 9}
+bench -desc "SWITCH default true" -body {switch-1.1 99}
