@@ -14,6 +14,22 @@ proc var-local-input {a} {
     set d $a
 }
 
+# Local input variable access
+proc var-mset {l} {
+    set a [lindex $l 0]
+    set b [lindex $l 1]
+    set c [lindex $l 2]
+    set d [lindex $l 3]
+    set e [lindex $l 4]
+    set f [lindex $l 5]
+    set g [lindex $l 6]
+    set h [lindex $l 7]
+}
+
+proc var-foreach {l} {
+    foreach {a b c d e f g h} $l { break }
+}
+
 # Global variable access
 # This takes a bogus input var to avoid proc compilation slowdown
 # (8.[12]) from skewing point of this test
@@ -126,3 +142,8 @@ bench -desc "VAR ref variable" \
 	-body {::foo::var::ref 50}
 bench -desc "VAR ref absolute" \
 	-body {::foo::var::gref 50}
+
+bench -desc "VAR mset" \
+	-body [list var-mset [list a b c d e f g h]]
+bench -desc "VAR mset (foreach)" \
+	-body [list var-foreach [list a b c d e f g h]]
