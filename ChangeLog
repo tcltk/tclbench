@@ -1,4 +1,4 @@
-2002-06-11  Miguel Sofer <msofer@users.sourceforge.net>
+2002-06-20  Miguel Sofer <msofer@users.sourceforge.net>
 
 	* tcl/md5.bench: added the faster implementation from tcllib
 	
