@@ -19,6 +19,7 @@ proc usage {} {
     puts stderr "Usage: $me ?options?\
 	    \n\t-help			# print out this message\
 	    \n\t-errors <0|1>		# whether or not errors should be thrown\
+	    \n\t-iterations <#>		# default # of iterations to run a benchmark\
 	    \n\t-minversion <version>	# minimum interp version to use\
 	    \n\t-maxversion <version>	# maximum interp version to use\
 	    \n\t-match <glob>		# only run tests matching this pattern\
