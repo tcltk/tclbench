@@ -175,6 +175,21 @@ proc rev-recursive {string} {
 		[string range $string 1 end]][string index $string 0]
     }
 }
+if {[info tclversion] < 8.0} {
+    # large strings hit the infinite loop boundary (recursion limit) in 7.x
+    proc rev-recursive2 {string} {
+	if {[string length $string]} {
+	    return [rev-recursive2 \
+		    [string range $string 1 end]][string index $string 0]
+	}
+    }
+    proc rev-recursive {string} {
+	if {[string length $string] > 200} {
+	    return -code 666 "8.0+"
+	}
+	rev-recursive2 $string
+    }
+}
 
 proc str-split {string} {
     split $string {}
@@ -194,7 +209,7 @@ for {set i 0} {$i < 100} {incr i} {
     append longString "abcdefghijklmnopqrstuvwxyz01234567890123"
 }
 for {set i 0} {$i < 100} {incr i} {
-    append ustring "abcdefghijk\369\370\371\372pqrs\373uvwxyz0123456789012\374"
+    append ustring "abcdefghijk\353\370\371\372pqrs\373uvwxyz0123456789012\374"
 }
 append longString 0987654321
 
@@ -292,39 +307,36 @@ bench -desc "STR repeat, [string length $longString] chars * 100" \
 
 foreach chars {10 100 400} {
     bench -desc "STR reverse iter/append, $chars c" \
-	    -pre {set string [string range $longString 0 $chars]} \
+	    -pre {set string [string range $longString 1 $chars]} \
 	    -body {rev-append $string}
     bench -desc "STR reverse iter/append, $chars uc" \
-	    -pre {set string [string range $ustring 0 $chars]} \
+	    -pre {set string [string range $ustring 1 $chars]} \
 	    -body {rev-append $string}
 
     bench -desc "STR reverse iter/set, $chars c" \
-	    -pre {set string [string range $longString 0 $chars]} \
+	    -pre {set string [string range $longString 1 $chars]} \
 	    -body {rev-set $string}
     bench -desc "STR reverse iter/set, $chars uc" \
-	    -pre {set string [string range $ustring 0 $chars]} \
+	    -pre {set string [string range $ustring 1 $chars]} \
 	    -body {rev-set $string}
 
     bench -desc "STR reverse recursive, $chars c" \
-	    -pre {set string [string range $longString 0 $chars]} \
+	    -pre {set string [string range $longString 1 $chars]} \
 	    -body {rev-recursive $string}
     bench -desc "STR reverse recursive, $chars uc" \
-	    -pre {set string [string range $ustring 0 $chars]} \
+	    -pre {set string [string range $ustring 1 $chars]} \
 	    -body {rev-recursive $string}
 }
 
-bench -desc "STR split, [string length $longString] chars" \
-	-body {str-split $longString} \
-	-iters 500
-bench -desc "STR split, [string length $ustring] uchars" \
-	-body {str-split $ustring} \
-	-iters 500
-bench -desc "STR split iter, [string length $longString] chars" \
-	-body {str-split-iter $longString} \
-	-iters 500
-bench -desc "STR split iter, [string length $ustring] uchars" \
-	-body {str-split-iter $ustring} \
-	-iters 500
+set iter 500
+bench -desc "STR split, [string length $longString] chars" -iter $iter \
+	-body {str-split $longString}
+bench -desc "STR split, [string length $ustring] uchars" -iter $iter \
+	-body {str-split $ustring}
+bench -desc "STR split iter, [string length $longString] chars" -iter $iter \
+	-body {str-split-iter $longString}
+bench -desc "STR split iter, [string length $ustring] uchars" -iter $iter \
+	-body {str-split-iter $ustring}
 
 bench -desc "STR append" \
       -body {str-append $longString "01234567890123456789"}
