@@ -42,9 +42,36 @@ proc matrixTransp1 {m} {
     set result
 }
 
+# From:
+# http://www.bagley.org/~doug/shootout/
+proc mmult {m1 m2} {
+    set cols [lindex $m2 0]
+    foreach row1 $m1 {
+        set row {}
+        set i 0
+        foreach - $cols {
+            set elem 0
+            foreach elem1 $row1 row2 $m2 {
+                set elem [expr {$elem + $elem1 * [lindex $row2 $i]}]
+            }
+            lappend row $elem
+            incr i
+        }
+        lappend result $row
+    }
+    return $result
+}
+
 set m [makeMatrix 20 50]
 set iter 400
 bench -desc "MATRIX transposition-0" -iter $iter \
 	-body {matrixTransp0 $m}
 bench -desc "MATRIX transposition-1" -iter $iter \
 	-body {matrixTransp1 $m}
+
+foreach size {5 10 15} {
+    set m1 [makeMatrix $size $size]
+    set m2 [makeMatrix $size $size]
+    bench -desc "MATRIX mult ${size}x${size}" -iter $iter \
+	    -body {mmult $m1 $m2}
+}

@@ -1,3 +1,10 @@
+2001-05-16  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/heapsort.bench: new file with heapsort benchmark
+	* tcl/string.bench:
+	* tcl/matrix.bench:
+	* tcl/regexp.bench: extended benchmarks
+
 2001-05-11  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tcl/string.bench: clarified string reverse benchmarks, added

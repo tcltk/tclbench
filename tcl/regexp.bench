@@ -4,12 +4,17 @@ proc regexp-1.1 {string} {
 }
 
 # Variable based regexp
-proc regexp-1.2 {string exp} {
+proc regexp-str-exp {string exp} {
     regexp $exp $string
 }
 
+# Variable based regexp with catching
+proc regexp-catch {string exp} {
+    regexp $exp $string match one two three
+}
+
 if { [catch {regexp -all "abc" "abc"}] } {
-    proc regexp-2.1 {string exp} {
+    proc regexp-count {string exp} {
 	set len [string len $string]
 	set ind 0
 	set count 0
@@ -27,7 +32,7 @@ if { [catch {regexp -all "abc" "abc"}] } {
 	}
 	set count
     }
-    proc regexp-2.2 {string exp} {
+    proc regexp-extract {string exp} {
 	set len [string len $string]
 	set ind 0
 	set result {}
@@ -47,19 +52,63 @@ if { [catch {regexp -all "abc" "abc"}] } {
 	set result
     }
 } else {
-    proc regexp-2.1 {string exp} {
+    proc regexp-count {string exp} {
 	regexp -all $exp $string
     }
-    proc regexp-2.2 {string exp} {
+    proc regexp-extract {string exp} {
 	regexp -all -inline $exp $string
+    }
+}
+
+if { [catch {string repeat "abc" 10}] } {
+    proc str-repeat {str num} {
+	for {set i 0} {$i < $num} {incr i} {
+	    append val $str
+	}
+    }
+} else {
+    proc str-repeat {str num} {
+	string repeat $str $num
     }
 }
 
 set string "abcdefghijklmnopqrstuvwxyz"
 set exp "^abc(.*)jkl(.*)"
-bench -desc "REGEXP literal regexp" -body {regexp-1.1 $string}
-bench -desc "REGEXP var-based regexp" -body {regexp-1.2 $string $exp}
-bench -desc "REGEXP count all matches" \
-	-body {regexp-2.1 "abcabcabcabcabcabc" "abc"}
-bench -desc "REGEXP extract all matches" \
-	-body {regexp-2.2 "abcabcabcabcabcabc" "abc"}
+bench -desc "RE literal regexp" -body {regexp-1.1 $string}
+bench -desc "RE var-based regexp" -body {regexp-str-exp $string $exp}
+bench -desc "RE count all matches" \
+	-body {regexp-count "abcabcabcabcabcabc" "abc"}
+bench -desc "RE extract all matches" \
+	-body {regexp-extract "abcabcabcabcabcabc" "abc"}
+
+set cCommentUnopt {/\*([^*]|\*+[^/*])*\*+/}
+set cCommentOpt   {/\*[^*]*\*+([^/*][^*]*\*+)*/}
+set 1char "(c)"
+set nchar "(b+)"
+
+set tests [list \
+	"1-char short" $1char "abcdef" \
+	"1-char long-start" $1char "abc[str-repeat a 1000]" \
+	"1-char long-middle" $1char "[str-repeat a 500]c[str-repeat a 500]" \
+	"1-char long-end" $1char "[str-repeat a 1000]cba" \
+	"n-char short" $nchar "abbbbbcdef" \
+	"n-char long-start" $nchar "a[str-repeat b 20][str-repeat a 1000]" \
+	"n-char long-middle" $nchar "[str-repeat a 500][str-repeat b 20][str-repeat a 500]" \
+	"n-char long-end" $nchar "[str-repeat a 1000]c[str-repeat b 20]a" \
+	"basic" {^([^ ]*)[ ]*([^ ]*)} "" \
+	"c-comment simple" $cCommentOpt "/* foo * x * y * z * a * b * c */" \
+	"c-comment nomatch" $cCommentOpt "there aren't any comments here" \
+	"c-comment long" $cCommentOpt "/* [str-repeat a 1000] */" \
+	"c-comment long pmatch" $cCommentOpt "/* [str-repeat a 2000] [str-repeat * 100]" \
+	"c-comment long nomatch" $cCommentOpt "[str-repeat a 2000]" \
+	"c-comment many *s" $cCommentOpt "/* [str-repeat a 2000] [str-repeat * 100]/" \
+	]
+
+foreach {type re str} $tests {
+    bench -desc "RE $type" \
+	    -body {regexp-str-exp $str $re}
+}
+foreach {type re str} $tests {
+    bench -desc "RE $type catching" \
+	    -body {regexp-catch $str $re}
+}

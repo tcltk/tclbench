@@ -91,10 +91,6 @@ proc str-index {a i} {
     string index $a $i
 }
 
-proc str-index2 {a i} {
-    string index $a $i
-}
-
 proc str-first {a s} {
     string first $s $a
 }
@@ -167,9 +163,11 @@ proc rev-append {string} {
     }
     return $out
 }
-proc rev-recursive {string} { 
-    if {[string length $string] == 0} {return ""}
-    return [rev-recursive [string range $string 1 end]][string index $string 0]
+proc rev-recursive {string} {
+    if {[string length $string]} {
+	return [rev-recursive \
+		[string range $string 1 end]][string index $string 0]
+    }
 }
 
 proc str-split {string} {
@@ -227,19 +225,10 @@ bench -desc "STR str \$a ne \$b (same obj)" \
 bench -desc "STR length (==[string length $longString])" \
 	-body {str-len $longString}
 
-bench -desc "STR index 0" \
-	-body {str-index $longString 0}
-bench -desc "STR index 100" \
-	-body {str-index $longString 100}
-bench -desc "STR index 500" \
-	-body {str-index $longString 500}
-
-bench -desc "STR index2 0" \
-	-body {str-index2 $longString 0}
-bench -desc "STR index2 100" \
-	-body {str-index2 $longString 100}
-bench -desc "STR index2 500" \
-	-body {str-index2 $longString 500}
+foreach len {0 100 500} {
+    bench -desc "STR index $len" \
+	    -body {str-index $longString $len}
+}
 
 bench -desc "STR first (success)" \
 	-body {str-first $longString 901}
@@ -293,7 +282,7 @@ bench -desc "STR repeat, [string length $longString] chars * 10" \
 bench -desc "STR repeat, [string length $longString] chars * 100" \
 	-body {str-repeat $longString 100}
 
-foreach chars {10 100 500} {
+foreach chars {10 100 400} {
     bench -desc "STR reverse iter/append, $chars c" \
 	    -pre {set string [string range $longString 0 $chars]} \
 	    -body {rev-append $string}

@@ -1,0 +1,67 @@
+#!/usr/local/bin/tclsh
+# $Id: heapsort.bench,v 1.1 2001/05/16 21:51:17 hobbs Exp $
+# http://www.bagley.org/~doug/shootout/
+# sped up by Miguel Sofer's function generator
+# adapated for tclbench by Jeff Hobbs
+
+set IM 139968
+set IA   3877
+set IC  29573
+
+set last 42
+
+proc gen_random {max} [subst {
+    global last
+    expr {(\$max * \[set last \[expr {(\$last * $IA + $IC) % $IM}\]\]) / $IM}
+}]
+
+proc heapsort {n ra_name} {
+    upvar 1 $ra_name ra
+
+    set j 0
+    set i 0
+    set rra 0.0
+    set l [expr {($n >> 1) + 1}]
+    set ir $n
+    while 1 {
+        if {$l > 1} {
+	    incr l -1
+            set rra $ra($l)
+        } else {
+	    set rra $ra($ir)
+	    set ra($ir) $ra(1)
+	    incr ir -1
+	    if {$ir == 1} {
+                set ra(1) $rra
+                return
+            }
+        }
+	set i $l
+	set j [expr {$l << 1}]
+        while {$j <= $ir} {
+	    if {($j < $ir) && ($ra($j) < $ra([expr {$j + 1}]))} {
+		incr j
+	    }
+            if {$rra < $ra($j)} {
+		set ra($i) $ra($j)
+		set i $j
+                set j [expr {$j + $i}]
+            } else {
+		set j [expr {$ir + 1}]
+            }
+        }
+        set ra($i) $rra
+    }
+}
+
+proc do {{n 100}} {
+    for {set i 1} {$i <= $n} {incr i} {
+	set ary($i) [gen_random 1.0]
+    }
+    heapsort $n ary
+}
+
+foreach size {10 50 100} {
+    bench -desc "HEAPSORT size $size" -iter 500 \
+	    -body {do $size}
+}
