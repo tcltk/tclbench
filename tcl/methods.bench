@@ -1,0 +1,87 @@
+namespace eval dad {
+    proc test {x args} {set x}
+    test 5
+    namespace export -clear *
+}
+namespace eval son {}
+
+# 1. Plain proc call
+proc ::son::test {x args} {set x}
+
+bench -desc "MTHD direct ns proc call" \
+	-body {::son::test 5}
+
+namespace eval :: {rename ::son::test {}}
+
+#  namespace import
+namespace eval ::son { namespace import -force ::dad::* }
+
+bench -desc "MTHD imported ns proc call" \
+	-body {::son::test 5}
+
+namespace eval :: {rename ::son::test {}}
+
+#  interp alias
+interp alias {} ::son::test {} ::dad::test
+
+bench -desc "MTHD interp alias proc call" \
+	-body {::son::test 5}
+
+interp alias {} ::son::test {}
+
+#  indirect through proc
+proc ::son::test {x args} { eval [linsert $args 0 ::dad::test $x] }
+
+bench -desc "MTHD indirect proc eval" \
+	-body {::son::test 5}
+
+namespace eval :: {rename ::son::test {}}
+
+#  indirect through proc
+proc ::son::test {x args} { eval [list ::dad::test $x] $args }
+
+bench -desc "MTHD indirect proc eval #2" \
+	-body {::son::test 5}
+
+namespace eval :: {rename ::son::test {}}
+
+#  store in array (it's name is the empty string!)
+set ::(::son::test) ::dad::test
+
+bench -desc "MTHD array stored proc call" \
+	-body {$::(::son::test) 5}
+
+#  switch
+proc ::son {method args} {
+    switch $method {
+	a     {}
+	b     {}
+	test     {return [eval [linsert $args 0 ::dad::test]]}
+    }
+}
+
+bench -desc "MTHD switch method call" \
+	-body {::son  test 5}
+
+namespace eval :: {rename ::son {}}
+
+#  lookup
+set ::b [list ::dad ::none]
+proc ::son {method args} {
+    foreach anc $::b {
+	if {[llength [info proc ${anc}::$method]]} {
+	    return [eval  [linsert $args 0 ${anc}::$method]]
+	}
+    }
+}
+
+bench -desc "MTHD ns lookup call" \
+	-body {::son test 5}
+
+namespace eval :: {rename ::son {}}
+
+#  inline
+set x 5
+
+bench -desc "MTHD inline call" \
+	-body {set x}

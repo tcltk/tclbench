@@ -1,0 +1,174 @@
+# From http://mini.net/cgi-bin/wikit/941
+# Procedure to generate a list of n numbers: 
+proc iota { n } {
+    for { set i 0 } { $i < $n } { incr i } {
+	lappend retval $i
+    }
+    return $retval
+}
+
+# Several of the procedures rely on Donal Fellows's K combinator: 
+proc K { x y } { set x }
+
+# shuffle0 is the obvious method of generating random keys, then sorting the
+# list according to those keys.
+proc shuffle0 { list } {
+    set newlist 0
+    foreach element $list {
+	lappend newlist [list [expr { rand() }] $element]
+    }
+    foreach pair [lsort -real -index 0 $newlist] {
+	foreach { random item } $pair {}
+	lappend retval $item
+    }
+    return $retval
+}
+
+# shuffle1 is Techentin's implementation of Bentley's method. 
+proc shuffle1 { list } {
+    set n [llength $list]
+    for { set i 0 } { $i < $n } { incr i } {
+	set j [expr {int(rand()*$n)}]
+	set temp [lindex $list $j]
+	set list [lreplace $list $j $j [lindex $list $i]]
+	set list [lreplace $list $i $i $temp]
+    }
+    return $list
+}
+
+# shuffle1a is Techentin's code, with a clever hack (due to Donal Fellows) for
+# managing the lifetime of the Tcl_Obj that represents the list so that it
+# doesn't get copied needlessly.
+proc shuffle1a { list } {
+    set n [llength $list]
+    for { set i 0 } { $i < $n } { incr i } {
+	set j [expr {int(rand()*$n)}]
+	set temp1 [lindex $list $j]
+	set temp2 [lindex $list $i]
+	set list [lreplace [K $list [set list {}]] $j $j $temp2]
+	set list [lreplace [K $list [set list {}]] $i $i $temp1]
+    }
+    return $list
+}
+
+# shuffle2 implements Bentley's method, unpacking the list to an array first. 
+proc shuffle2 { list } {
+    set n 0
+    foreach element $list {
+	set data($n) $element
+	incr n
+    }
+    for { set i 0 } { $i < $n } { incr i } {
+	set j [expr {int(rand()*$n)}]
+	set temp $data($j)
+	set data($j) $data($i)
+	set data($i) $temp
+    }
+    for { set i 0 } { $i < $n } { incr i } {
+	lappend retval $data($i)
+    }
+    return $retval
+}
+
+# shuffle3 is Bob Techentin's implementation of Stephen D. Cohen's proposed
+# method.
+proc shuffle3 { list } {
+    set n [llength $list]
+    while {$n>0} {
+	set j [expr {int(rand()*$n)}]
+	lappend slist [lindex $list $j]
+	set list [lreplace [K $list [set list {}]] $j $j]
+	incr n -1
+    }
+    return $slist
+}
+
+# shuffle4 is Steve Cohen's improved implementation: 
+proc shuffle4 { list } {
+    set n [llength $list]
+    while {$n>0} {
+	set j [expr {int(rand()*$n)}]
+	lappend slist [lindex $list $j]
+	incr n -1
+	set temp [lindex $list $n]
+	set list [lreplace [K $list [set list {}]] $j $j $temp]
+    }
+    return $slist
+}
+
+proc slow {args} {
+    return -code 666 "SLOW"
+}
+
+# The test harness times the various methods and prints the results. 
+
+set LENGTHS	[list 1     10   100  1000 10000]
+set ITERS	[list 5000  2000 800  200  20]
+
+proc doShuffle {} {
+    global LENGTHS ITERS
+    # init the lists
+    foreach n $LENGTHS {
+	set LISTS($n) [iota $n]
+    }
+
+    # do the benchmarking
+    foreach method {
+	shuffle0 shuffle1 shuffle1a shuffle4
+    } {
+	foreach n $LENGTHS iter $ITERS {
+	    if {($method == "shuffle1") && ($n > 1000)} {
+		continue
+	    }
+	    bench -desc "KLIST $method llength $n" \
+		    -body [list $method $LISTS($n)] -iter $iter
+	}
+    }
+}
+
+proc doShuffle0 {} {
+    global LENGTHS ITERS
+    # init the lists
+    foreach n $LENGTHS {
+	set LISTS($n) [iota $n]
+    }
+
+    puts "  Tcl[info patchlevel]      Times in usec for shuffle methods"
+    puts "  Method                    List length"
+    puts "                  [join $LENGTHS \t]"
+    puts " --------------------------------------------------"
+    # do the benchmarking
+    foreach method {
+	shuffle0 shuffle1 shuffle1a shuffle2 shuffle3 shuffle4
+    } {
+	set line [format " %-10s" $method]
+	foreach n $LENGTHS iter $ITERS {
+	    if {($method == "shuffle1") && ($n > 1000)} {
+		append line "  ------"
+	    } else {
+		set t [time {$method $LISTS($n)} $iter]
+		append line [format "%8d" [lindex $t 0]]
+	    }
+	}
+	puts $line
+    }
+}
+
+if {[info commands bench] == ""} {
+    doShuffle0
+} else {
+    doShuffle
+}
+
+# The results are summarized in the following table: 
+
+#  Tcl8.4a2      Times in usec for shuffle methods
+#  Method                    List length
+#		   1      10     100    1000    5000
+#  -------------------------------------------------
+#  shuffle0       145     435    3387   35831  198332
+#  shuffle1        61     326    4067  400734  ------
+#  shuffle1a       75     378    3338   33391  167022
+#  shuffle2       105     434    3645   36554  192944
+#  shuffle3        85     400    3490   37690  260518
+#  shuffle4        88     447    3899   38356  190989
