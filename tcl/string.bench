@@ -6,13 +6,25 @@ proc str-cmp-null {a} {
 }
 
 if { [catch {string equal "" ""}] } {
-    proc str-eq-null {a} {
+    proc str-equal-null {a} {
 	if {[string compare $a ""]} { set i 0 } else { set i 1 }
 	if {[string compare $a ""]} { set i 0 } else { set i 1 }
 	if {[string compare $a ""]} { set i 0 } else { set i 1 }
 	if {[string compare $a ""]} { set i 0 } else { set i 1 }
     }
+    proc str-eq-null {a} {
+	if {$a == ""} { set i 0 } else { set i 1 }
+	if {$a == ""} { set i 0 } else { set i 1 }
+	if {$a == ""} { set i 0 } else { set i 1 }
+	if {$a == ""} { set i 0 } else { set i 1 }
+    }
 } else {
+    proc str-equal-null {a} {
+	if {[string equal $a ""]} { set i 1 } else { set i 0 }
+	if {[string equal $a ""]} { set i 1 } else { set i 0 }
+	if {[string equal $a ""]} { set i 1 } else { set i 0 }
+	if {[string equal $a ""]} { set i 1 } else { set i 0 }
+    }
     proc str-eq-null {a} {
 	if {[string equal $a ""]} { set i 1 } else { set i 0 }
 	if {[string equal $a ""]} { set i 1 } else { set i 0 }
@@ -54,7 +66,7 @@ if { [catch {expr {"" eq ""}} nope] } {
 	if {$a ne $b} { set i 0 } else { set i 1 }
 	if {$a ne $b} { set i 0 } else { set i 1 }
     }
-    # redefn from above
+    # redef'n from above
     proc str-eq-null {a} {
 	if { $a eq "" } { set i 1 } else { set i 0 }
 	if { $a eq "" } { set i 1 } else { set i 0 }
@@ -79,30 +91,12 @@ proc str-last {a s} {
     string last $s $a
 }
 
-if { [catch {string map [list a b] "abc"}] } {
-    proc str-map {str {nocase 0}} {
-	if {$nocase} {
-	    regsub -nocase -all A $str at str
-	    regsub -nocase -all 0123 $str 0 str
-	} else {
-	    regsub -all a $str at str
-	    regsub -all 0123 $str num str
-	}
-	return $str
-    }
-} else {
-    proc str-map {str {nocase 0}} {
-	if {$nocase} {
-	    set str [string map -nocase {A at 0123 0} $str]
-	} else {
-	    set str [string map {a at 0123 0} $str]
-	}
-	return $str
-    }
-}
-
 proc str-match {a p} {
     string match $p $a
+}
+
+proc str-match-nocase {a p} {
+    string match -nocase $p $a
 }
 
 proc str-range {a s e} {
@@ -140,15 +134,17 @@ proc str-append {s a} {
 set str1 "This is a string"
 set str2 "This is also a string"
 
-bench -desc "STR \[string compare\]" \
+bench -desc "STR str \[string compare\]" \
 	-body {str-cmp-null 12345}
-bench -desc "STR \[string equal\]" \
+bench -desc "STR str \[string equal\]" \
+	-body {str-equal-null 12345}
+bench -desc "STR str \$a equal \"\"" \
 	-body {str-eq-null 12345}
-bench -desc "STR num == \"\"" \
+bench -desc "STR str num == \"\"" \
 	-body {str-==-null 12345}
-bench -desc "STR \$a eq \$b" \
+bench -desc "STR str \$a eq \$b" \
 	-body {str-eq $str1 $str1}
-bench -desc "STR \$a ne \$b" \
+bench -desc "STR str \$a ne \$b" \
 	-body {str-ne $str1 $str2}
 
 # String operations
@@ -165,50 +161,58 @@ append longString 0987654321
 
 bench -desc "STR length (==[string length $longString])" \
 	-body {str-len $longString}
+
 bench -desc "STR index 0" \
 	-body {str-index $longString 0}
 bench -desc "STR index 100" \
 	-body {str-index $longString 100}
 bench -desc "STR index 500" \
 	-body {str-index $longString 500}
+
 bench -desc "STR first (success)" \
 	-body {str-first $longString 901}
 bench -desc "STR first (failure)" \
 	-body {str-first $longString cba}
 bench -desc "STR first (total failure)" \
 	-body {str-first $longString ===}
+
 bench -desc "STR last (success)" \
 	-body {str-last $longString 901}
 bench -desc "STR last (failure)" \
 	-body {str-last $longString cba}
 bench -desc "STR last (total failure)" \
 	-body {str-last $longString ===}
-bench -desc "STR map" -iter 100 \
-	-body {str-map $longString 0}
-bench -desc "STR map -nocase" -iter 100 \
-	-body {str-map $longString 1}
-bench -desc "STR match, simple (success)" \
+
+bench -desc "STR match, simple (success early)" \
 	-body {str-match $longString 901}
+bench -desc "STR match, simple (success late)" \
+	-body {str-match $longString 309}
 bench -desc "STR match, simple (failure)" \
 	-body {str-match $longString cba}
 bench -desc "STR match, simple (total failure)" \
 	-body {str-match $longString ===}
-bench -desc "STR match, complex (success)" \
+bench -desc "STR match, complex (success early)" \
 	-body {str-match $longString *901*}
+bench -desc "STR match, complex (success late)" \
+	-body {str-match $longString *321}
 bench -desc "STR match, complex (failure)" \
 	-body {str-match $longString *cba*}
 bench -desc "STR match, complex (total failure)" \
 	-body {str-match $longString *===*}
+
 bench -desc "STR range" \
 	-body {str-range $longString 100 200}
+
 bench -desc "STR replace, no replacement" \
 	-body {str-replace $longString 10 20}
 bench -desc "STR replace, equal replacement" \
 	-body {str-replace $longString 10 20 "0000000000"}
 bench -desc "STR replace, longer replacement" \
 	-body {str-replace $longString 10 20 "00000000000000000000"}
+
 bench -desc "STR repeat, abcdefghij * 100" \
 	-body {str-repeat "abcdefghij" 100}
+
 bench -desc "STR append" \
       -body {str-append $longString "01234567890123456789"}
 

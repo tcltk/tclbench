@@ -1,0 +1,77 @@
+if { [catch {string map {a b} "abc"}] } {
+    proc map-str {str nocase args} { return -code 666 "(8.2+)" }
+} else {
+    proc map-str {str nocase mapChars} {
+	if {[string equal "-nocase" $nocase]} {
+	    return [string map -nocase $mapChars $str]
+	} else {
+	    return [string map $mapChars $str]
+	}
+    }
+}
+
+proc map-regsub {str nocase mapChars} {
+    foreach {exp subspec} $mapChars {
+	regsub -all $nocase $exp $str $subspec str
+    }
+    return $str
+}
+
+set longString ""
+for {set i 0} {$i < 200} {incr i} {
+    append longString "abcdefghijklmnopqrstuvwxyz01234567890123"
+}
+for {set i 0} {$i < 200} {incr i} {
+    append ustring "abcdefghijklmnopqrstuvwxyz0123456789012\374"
+}
+append longString 0987654321
+
+set iters 300
+bench -iter $iters -desc "MAP string 1 val" \
+	-body {map-str $longString -- {a at}}
+bench -iter $iters -desc "MAP string 2 val" \
+	-body {map-str $longString -- {a at 0123 0}}
+bench -iter $iters -desc "MAP string 3 val" \
+	-body {map-str $longString -- {a at 0123 0 456 4}}
+bench -iter $iters -desc "MAP string 4 val" \
+	-body {map-str $longString -- {a at 0123 0 456 4 jkl k}}
+bench -iter $iters -desc "MAP string 1 val -nocase" \
+	-body {map-str $longString -nocase {A at}}
+bench -iter $iters -desc "MAP string 2 val -nocase" \
+	-body {map-str $longString -nocase {A at 0123 0}}
+bench -iter $iters -desc "MAP string 3 val -nocase" \
+	-body {map-str $longString -nocase {A at 0123 0 456 4}}
+bench -iter $iters -desc "MAP string 4 val -nocase" \
+	-body {map-str $longString -nocase {A at 0123 0 456 4 jkl k}}
+
+bench -iter $iters -desc "MAP regsub 1 val" \
+	-body {map-regsub $longString -- {a at}}
+bench -iter $iters -desc "MAP regsub 2 val" \
+	-body {map-regsub $longString -- {a at 0123 0}}
+bench -iter $iters -desc "MAP regsub 3 val" \
+	-body {map-regsub $longString -- {a at 0123 0 456 4}}
+bench -iter $iters -desc "MAP regsub 4 val" \
+	-body {map-regsub $longString -- {a at 0123 0 456 4 jkl k}}
+bench -iter $iters -desc "MAP regsub 1 val -nocase" \
+	-body {map-regsub $longString -nocase {A at}}
+bench -iter $iters -desc "MAP regsub 2 val -nocase" \
+	-body {map-regsub $longString -nocase {A at 0123 0}}
+bench -iter $iters -desc "MAP regsub 3 val -nocase" \
+	-body {map-regsub $longString -nocase {A at 0123 0 456 4}}
+bench -iter $iters -desc "MAP regsub 4 val -nocase" \
+	-body {map-regsub $longString -nocase {A at 0123 0 456 4 jkl k}}
+
+bench -iter $iters -desc "MAP string, no match" \
+	-body {map-str $longString -- {=! != qwerty uiop}}
+bench -iter $iters -desc "MAP string -nocase, no match" \
+	-body {map-str $longString -nocase {=! != QWERTY uiop}}
+
+bench -iter $iters -desc "MAP regsub, no match" \
+	-body {map-regsub $longString -- {=! != qwerty uiop}}
+bench -iter $iters -desc "MAP regsub -nocase, no match" \
+	-body {map-regsub $longString -nocase {=! != QWERTY uiop}}
+
+bench -iter $iters -desc "MAP string short" \
+	-body {map-str "a b c d e f g h " -- {{ } +}}
+bench -iter $iters -desc "MAP regsub short" \
+	-body {map-regsub "a b c d e f g h " -- {{ } +}}
