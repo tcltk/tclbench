@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: regexp.bench,v 1.5 2002/06/11 14:44:54 msofer Exp $
+# RCS: @(#) $Id: regexp.bench,v 1.6 2002/11/14 01:55:34 hobbs Exp $
 #
 
 # Literal regular expresion 
@@ -15,6 +15,21 @@ proc regexp-str-exp {string exp} {
 # Static regexp
 proc regexp-str-static {string} {
     regexp "bcd" $string
+}
+
+# Static left anchor regexp
+proc regexp-str-static-lanchor {string} {
+    regexp "^foo" $string
+}
+
+# Static right anchor regexp
+proc regexp-str-static-ranchor {string} {
+    regexp {bar$} $string
+}
+
+# Static anchored regexp
+proc regexp-str-static-anchor {string} {
+    regexp {^foobar$} $string
 }
 
 # Variable based regexp with catching
@@ -136,3 +151,16 @@ bench -desc "RE static long match" \
 set str "[str-repeat a 500][str-repeat b 20]cc[str-repeat d 500]"
 bench -desc "RE static long nomatch" \
 	-body {regexp-str-static $str}
+
+bench -desc "RE static anchored match" \
+	-body {regexp-str-static-anchor "foobar"} -result 1
+bench -desc "RE static anchored nomatch" \
+	-body {regexp-str-static-anchor "goodbye"} -result 0
+bench -desc "RE static l-anchored match" \
+	-body {regexp-str-static-lanchor "foobar"} -result 1
+bench -desc "RE static l-anchored nomatch" \
+	-body {regexp-str-static-lanchor "goodbye"} -result 0
+bench -desc "RE static r-anchored match" \
+	-body {regexp-str-static-ranchor "foobar"} -result 1
+bench -desc "RE static r-anchored nomatch" \
+	-body {regexp-str-static-ranchor "goodbye"} -result 0
