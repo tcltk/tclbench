@@ -1,3 +1,8 @@
+2003-02-08  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/startup.bench: replaced by file benchmarks
+	* tcl/file.bench: file benchmarks
+
 2002-11-13  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tcl/regexp.bench: added anchored re tests

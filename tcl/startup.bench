@@ -1,9 +1,0 @@
-set file [bench_tmpfile]
-set fp [open $file w]
-puts $fp "exit"
-close $fp
-
-bench -desc "STARTUP time to launch tclsh" -iter 200 \
-	-body {exec $BENCH(INTERP) $file}
-
-bench_rm $file

@@ -1,0 +1,80 @@
+# file.bench --
+#
+
+# setup routines
+proc contents {file str} {
+    set fp [open $file w]
+    puts $fp $str
+    close $fp
+}
+
+proc setup {dir size} {
+    for {set i 0} {$i < $size} {incr i} {
+	file mkdir [file join $dir _benchdir.$i]
+	contents [file join $dir _benchfile.$i] "delete me"
+    }
+}
+
+set file [bench_tmpfile]
+set dir  $file.DIR
+file mkdir $dir
+setup $dir 30
+
+# test procs
+
+proc checkone {dir cmd} {
+    foreach f [glob -directory $dir -nocomplain *] { file $cmd $f }
+}
+proc checkstat {dir} {
+    foreach f [glob -directory $dir -nocomplain *] { file stat $f var }
+}
+
+proc checkall {dir} {
+    foreach f [glob -directory $dir -nocomplain *] {
+	foreach fcmd {
+	    atime attributes dirname executable exists extension isdirectory
+	    isfile mtime owned readable rootname size tail writable
+	} { file $fcmd $f }
+	file stat $f var
+    }
+}
+
+bench -desc "FILE exists tmpfile (1)" -iter 1 \
+	-body {file exists $file}
+
+bench -desc "FILE exists! tmpfile (1)" -iter 1 \
+	-body {file exists $file.BOGUS}
+
+bench -desc "FILE exists tmpfile (100)" -iter 100 \
+	-body {file exists $file}
+
+bench -desc "FILE exists! tmpfile (100)" -iter 100 \
+	-body {file exists $file.BOGUS}
+
+set num [llength [glob -directory $dir *]]
+bench -desc "FILE glob  tmpdir ($num entries)" -iter 100 \
+	-body {glob -directory $dir *}
+
+foreach fcmd {
+    atime attributes dirname executable exists extension isdirectory
+    isfile mtime owned readable rootname size tail writable
+} {
+    bench -desc "FILE glob / $fcmd" -iter 100 \
+	    -body {checkone $dir $fcmd}
+}
+
+bench -desc "FILE glob / all subcommands" -iter 100 \
+	-body {checkall $dir}
+
+contents $file "exit"
+
+bench -desc "FILE exec interp" \
+	-iter 100 -body {exec $BENCH(INTERP) $file}
+
+contents $file "catch {package require bogus-name}; package names"
+
+bench -desc "FILE exec interp: pkg require" \
+	-iter 100 -body {exec $BENCH(INTERP) $file}
+
+bench_rm $file
+file delete -force $dir
