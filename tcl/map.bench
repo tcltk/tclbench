@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: map.bench,v 1.3 2001/05/22 22:31:20 hobbs Exp $
+# RCS: @(#) $Id: map.bench,v 1.4 2002/02/08 06:02:52 hobbs Exp $
 #
 
 if { [catch {string map {a b} "abc"}] } {
@@ -22,15 +22,43 @@ if {[info tclversion] < 7.5} {
 	    set mapChars [lrange $mapChars 2 end]
 	    regsub -all $nocase $exp $str $subspec str
 	}
-	return $str
+	set str
     }
 } else {
     proc map-regsub {str nocase mapChars} {
 	foreach {exp subspec} $mapChars {
 	    regsub -all $nocase $exp $str $subspec str
 	}
-	return $str
+	set str
     }
+}
+
+proc map-regsub-2 {exp str subspec} {
+    regsub -all -- $exp $str $subspec str
+    set str
+}
+
+## This code is taken from the http library
+##
+set alphanumeric a-zA-Z0-9
+proc init {} {
+    global formMap alphanumeric
+    for {set i 0} {$i <= 256} {incr i} {
+	set c [format %c $i]
+	if {![string match \[$alphanumeric\] $c]} {
+	    set formMap($c) %[format %.2x $i]
+	}
+    }
+    # These are handled specially
+    array set formMap { " " + \n %0d%0a }
+}
+init
+proc mapReply {string} {
+    global formMap alphanumeric
+
+    regsub -all \[^$alphanumeric\] $string {$formMap(&)} string
+    regsub -all {[][{})\\]\)} $string {\\&} string
+    return [subst -nocommand $string]
 }
 
 set longString ""
@@ -78,16 +106,36 @@ bench -iter $iters -desc "MAP regsub 4 val -nocase" \
 	-body {map-regsub $longString -nocase {A at 0123 0 456 4 jkl k}}
 
 bench -iter $iters -desc "MAP string, no match" \
-	-body {map-str $longString -- {=! != qwerty uiop}}
+	-body {map-str $longString -- {=! != qwerty uiop}} \
+	-result $longString
 bench -iter $iters -desc "MAP string -nocase, no match" \
-	-body {map-str $longString -nocase {=! != QWERTY uiop}}
+	-body {map-str $longString -nocase {=! != QWERTY uiop}} \
+	-result $longString
 
 bench -iter $iters -desc "MAP regsub, no match" \
-	-body {map-regsub $longString -- {=! != qwerty uiop}}
+	-body {map-regsub $longString -- {=! != qwerty uiop}} \
+	-result $longString
 bench -iter $iters -desc "MAP regsub -nocase, no match" \
-	-body {map-regsub $longString -nocase {=! != QWERTY uiop}}
+	-body {map-regsub $longString -nocase {=! != QWERTY uiop}} \
+	-result $longString
 
 bench -iter $iters -desc "MAP string short" \
 	-body {map-str "a b c d e f g h " -- {{ } +}}
 bench -iter $iters -desc "MAP regsub short" \
 	-body {map-regsub "a b c d e f g h " -- {{ } +}}
+
+bench -iter $iters -desc "MAP |-case regsub" \
+	-body {map-regsub-2 "foo|bar|baz" "food in bars is bazzy" "OY"}
+
+bench -iter $iters -desc "MAP |-case strmap" \
+	-body {map-str "food in bars is bazzy" -- {foo OY bar OY baz OY}}
+
+bench -iter $iters -desc "MAP (\[chars\])-case regsub" \
+	-body {map-regsub-2 {([0-9])} "1 hav3 gr8t s0ftw33rz!" {\\&}}
+
+set fid [open [info script]]
+set data [read $fid]
+close $fid
+
+bench -iter 50 -desc "MAP http mapReply" \
+	-body {mapReply $data}
