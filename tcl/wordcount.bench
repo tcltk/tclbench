@@ -1,0 +1,78 @@
+#!/usr/local/bin/tclsh
+# $Id: wordcount.bench,v 1.1 2001/05/17 00:40:21 hobbs Exp $
+# http://www.bagley.org/~doug/shootout/
+
+# this program is modified from:
+#   http://cm.bell-labs.com/cm/cs/who/bwk/interps/pap.html
+# Timing Trials, or, the Trials of Timing: Experiments with Scripting
+# and User-Interface Languages</a> by Brian W. Kernighan and
+# Christopher J. Van Wyk.
+# Adapted for tclbench by Jeff Hobbs
+
+if {[info tclversion] < 8.1} {
+    proc wc1 {fid} { return -code 666 "8.2+" }
+    proc wc2 {fid} { return -code 666 "8.2+" }
+    proc wc3 {fid} { return -code 666 "8.2+" }
+} else {
+    proc wc1 {fid} {
+	set nl 0
+	set nc 0
+	set nw 0
+
+	while {[gets $fid line] >= 0} {
+	    incr nl
+	    incr nc [string length $line]
+	    incr nc
+	    regsub -all {\S+} $line {x} line
+	    incr nw [llength $line]
+	}
+	return "$nl $nw $nc"
+    }
+
+    proc wc2 {fid} {
+	set nl -1; # easier than chomping last line
+	set nc 0
+	set nw 0
+
+	set map [list \" x \{ x \} x \\ x]
+	while {![eof $fid]} {
+	    # map gets rid of list sensitive characters
+	    set data [string map $map [read $fid 4095]]
+	    incr nc [string length $data]
+	    set lines [split $data \n]
+	    incr nl [llength $lines]
+	    foreach line $lines {
+		incr nw [llength $line]
+	    }
+	}
+	return "$nl $nw $nc"
+    }
+
+    proc wc3 {fid} {
+	set nl -1 ; # -1 to account for last line
+	set nc 0
+	set nw 0
+
+	set map [list \" x \{ x \} x \\ x]
+	while {![eof $fid]} {
+	    # map gets rid of list sensitive characters
+	    set data [string map $map [read $fid 4095]]
+	    incr nc [string length $data]
+	    incr nl [llength [split $data \n]]
+	    incr nw [llength $data]
+	}
+	return "$nl $nw $nc"
+    }
+}
+
+set fid [open "[file dirname [info script]]/wordcount.in"]
+
+set iter 400
+foreach method {wc1 wc2 wc3} {
+    if {[info commands bench] == ""} {
+	seek $fid 0 ; puts "[$method $fid]"
+    } else {
+	bench -desc "WORDCOUNT $method" -iter $iter \
+		-body {seek $fid 0 ; $method $fid}
+    }
+}

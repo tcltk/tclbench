@@ -1,5 +1,8 @@
 2001-05-16  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* tcl/wordcount.in: 
+	* tcl/wordcount.bench: wordcount benchmarks
+
 	* tcl/heapsort.bench: new file with heapsort benchmark
 	* tcl/string.bench:
 	* tcl/matrix.bench:
