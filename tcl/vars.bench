@@ -104,7 +104,7 @@ bench -iter 10000 -desc "VAR access upvar" \
 set foo(0) 0
 
 bench -desc "VAR set scalar" \
-	-body {var-set 1}
+	-body {var-scalar 1}
 bench -desc "VAR set array element" \
 	-body {var-array 1}
 
