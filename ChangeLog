@@ -1,5 +1,10 @@
 2002-06-20  Miguel Sofer <msofer@users.sourceforge.net>
 
+	* tcl/read.bench: modified to actually "use" the data being read
+	by setting a local variable. 
+
+2002-06-20  Miguel Sofer <msofer@users.sourceforge.net>
+
 	* tcl/md5.bench: added the faster implementation from tcllib
 	
 2002-06-12  Jeff Hobbs  <jeffh@ActiveState.com>

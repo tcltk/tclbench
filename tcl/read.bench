@@ -4,7 +4,9 @@ proc read-gets {filename {trans {}}} {
     if {[string compare $trans {}] && ([info tclversion] > 8.1)} {
 	fconfigure $fp -translation $trans
     }
-    while {[gets $fp line] != -1} {}
+    while {[gets $fp line] != -1} {
+	set x $line
+    }
     close $fp
 }
 
@@ -14,7 +16,7 @@ proc read-read {filename {trans {}}} {
     if {[string compare $trans {}] && ([info tclversion] > 8.1)} {
 	fconfigure $fp -translation $trans
     }
-    read $fp
+    set x [read $fp]
     close $fp
 }
 
@@ -24,7 +26,7 @@ proc read-read-size {filename {trans {}}} {
     if {[string compare $trans {}] && ([info tclversion] > 8.1)} {
 	fconfigure $fp -translation $trans
     }
-    read $fp [file size $filename]
+    set x [read $fp [file size $filename]]
     close $fp
 }
 
@@ -36,7 +38,7 @@ proc read-read-10 {filename {trans {}}} {
     if {[string compare $trans {}] && ([info tclversion] > 8.1)} {
 	fconfigure $fp -translation $trans
     }
-    read $fp
+    set x [read $fp]
     close $fp
 }
 
@@ -49,7 +51,7 @@ proc read-read-dyn {filename {trans {}}} {
     }
     read $fp 2
     fconfigure $fp -buffersize 4096
-    read $fp
+    set x [read $fp]
     close $fp
 }
 
