@@ -114,6 +114,9 @@ proc bench {args} {
     if {($BENCH(MATCH) != "") && ![string match $BENCH(MATCH) $opts(-desc)]} {
 	return
     }
+    if {($BENCH(RMATCH) != "") && ![regexp $BENCH(RMATCH) $opts(-desc)]} {
+	return
+    }
     if {$opts(-pre) != ""} {
 	uplevel \#0 $opts(-pre)
     }
@@ -151,6 +154,7 @@ proc usage {} {
     set me [file tail [info script]]
     puts stderr "Usage: $me ?options?\
 	    \n\t-help			# print out this message\
+	    \n\t-rmatch <regexp>	# only run tests matching this pattern\
 	    \n\t-match <glob>		# only run tests matching this pattern\
 	    \n\t-interp	<name>		# name of interp (tries to get it right)\
 	    \n\tfileList		# files to benchmark"
@@ -176,6 +180,7 @@ if {[llength $argv]} {
 	    -help*	{ usage }
 	    -err*	{ set BENCH(ERRORS)  [lindex $argv 1] }
 	    -int*	{ set BENCH(INTERP) [lindex $argv 1] }
+	    -rmat*	{ set BENCH(RMATCH) [lindex $argv 1] }
 	    -mat*	{ set BENCH(MATCH) [lindex $argv 1] }
 	    -iter*	{ set BENCH(ITERS) [lindex $argv 1] }
 	    default {

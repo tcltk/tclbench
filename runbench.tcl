@@ -22,6 +22,7 @@ proc usage {} {
 	    \n\t-iterations <#>		# default # of iterations to run a benchmark\
 	    \n\t-minversion <version>	# minimum interp version to use\
 	    \n\t-maxversion <version>	# maximum interp version to use\
+	    \n\t-rmatch <regexp>	# only run tests matching this pattern\
 	    \n\t-match <glob>		# only run tests matching this pattern\
 	    \n\t-notcl			# do not run tclsh tests\
 	    \n\t-notk			# do not run wish tests\
@@ -50,6 +51,7 @@ array set opts {
     minver	0.0
     maxver	10.0
     match	{}
+    rmatch	{}
     tcllist	{}
     tklist	{}
     tclsh	"tclsh?*"
@@ -90,6 +92,10 @@ if {[llength $argv]} {
 	    }
 	    -match*	{
 		set opts(match) [lindex $argv 1]
+		set argv [lreplace $argv 0 1]
+	    }
+	    -rmatch*	{
+		set opts(rmatch) [lindex $argv 1]
 		set argv [lreplace $argv 0 1]
 	    }
 	    -notcl	{
@@ -226,6 +232,7 @@ proc collectData {iArray dArray oArray fileList} {
 	vputs stdout "Benchmark $label $interp"
 	set cmd [list $interp libbench.tcl \
 		-match $opts(match) \
+		-rmatch $opts(rmatch) \
 		-iters $opts(iters) \
 		-interp $interp \
 		-errors $opts(errors) \
@@ -238,6 +245,7 @@ proc collectData {iArray dArray oArray fileList} {
 		continue
 	    }
 	}
+	vputs stdout "MIDPOINT [now]"
 	#vputs $output ; continue
 	array set tmp $output
 	catch {unset tmp(Sourcing)}
@@ -336,14 +344,18 @@ proc outputData {type iArray dArray} {
     }
 }
 
+proc now {} {
+    return [clock format [clock seconds] -format "%Y-%m-%d %H:%M:%S"]
+}
+
 if {[llength $opts(tcllist)] && $opts(usetcl)} {
     array set TCL_INTERP {ORDERED {} VERSION {}}
     getInterps opts $opts(tclsh) TCL_INTERP
     orderInterps TCL_INTERP
-    vputs stdout "STARTED [clock format [clock seconds]]"
+    vputs stdout "STARTED [now]"
     collectData TCL_INTERP TCL_DATA opts $opts(tcllist)
     outputData $opts(output) TCL_INTERP TCL_DATA
-    vputs stdout "FINISHED [clock format [clock seconds]]"
+    vputs stdout "FINISHED [now]"
 }
 
 if {[llength $opts(tklist)] && $opts(usetk)} {
@@ -351,8 +363,8 @@ if {[llength $opts(tklist)] && $opts(usetk)} {
     array set TK_INTERP {ORDERED {} VERSION {}}
     getInterps opts $opts(wish) TK_INTERP
     orderInterps TK_INTERP
-    vputs stdout "STARTED [clock format [clock seconds]]"
+    vputs stdout "STARTED [now]"
     collectData TK_INTERP TK_DATA opts $opts(tklist)
     outputData $opts(output) TK_INTERP TK_DATA
-    vputs stdout "FINISHED [clock format [clock seconds]]"
+    vputs stdout "FINISHED [now]"
 }

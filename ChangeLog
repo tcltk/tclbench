@@ -1,3 +1,21 @@
+2001-05-11  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/string.bench: clarified string reverse benchmarks, added
+	more to the string compare benchmarks.
+
+	* tcl/matrix.bench: some new matrix benchmarks.  Basically a seed
+	file looking for more.  procs courtesy Sofer.
+
+	* tcl/list.bench: added a list-iter benchmark
+
+	* tcl/klist.bench: reduced default iters in klist.bench.  Accuracy
+	seems about the same without the wait...
+
+	* libbench.tcl: 
+	* runbench.tcl: added support for -rmatch option (regexp match of
+	benchmark description).
+	Added MIDPOINT verbose puts for interim time notes.
+
 2001-04-11  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tcl/klist.bench: added shuffle5* from wiki.
