@@ -99,6 +99,13 @@ proc list-iter {l} {
     }
 }
 
+proc list-list {a b c} {
+    foreach v [list $a $b $c a b c $a $b $c \
+	    a b c] {
+	set v foobar
+    }
+}
+
 proc makeLists {{size 500}} {
     global Sobj Lobj LSobj
     set Sobj ""
@@ -206,3 +213,6 @@ bench -desc "LIST join list" \
 
 bench -desc "LIST iterate list" \
       -body {list-iter $Lobj}
+
+bench -desc "LIST list" \
+      -body {list-list one two three}
