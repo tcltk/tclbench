@@ -1,3 +1,10 @@
+2001-05-31  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/md5.bench: new benchmark with Libes' md5 (from tcllib).
+
+	* tcl/sha1.bench: new benchmark with a couple of pure tcl sha1
+	routines (Libes and Fellows).
+
 2001-05-29  Andreas Kupries  <andreas_kupries@users.sourceforge.net>
 
 	* doc/libbench.n:
