@@ -1,3 +1,8 @@
+2003-08-06  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* normbench.tcl (normalize): correct normalization of new-style
+	stats where TclX data is present in output.
+
 2003-02-11  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tcl/list.bench: lsearch -regexp benchmarks

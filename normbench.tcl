@@ -4,7 +4,7 @@ exec tclsh "$0" ${1+"$@"}
 
 # runbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: normbench.tcl,v 1.2 2001/05/23 04:06:08 hobbs Exp $}
+set RCS {RCS: @(#) $Id: normbench.tcl,v 1.3 2003/08/07 00:57:44 hobbs Exp $}
 #
 # Copyright (c) 2000-2001 Jeffrey Hobbs.
 
@@ -140,7 +140,7 @@ proc normalize-text {norm line} {
 	    append out [format " %7s" $t]
 	}
     }
-    return $out 
+    return $out
 }
 
 proc normalize-list {norm line} {
@@ -163,14 +163,15 @@ proc normalize-list {norm line} {
 		lappend out $t
 	    }
 	}
-	return $out 
+	return $out
     }
 }
 
 proc normalize {norm indata} {
     set lines [split $indata \n]
     foreach line $lines {
-	if {![string match "\[0-9\]*" $line]} {
+	if {![string match {[0-9]*} $line] \
+		|| [string match {*milliseconds} $line]} {
 	    puts stdout $line
 	    continue
 	}
