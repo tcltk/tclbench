@@ -1,3 +1,7 @@
+#
+# RCS: @(#) $Id: string.bench,v 1.14 2001/05/22 22:16:17 hobbs Exp $
+#
+
 proc str-cmp-null {a} {
     if {[string compare $a ""]} { set i 0 } else { set i 1 }
     if {[string compare $a ""]} { set i 0 } else { set i 1 }
@@ -129,9 +133,11 @@ if { [catch {string replace "abc" 0 0}] } {
 
 if { [catch {string repeat "abc" 10}] } {
     proc str-repeat {str num} {
+	set val {}
 	for {set i 0} {$i < $num} {incr i} {
 	    append val $str
 	}
+	set val
     }
 } else {
     proc str-repeat {str num} {
@@ -351,20 +357,22 @@ bench -desc "STR append (10KB + 1KB)" \
 	-body {str-append $base $kilobyte}
 
 set base [str-repeat "0" 1049600]
-bench -desc "STR append (1MB + 2b * 1000)" \
+set iters 300
+bench -desc "STR append (1MB + 2b * 1000)" -iters $iters \
 	-body {str-append $base "00" 1000}
-bench -desc "STR append (1MB + 1KB)" \
+bench -desc "STR append (1MB + 1KB)" -iters $iters \
 	-body {str-append $base $kilobyte}
-bench -desc "STR append (1MB + 1KB * 20)" \
+bench -desc "STR append (1MB + 1KB * 20)" -iters $iters \
 	-body {str-append $base $kilobyte 20}
-bench -desc "STR append (1MB + 1KB * 1000)" \
+bench -desc "STR append (1MB + 1KB * 1000)" -iters $iters \
 	-body {str-append $base $kilobyte 1000}
-bench -desc "STR append (1MB + 1MB * 3)" \
-	-body {str-append $base $base 3} -iters 100
-bench -desc "STR append (1MB + 1MB * 5)" \
-	-body {str-append $base $base 4} -iters 100
-bench -desc "STR append (1MB + (1b + 1K + 1b) * 100)" \
+bench -desc "STR append (1MB + (1b + 1K + 1b) * 100)" -iters $iters \
 	-body {str-append-2 $base "b" $kilobyte 100}
+set iters 100
+bench -desc "STR append (1MB + 1MB * 3)" -iters $iters \
+	-body {str-append $base $base 3}
+bench -desc "STR append (1MB + 1MB * 5)" -iters $iters \
+	-body {str-append $base $base 4}
 
 
 proc proc-locals {404040} {
