@@ -1,0 +1,16 @@
+proc entry-create {w} {
+    entry $w
+    destroy $w
+}
+
+eval destroy [winfo children .]
+
+bench -iters 100 -desc "ENTRY create" \
+	-body {entry-create .e}
+
+entry .one
+
+bench -iters 500 -desc "ENTRY create (one exists)" \
+	-body {entry-create .e}
+
+eval destroy [winfo children .]

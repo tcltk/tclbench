@@ -1,0 +1,57 @@
+proc canvas-create {w} {
+    canvas $w
+    destroy $w
+}
+
+eval destroy [winfo children .]
+
+bench -iters 500 -desc "CANVAS create" \
+	-body {canvas-create .c}
+
+canvas .one
+
+bench -iters 500 -desc "CANVAS create (one exists)" \
+	-body {canvas-create .c}
+
+bench -iters 500 -desc "CANVAS configure -bg" \
+	-pre {destroy .c ; canvas .c} \
+	-body {.c config -bg black} \
+	-post {destroy .c}
+
+bench -iters 500 -desc "CANVAS cget/incr -width" \
+	-pre {destroy .c ; canvas .c} \
+	-body {set width [.c cget -width] ; incr width} \
+	-post {destroy .c}
+
+bench -iters 500 -desc "CANVAS configure all" \
+	-pre {destroy .c ; canvas .c} \
+	-body {
+    .c configure -background black \
+	    -borderwidth 4 \
+	    -closeenough 5.0 \
+	    -confine yes \
+	    -cursor arrow \
+	    -height 100 \
+	    -highlightbackground yellow \
+	    -highlightcolor pink \
+	    -highlightthickness 3 \
+	    -insertbackground red \
+	    -insertborderwidth 2 \
+	    -insertofftime 300 \
+	    -insertontime 200 \
+	    -insertwidth 4 \
+	    -relief raised \
+	    -scrollregion {0 0 1000 1000} \
+	    -selectbackground blue \
+	    -selectborderwidth 2 \
+	    -selectforeground white \
+	    -takefocus "of course" \
+	    -width 200 \
+	    -xscrollcommand [list .sx set] \
+	    -xscrollincrement 20 \
+	    -yscrollcommand [list .sy set] \
+	    -yscrollincrement 20 \
+	} \
+	-post {destroy .c}
+
+eval destroy [winfo children .]
