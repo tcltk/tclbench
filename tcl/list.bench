@@ -127,6 +127,7 @@ foreach type $types {
 	set l2 [makeList $len b]
 	bench -desc "LIST concat $type 2x$len" -iter 200 \
 		-body [subst {llength \[$type \$l1 \$l2\]}]
+	unset l1 l2
     }
 }
 
