@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: string.bench,v 1.17 2001/09/25 19:05:11 hobbs Exp $
+# RCS: @(#) $Id: string.bench,v 1.18 2002/02/08 06:02:22 hobbs Exp $
 #
 
 proc str-cmp-null {a} {
@@ -284,6 +284,12 @@ bench -desc "STR first (failure)" \
 	-body {str-first $longString cba}
 bench -desc "STR first (total failure)" \
 	-body {str-first $longString ===}
+bench -desc "STR first (success) utf" \
+	-body {str-first $ustring "\374ab"}
+bench -desc "STR first (failure) utf" \
+	-body {str-first $ustring "\373cba"}
+bench -desc "STR first (total failure) utf" \
+	-body {str-first $ustring ===}
 
 bench -desc "STR last (success)" \
 	-body {str-last $longString 901}
