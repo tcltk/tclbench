@@ -1,0 +1,103 @@
+# -*- tcl -*-
+# Benchmark "fcopy" command
+
+# 1. Create a big file to copy
+
+set longString ""
+for {set i 0} {$i < 4000} {incr i} {
+    append longString "abcdefghijklmnopqrstuvwxyz01234567890123"
+}
+append longString 0987654321
+
+set f [open fcopy.in w]
+puts -nonewline $f $longString
+close $f
+unset longString
+
+# 2. Define the procedures to benchmark. We have to distinguish pre-
+#    and post-8.0 versions of the core.
+#    Post-7.6 : fcopy
+#    7.4 - 7.6: unsupported0
+#    Pre-7.4  : _functionality not available_
+# ---------------------------------------------------------
+
+if {[info command fcopy] != {}} {
+
+    # Standard fcopy, system encoding, both sides have same encoding.
+    proc fcopy-std {} {
+	set in  [open fcopy.in  r]
+	set out [open fcopy.out w]
+	fcopy $in $out
+	close $in
+	close $out
+	return
+    }
+
+    # Binary copying, both sides have the same encoding
+    proc fcopy-binary {} {
+	set in  [open fcopy.in  r]
+	set out [open fcopy.out w]
+	fconfigure $in  -encoding binary
+	fconfigure $out -encoding binary
+	fcopy $in $out
+	close $in
+	close $out
+	return
+    }
+
+    # Copying with different encodings set on in- and output.
+    proc fcopy-encoding {} {
+	set in  [open fcopy.in  r]
+	set out [open fcopy.out w]
+	fconfigure $out -encoding shiftjis
+	fcopy $in $out
+	close $in
+	close $out
+	return
+    }
+
+    # 3. Run the bench
+    # ---------------------------------------------------------
+
+    # We open some dummy channels to hold all the used encodings in memory
+    # and to avoid benchmarking how fast they are (un)loaded.
+
+    set d1 [open dummy.1 w]; # no fconfigure, holds system encoding
+    set d2 [open dummy.2 w]
+
+    bench -body {fcopy-std} -desc "FCOPY std: [file size fcopy.in] bytes"
+
+    if {![catch {fconfigure $d2 -encoding shiftjis}]} {
+	# Interpreter does understand -encoding ...
+	# Skip these tests if it doesn't.
+
+	bench -body {fcopy-binary}   -desc "FCOPY binary: [file size fcopy.in] bytes"
+	bench -body {fcopy-encoding} -desc "FCOPY encoding: [file size fcopy.in] bytes"
+    }
+
+    # 4. Clean up ...
+
+    close $d1
+    close $d2
+    catch {file delete dummy.1 dummy.2}
+
+} elseif {[info command unsupported0] != {}} {
+
+    # Standard fcopy, system encoding, both sides have same encoding.
+    proc fcopy-std {} {
+	set in  [open fcopy.in  r]
+	set out [open fcopy.out w]
+	unsupported0 $in $out
+	close $in
+	close $out
+	return
+    }
+
+    bench -body {fcopy-std} -desc "FCOPY std: [file size fcopy.in] bytes"
+
+} else {
+   # Functionality not available. Ignore
+}
+
+# File delete is not known before 7.6.
+catch {file delete fcopy.in fcopy.out}

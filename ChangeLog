@@ -1,3 +1,11 @@
+2001-05-19  Andreas Kupries  <andreas_kupries@users.sourceforge.net>
+
+	* tcl/conditional.bench: Changed some descriptions to make them
+	  unique and matching to the code.
+
+	* tcl/fcopy.bench: New benchmarks for the [fcopy] command
+	  (unsupported0 in older versions of the core).
+
 2001-05-16  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tcl/string.bench: added static string length benchmarks
