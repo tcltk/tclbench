@@ -37,8 +37,8 @@ proc makeFiles {largeFile smallFile} {
     }
     close $smallFid
 }
-set largeFile $TMPFILE.lrg
-set smallFile $TMPFILE.sml
+set largeFile [bench_tmpfile].lrg
+set smallFile [bench_tmpfile].sml
 makeFiles $largeFile $smallFile
 set large "[expr {[file size $largeFile]/1024}]K"
 set small "[file size $smallFile]b"
@@ -57,6 +57,4 @@ bench -iter $iters -desc "READ $small file with read" \
 bench -iter $iters -desc "READ $small file with read & size" \
 	-body {read-read-size $smallFile}
 
-foreach file [list $largeFile $smallFile] {
-    if {[catch {file delete $file}]} { exec $deleteCommand $file }
-}
+bench_rm $largeFile $smallFile

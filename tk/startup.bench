@@ -1,11 +1,9 @@
-set file $TMPFILE
+set file [bench_tmpfile]
 set fp [open $file w]
 puts $fp "exit"
 close $fp
 
 bench -desc "STARTUP time to launch wish" -iter 100 \
-	-body {exec $MY_INTERP $file}
+	-body {exec $BENCH(INTERP) $file}
 
-if {[catch {file delete $file}]} {
-    exec $deleteCommand $file
-}
+bench_rm $file
