@@ -132,6 +132,13 @@ proc str-append {s a {count 1}} {
     }
 }
 
+proc str-append-2 {s small large count} {
+    append out $s
+    for {set i 0} {$i < $count} {incr i} {
+	append out $small $large $small
+    }
+}
+
 proc rev-full-compile {string} {
     set len [string length $string]
     set out {}
@@ -288,10 +295,15 @@ bench -desc "STR append (1MB + 1KB)" \
 	-body {str-append $base $kilobyte}
 bench -desc "STR append (1MB + 1KB * 20)" \
 	-body {str-append $base $kilobyte 20}
+bench -desc "STR append (1MB + 1KB * 1000)" \
+	-body {str-append $base $kilobyte 1000}
 bench -desc "STR append (1MB + 1MB * 3)" \
 	-body {str-append $base $base 3} -iters 100
 bench -desc "STR append (1MB + 1MB * 5)" \
 	-body {str-append $base $base 4} -iters 100
+bench -desc "STR append (1MB + (1b + 1K + 1b) * 100)" \
+	-body {str-append-2 $base "b" $kilobyte 100}
+
 
 proc proc-locals {404040} {
     set 0000 1;  set 0001 1;  set 0002 1;  set 0003 1;  set 0004 1;  set 0005 1
