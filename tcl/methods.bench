@@ -1,3 +1,5 @@
+if {[info tclversion] < 8.0} { return }
+
 namespace eval dad {
     proc test {x args} {set x}
     test 5
