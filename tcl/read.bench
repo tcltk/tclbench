@@ -1,20 +1,29 @@
 # Read a file using gets
-proc read-gets {filename} {
+proc read-gets {filename {trans {}}} {
     set fp [open $filename r]
+    if {[string compare $trans {}] && ([info tclversion] > 8.1)} {
+	fconfigure $fp -translation $trans
+    }
     while {[gets $fp line] != -1} {}
     close $fp
 }
 
 # Read a file using read only
-proc read-read {filename} {
+proc read-read {filename {trans {}}} {
     set fp [open $filename r]
+    if {[string compare $trans {}] && ([info tclversion] > 8.1)} {
+	fconfigure $fp -translation $trans
+    }
     read $fp
     close $fp
 }
 
 # Read a file using read and [file size]
-proc read-read-size {filename} {
+proc read-read-size {filename {trans {}}} {
     set fp [open $filename r]
+    if {[string compare $trans {}] && ([info tclversion] > 8.1)} {
+	fconfigure $fp -translation $trans
+    }
     read $fp [file size $filename]
     close $fp
 }
@@ -37,24 +46,37 @@ proc makeFiles {largeFile smallFile} {
     }
     close $smallFid
 }
+
 set largeFile [bench_tmpfile].lrg
 set smallFile [bench_tmpfile].sml
 makeFiles $largeFile $smallFile
 set large "[expr {[file size $largeFile]/1024}]K"
 set small "[file size $smallFile]b"
 
-set iters 10
-bench -iter $iters -desc "READ $large file with gets" \
+set iters 30
+bench -iter $iters -desc "READ $large, gets" \
 	-body {read-gets $largeFile}
-bench -iter $iters -desc "READ $large file with read" \
+bench -iter $iters -desc "READ $large, read" \
 	-body {read-read $largeFile}
-bench -iter $iters -desc "READ $large file with read & size" \
+bench -iter $iters -desc "READ $large, read & size" \
 	-body {read-read-size $largeFile}
-bench -iter $iters -desc "READ $small file with gets" \
+bench -iter $iters -desc "READ $small, gets" \
 	-body {read-gets $smallFile}
-bench -iter $iters -desc "READ $small file with read" \
+bench -iter $iters -desc "READ $small, read" \
 	-body {read-read $smallFile}
-bench -iter $iters -desc "READ $small file with read & size" \
+bench -iter $iters -desc "READ $small, read & size" \
 	-body {read-read-size $smallFile}
+bench -iter $iters -desc "BREAD $large, gets" \
+	-body {read-gets $largeFile binary}
+bench -iter $iters -desc "BREAD $large, read" \
+	-body {read-read $largeFile binary}
+bench -iter $iters -desc "BREAD $large, read & size" \
+	-body {read-read-size $largeFile binary}
+bench -iter $iters -desc "BREAD $small, gets" \
+	-body {read-gets $smallFile binary}
+bench -iter $iters -desc "BREAD $small, read" \
+	-body {read-read $smallFile binary}
+bench -iter $iters -desc "BREAD $small, read & size" \
+	-body {read-read-size $smallFile binary}
 
 bench_rm $largeFile $smallFile
