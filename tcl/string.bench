@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: string.bench,v 1.21 2002/05/29 10:07:56 hobbs Exp $
+# RCS: @(#) $Id: string.bench,v 1.22 2002/06/12 19:33:29 hobbs Exp $
 #
 
 proc str-cmp-null {a} {
@@ -278,13 +278,15 @@ bench -desc "STR string compare uni long" \
 bench -desc "STR string compare \"\"" \
 	-body {str-cmp-null 12345}
 bench -desc "STR string equal long (same obj)" \
-	-body {str-eq $longString $longString2}
+	-body {str-eq $longString $longString}
 bench -desc "STR string equal long (== len)" \
 	-body {str-eq $longString $longString2}
 bench -desc "STR string equal long (!= len)" \
 	-body {str-eq $longString "$longString2 a"}
+set mixed $longString
+append mixed \369
 bench -desc "STR string equal mixed long" \
-	-body {str-eq $longString "$longString\369"}
+	-body {str-eq $longString $mixed}
 bench -desc "STR string equal uni long" \
 	-body {str-eq $ustring $ustring2}
 bench -desc "STR string equal \"\"" \
