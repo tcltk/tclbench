@@ -148,6 +148,10 @@ proc rev {string} {
     }
     return $out
 }
+proc rev-recursive {string} { 
+    if {[string length $string] == 0} {return ""}
+    return [rev-recursive [string range $string 1 end]][string index $string 0]
+}
 
 # String comparisons
 #
@@ -224,7 +228,7 @@ bench -desc "STR match, complex (failure)" \
 bench -desc "STR match, complex (total failure)" \
 	-body {str-match $longString *===*}
 
-bench -desc "STR range" \
+bench -desc "STR range, index 100..200 of [string length $longString]" \
 	-body {str-range $longString 100 200}
 
 bench -desc "STR replace, no replacement" \
@@ -234,29 +238,44 @@ bench -desc "STR replace, equal replacement" \
 bench -desc "STR replace, longer replacement" \
 	-body {str-replace $longString 10 20 "00000000000000000000"}
 
+bench -desc "STR repeat, abcdefghij * 10" \
+	-body {str-repeat "abcdefghij" 10}
 bench -desc "STR repeat, abcdefghij * 100" \
 	-body {str-repeat "abcdefghij" 100}
+bench -desc "STR repeat, abcdefghij * 1000" \
+	-body {str-repeat "abcdefghij" 1000}
+bench -desc "STR repeat, [string length $longString] chars * 10" \
+	-body {str-repeat $longString 10}
+bench -desc "STR repeat, [string length $longString] chars * 100" \
+	-body {str-repeat $longString 100}
 
 set chars 100
-bench -desc "STR reverse-1, $chars chars" \
+bench -desc "STR reverse iter1, $chars chars" \
 	-pre {set string [string range $longString 0 $chars]} \
 	-body {rev $string}
-bench -desc "STR reverse-1, $chars unichars" \
+bench -desc "STR reverse iter1, $chars uchars" \
 	-pre {set string [string range $ustring 0 $chars]} \
 	-body {rev $string}
 
-bench -desc "STR reverse-2, $chars chars" \
+bench -desc "STR reverse iter2, $chars chars" \
 	-pre {set string [string range $longString 0 $chars]} \
 	-body {rev-full-compile $string}
-bench -desc "STR reverse-2, $chars unichars" \
+bench -desc "STR reverse iter2, $chars uchars" \
 	-pre {set string [string range $ustring 0 $chars]} \
 	-body {rev-full-compile $string}
+
+bench -desc "STR reverse recur1, $chars chars" \
+	-pre {set string [string range $longString 0 $chars]} \
+	-body {rev-recursive $string}
+bench -desc "STR reverse recur1, $chars uchars" \
+	-pre {set string [string range $ustring 0 $chars]} \
+	-body {rev-recursive $string}
 
 bench -desc "STR append" \
       -body {str-append $longString "01234567890123456789"}
 
-set kilobyte [string repeat "0" 1024]
-set base [string repeat "0" 1024]
+set kilobyte	[str-repeat "0" 1024]
+set base	[str-repeat "0" 1024]
 bench -desc "STR append (1KB + 1KB)" \
 	-body {str-append $base $kilobyte}
 set base [string repeat "0" 10240]

@@ -23,7 +23,7 @@ global BENCH bench
 #   Returns file name
 #
 proc bench_tmpfile {} {
-    global tcl_platform
+    global tcl_platform env
     if {[info exists tcl_platform(platform)]} {
 	if {$tcl_platform(platform) == "unix"} {
 	    return "/tmp/tclbench.dat"

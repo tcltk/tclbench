@@ -1,3 +1,10 @@
+2000-08-30  Jeff Hobbs  <hobbs@scriptics.com>
+
+	* tcl/string.bench: made string repeat calls compatible with
+	pre-8.1.1 interpreters.
+
+	* libbench.tcl (bench_tmpfile): add env to global list
+
 2000-08-29  Eric Melski  <ericm@ajubasolutions.com>
 
 	* tcl/string.bench: Extended string append benchmarks to exploit
