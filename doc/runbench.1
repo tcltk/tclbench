@@ -2,7 +2,7 @@
 '\" Copyright (c) 2001 by Andreas Kupries <a.kupries@westend.com>
 '\" All rights reserved.
 '\" 
-'\" RCS: @(#) $Id: runbench.1,v 1.1 2001/05/29 21:16:16 andreas_kupries Exp $
+'\" RCS: @(#) $Id: runbench.1,v 1.2 2004/12/27 19:41:24 hobbs Exp $
 '\" 
 .so man.macros
 .TH runbench.tcl 1 1.0 Runbench "Tclbench application"
@@ -29,9 +29,10 @@ The following options are recognized by the application:
 Causes the application to print a list of the recognized option plus
 short explanations of their meaning.
 .TP
-\fB-errors\fR
-Takes a boolean value (0 or 1). True means that errors are thrown,
-else they are ignored.
+\fB-throwerrors\fR
+Forces the application to bubble errors up, possibly causing the benchmark
+run to stop.  By default errors during tests are suppressed if they occur,
+and \fBERR\fR is noted in the output for that test.
 .TP
 \fB-iterations\fR
 The value of this option is a positive integer number and declares how
