@@ -93,6 +93,12 @@ proc list-2.12 {l j} {
     join $l $j
 }
 
+proc list-iter {l} {
+    for {set i 0} {$i < [llength $l]} {incr i} {
+	set var [lindex $l $i]
+    }
+}
+
 proc makeLists {{size 500}} {
     global Sobj Lobj LSobj
     set Sobj ""
@@ -197,3 +203,6 @@ bench -desc "LIST append to list" \
       -body {list-2.11 $Lobj 10}
 bench -desc "LIST join list" \
       -body {list-2.12 $Lobj ","}
+
+bench -desc "LIST iterate list" \
+      -body {list-iter $Lobj}
