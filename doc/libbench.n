@@ -1,0 +1,78 @@
+'\" -*- nroff -*-
+'\" Copyright (c) 2001 by Andreas Kupries <a.kupries@westend.com>
+'\" All rights reserved.
+'\" 
+'\" RCS: @(#) $Id: libbench.n,v 1.1 2001/05/29 21:16:16 andreas_kupries Exp $
+'\" 
+.so man.macros
+.TH libbench n 1.0 Libbench "Runtime support for tclbench scripts"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+libbench \- Runtime support for tclbench scripts
+.SH SYNOPSIS
+\fBbench_tmpfile\fR
+.sp
+\fBbench_rm\fR \fIfile...\fR
+.sp
+\fBbench\fR \fI-option value ...\fR
+.sp
+.BE
+.SH DESCRIPTION
+.PP
+The \fBlibbench\fR provides the support commands to use in the
+benchmark scripts executed by the \fBtclbench\fR application. They
+provide functionality to portably generate names for temporary files,
+delete files and to declare benchmarks.
+.PP
+The public interface is made up from the following commands:
+.TP
+\fBbench_tmpfile\fR
+Generates names for temporary files used by benchmarks. Returns a new
+name for each call of the command.
+.TP
+\fBbench_rm\fR \fIfile...\fR
+Silently deletes all the files whose names were specified as arguments
+for the command. Errors during the deletion are ignored. In other
+words, this command does a best-effort but gives no guarantees that
+the files are actually rmeoved.
+.TP
+\fBbench\fR \fI-option value ...\fR
+Declares a benchmark to execute. Expects that the benchmark exits
+cleanly. In other words, errors are not caught and thrown to the
+top. The exceptions to this is the special errorcode 666 which
+declares that the accompanying string is the benchmark value instead
+of the time. The main use to signal missing features required by the
+benchmark. The following options are recognized by the command. At
+least the options \fI-body\fR and \fI-desc\fR are required for the
+correct interaction of the benchmark with the management.
+.RS
+.TP
+\fB-pre\fR
+The value of this option is a tcl script. This script is executed
+before the main timed body and should setup variables, files,
+etc. required by the benchmark. This script is not timed.
+.TP
+\fB-post\fR
+The value of this option is a tcl script. This script is executed
+after the main timed body and should be used to tear down resources
+setup by the \fB-pre\fR script.
+.TP
+\fB-body\fR
+The value of this option is a tcl script. This is the script which is
+run as the main body of the benchmark and its execution is timed.
+.TP
+\fB-desc\fR
+The value of this option is a string to be used in the output of the
+framework to describe the executed benchmark. Although not enforced it
+makes sense to make this value unique over all benchmark scripts
+belonging together.
+.TP
+\fB-iterations\fR
+The value of this option is a positive integer number and declares how
+often the body should be executed to get accurate timing results. This
+is a maximum value which can be overidden by the global management of
+a benchmark run.
+.RE
+.SH KEYWORDS
+benchmarks, tclbench, runbench, normbench

@@ -1,0 +1,36 @@
+'\" -*- nroff -*-
+'\" Copyright (c) 2001 by Andreas Kupries <a.kupries@westend.com>
+'\" All rights reserved.
+'\" 
+'\" RCS: @(#) $Id: normbench.1,v 1.1 2001/05/29 21:16:16 andreas_kupries Exp $
+'\" 
+.so man.macros
+.TH normbench.tcl 1 1.0 Normbench "Tclbench application"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+normbench.tcl \- Normalize benchmark results.
+.SH SYNOPSIS
+\fBnormbench.tcl\fR \fI?-option value ...? ?file?\fR
+.BE
+.SH DESCRIPTION
+.PP
+The \fBnormbench.tcl\fR application provides the same functionality as
+the \fI-normalize\fR option of \fBrunbench.tcl\fR. This allows the
+postprocessing of benchmark results which there not normalized right
+away. It processes either the file whose name was specified on the
+commandline or \fBstdin\fR. It automatically detects which of the
+formats supported by \fBrunbench.tcl\fR the input is in.
+.PP
+The following options are recognized by the application:
+.TP
+\fB-help\fR
+Causes the application to print a list of the recognized option plus
+short explanations of their meaning.
+.TP
+\fB-normalize\fR
+Takes a version number as value and causes the application to
+normalize the timing values to the value of the given version.
+.RE
+.SH KEYWORDS
+benchmarks, tclbench, libbench, runbench

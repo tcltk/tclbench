@@ -1,0 +1,89 @@
+'\" -*- nroff -*-
+'\" Copyright (c) 2001 by Andreas Kupries <a.kupries@westend.com>
+'\" All rights reserved.
+'\" 
+'\" RCS: @(#) $Id: runbench.1,v 1.1 2001/05/29 21:16:16 andreas_kupries Exp $
+'\" 
+.so man.macros
+.TH runbench.tcl 1 1.0 Runbench "Tclbench application"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+runbench.tcl \- Main application for executing benchmarks
+.SH SYNOPSIS
+\fBrunbench.tcl\fR \fI?-option value ...? ?file ...?\fR
+.BE
+.SH DESCRIPTION
+.PP
+The \fBrunbench.tcl\fR application provides the overall management for
+the execution of benchmarks. If no specific benchmark files are
+provided on the command line itself the application will use all
+\fI.bench\fR files in the subdirectories \fBtcl\fR and \fBtk\fR of the
+directory containing the application itself. If files are provided all
+files matching the glob pattern \fB*tk*\fR are assumed to be
+benchmarks for the Tk toolkit.
+.PP
+The following options are recognized by the application:
+.TP
+\fB-help\fR
+Causes the application to print a list of the recognized option plus
+short explanations of their meaning.
+.TP
+\fB-errors\fR
+Takes a boolean value (0 or 1). True means that errors are thrown,
+else they are ignored.
+.TP
+\fB-iterations\fR
+The value of this option is a positive integer number and declares how
+often the body of benchmarks should be executed to get accurate timing
+results. This is a global maximum value which can be overidden by the
+individual benchmarks.
+.TP
+\fB-minversion\fR
+Declares the minimum version of tcl interpreters the application is
+allowed to use in the benchmarking.
+.TP
+\fB-maxversion\fR
+Declares the maximum version of tcl interpreters the application is
+allowed to use in the benchmarking.
+.TP
+\fB-rmatch\fR
+Restricts the benchmarking to benchmarks whose description matches
+the regexp pattern specified as the value of this option. If both
+\fI-match\fR and \fI-rmatch\fR are specified benchmarks have to
+fulfill both conditions to be executed.
+.TP
+\fB-match\fR
+Restricts the benchmarking to benchmarks whose description matches the
+glob pattern specified as the value of this option. If both
+\fI-match\fR and \fI-rmatch\fR are specified benchmarks have to
+fulfill both conditions to be executed.
+.TP
+\fB-normalize\fR
+Takes a version number as value and causes the application to
+normalize the timing values to the value of the given version.
+.TP
+\fB-notcl\fR
+Forces the application to skip all tcl related benchmarks. Takes no
+additional value.
+.TP
+\fB-notk\fR
+Forces the application to skip all tk related benchmarks. Takes no
+additional value.
+.TP
+\fB-output\fR
+Declares the style to use when generating the output for the
+benchmarks. Accepts \fBtext\fR, \fBcsv\fR and \fBlist\fR. The first
+value is the default.
+.TP
+\fB-paths\fR
+Accepts a list of paths to search for tcl interpreters. If no paths
+are specified the paths in the environment variable \fBPATH\fR are
+used.
+.TP
+\fB-verbose\fR
+Activates the output of interim status info. Takes no additional
+value.
+.RE
+.SH KEYWORDS
+benchmarks, tclbench, libbench, normbench

@@ -1,3 +1,12 @@
+2001-05-29  Andreas Kupries  <andreas_kupries@users.sourceforge.net>
+
+	* doc/libbench.n:
+	* doc/runbench.1:
+	* doc/normbench.1: Added documentation of benchmark library and
+	  applications.
+
+	* doc: Added documentation directory.
+
 2001-05-22  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* runbench.tcl: corrected error for reporting errors in sourced files
