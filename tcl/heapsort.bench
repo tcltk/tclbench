@@ -1,5 +1,5 @@
 #!/usr/local/bin/tclsh
-# $Id: heapsort.bench,v 1.1 2001/05/16 21:51:17 hobbs Exp $
+# $Id: heapsort.bench,v 1.2 2002/06/12 19:10:06 msofer Exp $
 # http://www.bagley.org/~doug/shootout/
 # sped up by Miguel Sofer's function generator
 # adapated for tclbench by Jeff Hobbs
@@ -54,14 +54,62 @@ proc heapsort {n ra_name} {
     }
 }
 
-proc do {{n 100}} {
-    for {set i 1} {$i <= $n} {incr i} {
-	set ary($i) [gen_random 1.0]
+proc heapsortLset {ra_name} {
+    upvar 1 $ra_name ra
+
+    set n [expr {[llength $ra] - 1}]
+    set j 0
+    set i 0
+    set rra 0.0
+    set l [expr {($n >> 1) + 1}]
+    set ir $n
+    while 1 {
+        if {$l > 1} {
+	    incr l -1
+            set rra [lindex $ra $l]
+        } else {
+	    set rra [lindex $ra $ir]
+	    lset ra $ir [lindex $ra 1]
+	    incr ir -1
+	    if {$ir == 1} {
+                return [lset ra 1 $rra]
+            }
+        }
+	set i $l
+	set j [expr {$l << 1}]
+        while {$j <= $ir} {
+	    if {($j < $ir) && ([lindex $ra $j] < [lindex $ra [expr {$j + 1}]])} {
+		incr j
+	    }
+            if {$rra < [lindex $ra $j]} {
+		lset ra $i [lindex $ra $j]
+		set i $j
+                set j [expr {$j + $i}]
+            } else {
+		set j [expr {$ir + 1}]
+            }
+        }
+        lset ra $i $rra
     }
-    heapsort $n ary
 }
 
 foreach size {10 50 100} {
+    for {set i 1} {$i <= $size} {incr i} {
+	set ary($i) [gen_random 1.0]
+    }
     bench -desc "HEAPSORT size $size" -iter 500 \
-	    -body {do $size}
+	    -body {heapsort $size ary}
+
+    if {[info command lset] != {}} {
+	#
+	# mangle the zero'th element, to keep 1-based numbering
+	#
+	set data [list VOID]
+	
+	for {set i 1} {$i <= $size} {incr i} {
+	    lappend data [gen_random 1.0]
+	}
+	bench -desc "HEAPSORT2 size $size" -iter 500 \
+		-body {heapsortLset data}
+    }
 }

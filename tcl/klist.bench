@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: klist.bench,v 1.5 2001/05/22 22:30:42 hobbs Exp $
+# RCS: @(#) $Id: klist.bench,v 1.6 2002/06/12 19:10:06 msofer Exp $
 #
 # From http://mini.net/cgi-bin/wikit/941
 # Procedure to generate a list of n numbers: 
@@ -137,6 +137,20 @@ proc shuffle5a { list } {
     return $slist
 }
 
+# shuffle6 uses the new [lset] command
+if {[info command lset] != {}} {
+    proc shuffle6 { list } {
+	set n [llength $list]
+	for { set i 1 } { $i < $n } { incr i } {
+	    set j [expr { int( rand() * $n ) }]
+	    set temp [lindex $list $i]
+	    lset list $i [lindex $list $j]
+	    lset list $j $temp
+	}
+	return $list
+    }
+}
+
 # The test harness times the various methods and prints the results. 
 
 if {[info tclversion] < 8.0} {
@@ -150,13 +164,17 @@ if {[info tclversion] < 8.0} {
 set METHODS	[list shuffle0 shuffle1-s shuffle1a shuffle2 shuffle3 \
 	shuffle4 shuffle5-s shuffle5a]
 
+if {[info command lset] != {}} {
+    lappend METHODS shuffle6
+}
+
 proc doShuffle {} {
     global LENGTHS ITERS METHODS
     # init the lists
     foreach n $LENGTHS {
 	set LISTS($n) [iota $n]
     }
-
+    
     # do the benchmarking
     foreach method $METHODS {
 	foreach n $LENGTHS iter $ITERS {

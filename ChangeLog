@@ -1,3 +1,8 @@
+2002-06-12  Miguel Sofer <msofer@users.sourceforge.net>
+
+	* tcl/klist.bench:
+	* tcl/heapsort.bench: added algorithms using [lset]
+	
 2002-06-11  Miguel Sofer <msofer@users.sourceforge.net>
 
 	* tcl/regexp.bench: made the bench access the match variables, to
