@@ -1,3 +1,39 @@
+2001-05-22  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/libbench.tcl:
+	* tcl/runbench.tcl: changed -iterations to be a maximum number for
+	timings, to override any larger number the benchmark may set for
+	itself.
+	Rearranged result format of benchmarks to return data by benchmark
+	description.  Benchmarks are now always returned in alphabetical
+	order of the benchmark description.
+	Changed benchmarks to rerun the interpreter per benchmark file
+	instead of sourcing all files into the same interpreter.  This
+	reduces any skew related to excessive mem usage or other factors
+	that may arise for one benchmark file.
+	Changed midpoint numbers to time elapsed calculation.
+	Added -normalize option that post-processes the time information
+	to normalize against one version as a baseline.
+	Changed -errors <bool> to -throwerrors with no arg, and changed
+	the default to not throw errors in benchmark files.
+	Added version string to verbose run info.
+
+	* tcl/klist.bench: added support for <8.0 to all benchmarks except
+	shuffle0, with notably reduced default run iters due to extreme
+	slowness of <8.0 interps for these tasks.
+
+	* tcl/string.bench:
+	* tcl/regexp.bench: fixed incorrect str-repeat replacement function
+
+2001-05-18  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/string.bench: added <8.0 compatible rev-recursive benchmark,
+	fixed non-octal escape in ustring instantiation.
+
+	* tcl/wordcount.bench: added <8.1 compatible benchmarks
+
+	* tcl/methods.bench: return for interps <8.0
+
 2001-05-19  Andreas Kupries  <andreas_kupries@users.sourceforge.net>
 
 	* tcl/conditional.bench: Changed some descriptions to make them

@@ -2,6 +2,12 @@
 # The next line is executed by /bin/sh, but not tcl \
 exec tclsh "$0" ${1+"$@"}
 
+# runbench.tcl ?options?
+#
+set RCS {RCS: @(#) $Id: runbench.tcl,v 1.9 2001/05/22 22:39:12 hobbs Exp $}
+#
+# Copyright (c) 2000-2001 Jeffrey Hobbs.
+
 #
 # Run the main script from an 8.2+ interp
 #
@@ -12,23 +18,24 @@ if {[catch {package require Tcl 8.2}]} {
     exit 1
 }
 
+regexp {,v (\d+\.\d+)} $RCS -> VERSION
 set MYDIR [file dirname [info script]]
+set ME [file tail [info script]]
 
 proc usage {} {
-    set me [file tail [info script]]
-    puts stderr "Usage: $me ?options?\
+    puts stderr "Usage (v$::VERSION): $::ME ?options?\
 	    \n\t-help			# print out this message\
-	    \n\t-errors <0|1>		# whether or not errors should be thrown\
-	    \n\t-iterations <#>		# default # of iterations to run a benchmark\
+	    \n\t-iterations <#>		# max # of iterations to run a benchmark\
 	    \n\t-minversion <version>	# minimum interp version to use\
 	    \n\t-maxversion <version>	# maximum interp version to use\
-	    \n\t-rmatch <regexp>	# only run tests matching this pattern\
 	    \n\t-match <glob>		# only run tests matching this pattern\
+	    \n\t-rmatch <regexp>	# only run tests matching this pattern\
 	    \n\t-normalize <version>	# normalize numbers to given version\
 	    \n\t-notcl			# do not run tclsh tests\
 	    \n\t-notk			# do not run wish tests\
-	    \n\t-output <text|list|csv>	# style of output from program\
+	    \n\t-output <text|list|csv>	# style of output from program (default: text)\
 	    \n\t-paths <pathList>	# path or list of paths to search for interps\
+	    \n\t-throwerrors		# propagate errors in benchmarks files\
 	    \n\t-verbose		# output interim status info\
 	    \n\tfileList		# files to source, files matching *tk*\
 	    \n\t			# will be used for Tk benchmarks"
@@ -59,7 +66,7 @@ array set opts {
     wish	"wish?*"
     usetk	1
     usetcl	1
-    errors	1
+    errors	0
     verbose	0
     output	text
     iters	2000
@@ -70,13 +77,15 @@ if {[llength $argv]} {
 	set key [lindex $argv 0]
 	switch -glob -- $key {
 	    -help*	{ usage }
-	    -err*	{
-		# Whether or not to throw errors
-		set opts(errors) [lindex $argv 1]
-		set argv [lreplace $argv 0 1]
+	    -throw*	{
+		# throw errors when they occur in benchmark files
+		set opts(errors) 1
+		set argv [lreplace $argv 0 0]
 	    }
 	    -iter*	{
-		# Default iters to run a test
+		# Maximum iters to run a test
+		# The test may set a smaller iter run, but anything larger
+		# will be reduced.
 		set opts(iters) [lindex $argv 1]
 		set argv [lreplace $argv 0 1]
 	    }
@@ -410,7 +419,7 @@ proc now {} {
 if {[llength $opts(tcllist)] && $opts(usetcl)} {
     array set TCL_INTERP {ORDERED {} VERSION {}}
     getInterps opts $opts(tclsh) TCL_INTERP
-    vputs stdout "STARTED [now]"
+    vputs stdout "STARTED [now] ($::ME v$::VERSION)"
     collectData TCL_INTERP TCL_DATA opts $opts(tcllist)
     outputData opts TCL_INTERP TCL_DATA
     vputs stdout "FINISHED [now]"
@@ -420,7 +429,7 @@ if {[llength $opts(tklist)] && $opts(usetk)} {
     vputs stdout ""
     array set TK_INTERP {ORDERED {} VERSION {}}
     getInterps opts $opts(wish) TK_INTERP
-    vputs stdout "STARTED [now]"
+    vputs stdout "STARTED [now] ($::ME v$::VERSION)"
     collectData TK_INTERP TK_DATA opts $opts(tklist)
     outputData opts TK_INTERP TK_DATA
     vputs stdout "FINISHED [now]"

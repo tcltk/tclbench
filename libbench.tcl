@@ -4,6 +4,9 @@
 # This file has to have code that works in any version of Tcl that
 # the user would want to benchmark.
 #
+# RCS: @(#) $Id: libbench.tcl,v 1.8 2001/05/22 22:39:12 hobbs Exp $
+#
+# Copyright (c) 2000-2001 Jeffrey Hobbs.
 
 # We will put our data into these named globals
 global BENCH bench
@@ -104,7 +107,12 @@ proc bench {args} {
 	    -po*	{ set opts(-post) [lindex $args 1] }
 	    -bo*	{ set opts(-body) [lindex $args 1] }
 	    -de*	{ set opts(-desc) [lindex $args 1] }
-	    -it*	{ set opts(-iter) [lindex $args 1] }
+	    -it*	{
+		# Only change the iterations when it is smaller than
+		# the requested default
+		set val [lindex $args 1]
+		if {$opts(-iter) > $val} { set opts(-iter) $val }
+	    }
 	    default {
 		error "unknown option $key"
 	    }
