@@ -94,6 +94,10 @@ proc list-2.12 {l j} {
     join $l $j
 }
 
+proc lsearch-regexp {l ptn} {
+    lsearch -regexp $l $ptn
+}
+
 proc list-iter {l} {
     for {set i 0} {$i < [llength $l]} {incr i} {
 	set var [lindex $l $i]
@@ -211,6 +215,13 @@ bench -desc "LIST exact search, typed item" \
 	-body {list-2.3 $Lobj 199}
 bench -desc "LIST sorted search, typed item" \
 	-body {list-2.4 $Lobj 199}
+
+bench -desc "LIST regexp search, first item" \
+	-body {lsearch-regexp $Lobj 1}
+bench -desc "LIST regexp search, non-item" \
+	-body {lsearch-regexp $Lobj 500}
+bench -desc "LIST regexp search, last item" \
+	-body {lsearch-regexp $Lobj 199}
 
 # Other list operations
 

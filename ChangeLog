@@ -1,5 +1,7 @@
 2003-02-11  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* tcl/list.bench: lsearch -regexp benchmarks
+
 	* tcl/file.bench: updated with more benchmarks
 
 2003-02-08  Jeff Hobbs  <jeffh@ActiveState.com>
