@@ -4,7 +4,7 @@
 # This file has to have code that works in any version of Tcl that
 # the user would want to benchmark.
 #
-# RCS: @(#) $Id: libbench.tcl,v 1.11 2001/06/03 20:40:51 hobbs Exp $
+# RCS: @(#) $Id: libbench.tcl,v 1.12 2001/09/25 19:05:31 hobbs Exp $
 #
 # Copyright (c) 2000-2001 Jeffrey Hobbs.
 
@@ -135,20 +135,27 @@ proc bench {args} {
 	catch {uplevel \#0 $opts(-body)}
 	set code [catch {uplevel \#0 \
 		[list time $opts(-body) $opts(-iter)]} res]
-	if {$code == 0} {
-	    # Get just the microseconds value from the time result
-	    set res [lindex $res 0]
-	} elseif {$code != 666} {
-	    # A 666 result code means pass it through to the bench suite.
-	    # Otherwise throw errors all the way out, unless we specified
-	    # not to throw errors (option -errors 0 to libbench).
-	    if {$BENCH(ERRORS)} {
-		return -code $code -errorinfo $errorInfo -errorcode $errorCode
-	    } else {
-		set res "ERR"
+	if {!$BENCH(THREADED)} {
+	    if {$code == 0} {
+		# Get just the microseconds value from the time result
+		set res [lindex $res 0]
+	    } elseif {$code != 666} {
+		# A 666 result code means pass it through to the bench suite.
+		# Otherwise throw errors all the way out, unless we specified
+		# not to throw errors (option -errors 0 to libbench).
+		if {$BENCH(ERRORS)} {
+		    return -code $code -errorinfo $errorInfo \
+			    -errorcode $errorCode
+		} else {
+		    set res "ERR"
+		}
 	    }
+	    set bench($opts(-desc)) $res
+	} else {
+	    # Threaded runs report back asynchronously
+	    thread::send $BENCH(us) \
+		    [list thread_report $opts(-desc) $code $res]
 	}
-	set bench($opts(-desc)) $res
     }
     if {$opts(-post) != ""} {
 	uplevel \#0 $opts(-post)
@@ -178,6 +185,7 @@ set BENCH(MATCH)	{}
 set BENCH(OUTFILE)	stdout
 set BENCH(FILES)	{}
 set BENCH(ITERS)	1000
+set BENCH(THREADED)	0
 
 if {[llength $argv]} {
     while {[llength $argv]} {
@@ -189,6 +197,7 @@ if {[llength $argv]} {
 	    -rmat*	{ set BENCH(RMATCH) [lindex $argv 1] }
 	    -mat*	{ set BENCH(MATCH) [lindex $argv 1] }
 	    -iter*	{ set BENCH(ITERS) [lindex $argv 1] }
+	    -thr*	{ set BENCH(THREADED) [lindex $argv 1] }
 	    default {
 		foreach arg $argv {
 		    if {![file exists $arg]} { usage }
@@ -201,11 +210,15 @@ if {[llength $argv]} {
     }
 }
 
+if {$BENCH(THREADED)} {
+    # We have to be able to load threads if we want to use threads.
+    set BENCH(THREADED) [expr {![catch {package require Thread}]}]
+}
+
 rename exit exit.true
 proc exit args {
     error "called \"exit $args\" in benchmark test"
 }
-
 
 if {[string compare $BENCH(OUTFILE) stdout]} {
     set BENCH(OUTFID) [open $BENCH(OUTFILE) w]
@@ -218,15 +231,78 @@ if {[string compare $BENCH(OUTFILE) stdout]} {
 # the data will be collected in via an 'array set'.
 #
 
-foreach BENCH(file) $BENCH(FILES) {
-    if {[file exists $BENCH(file)]} {
-	puts $BENCH(OUTFID) [list Sourcing $BENCH(file)]
-	source $BENCH(file)
+if {$BENCH(THREADED)} {
+    # Each file must run in it's own thread because of all the extra
+    # header stuff they have.
+    proc thread_em {} {
+	global BENCH
+	set BENCH(us) [thread::id]
+	puts $BENCH(OUTFID) [list __THREADED [package provide Thread]]
+	foreach BENCH(file) $BENCH(FILES) {
+	    if {[file exists $BENCH(file)]} {
+		puts $BENCH(OUTFID) [list Sourcing $BENCH(file)]
+		set them [thread::create]
+		thread::send -async $them { load {} Thread }
+		thread::send -async $them \
+			[list array set BENCH [array get BENCH]]
+		thread::send -async $them \
+			[list proc bench_tmpfile {} [info body bench_tmpfile]]
+		thread::send -async $them \
+			[list proc bench_rm {args} [info body bench_rm]]
+		thread::send -async $them \
+			[list proc bench {args} [info body bench]]
+		thread::send -async $them [list source $BENCH(file)]
+		thread::send -async $them { thread::unwind }
+	    }
+	}
     }
-}
 
-foreach desc [array names bench] {
-    puts $BENCH(OUTFID) [list $desc $bench($desc)]
-}
+    proc thread_report {desc code res} {
+	global BENCH bench errorInfo errorCode
 
-exit.true ; # needed for Tk tests
+	if {$code == 0} {
+	    # Get just the microseconds value from the time result
+	    set res [lindex $res 0]
+	} elseif {$code != 666} {
+	    # A 666 result code means pass it through to the bench suite.
+	    # Otherwise throw errors all the way out, unless we specified
+	    # not to throw errors (option -errors 0 to libbench).
+	    if {$BENCH(ERRORS)} {
+		return -code $code -errorinfo $errorInfo \
+			-errorcode $errorCode
+	    } else {
+		set res "ERR"
+	    }
+	}
+	set bench($desc) $res
+    }
+
+    proc thread_finish {{delay 2000}} {
+	if {[llength [thread::names]] > 1} {
+	    after $delay [info level 0]
+	} else {
+	    global BENCH bench
+	    foreach desc [array names bench] {
+		puts $BENCH(OUTFID) [list $desc $bench($desc)]
+	    }
+	    exit.true ; # needed for Tk tests
+	}
+    }
+
+    thread_em
+    thread_finish
+    vwait forever
+} else {
+    foreach BENCH(file) $BENCH(FILES) {
+	if {[file exists $BENCH(file)]} {
+	    puts $BENCH(OUTFID) [list Sourcing $BENCH(file)]
+	    source $BENCH(file)
+	}
+    }
+
+    foreach desc [array names bench] {
+	puts $BENCH(OUTFID) [list $desc $bench($desc)]
+    }
+
+    exit.true ; # needed for Tk tests
+}

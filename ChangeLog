@@ -1,3 +1,16 @@
+2001-09-25  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/string.bench: added exact string match benchmark and fixed
+	other string match benchmarks
+
+	* tcl/list.bench: added simple list benchmark
+
+	* tcl/vars.bench: added mset benchmarks
+
+	* libbench.tcl:
+	* runbench.tcl: added support for -threads option to try and load
+	a thread package and run separate benchmark files simultaneously.
+
 2001-08-29  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tcl/methods.bench:

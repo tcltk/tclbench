@@ -4,7 +4,7 @@ exec tclsh "$0" ${1+"$@"}
 
 # runbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: runbench.tcl,v 1.11 2001/06/03 20:40:51 hobbs Exp $}
+set RCS {RCS: @(#) $Id: runbench.tcl,v 1.12 2001/09/25 19:05:31 hobbs Exp $}
 #
 # Copyright (c) 2000-2001 Jeffrey Hobbs.
 
@@ -66,6 +66,7 @@ array set opts {
     wish	"wish?*"
     usetk	1
     usetcl	1
+    usethreads	0
     errors	0
     verbose	0
     output	text
@@ -81,6 +82,10 @@ if {[llength $argv]} {
 	    -throw*	{
 		# throw errors when they occur in benchmark files
 		set opts(errors) 1
+		set argv [lreplace $argv 0 0]
+	    }
+	    -thread*	{
+		set opts(usethreads) 1
 		set argv [lreplace $argv 0 0]
 	    }
 	    -iter*	{
@@ -203,12 +208,11 @@ proc getInterps {optArray pattern iArray} {
 		} {
 		    set var($interp) $patchlevel
 		    lappend var(ORDERED) [list $patchlevel $interp]
-		    set var(ORDERED) [lsort -dictionary -decreasing \
-			    -index 0 $var(ORDERED)]
 		}
 	    }
 	}
     }
+    set var(ORDERED) [lsort -dictionary -decreasing -index 0 $var(ORDERED)]
 
     #
     # Post process ordering of the interpreters for output
@@ -246,6 +250,11 @@ proc vputs {args} {
     }
 }
 
+catch {
+    lappend ::auto_path /usr/local/ActiveTcl/lib
+    package require Tclx
+}
+
 #
 # Do benchmarking
 #
@@ -253,6 +262,10 @@ proc collectData {iArray dArray oArray fileList} {
     upvar 1 $iArray ivar $dArray DATA $oArray opts
 
     array set DATA {MAXLEN 0}
+    catch {
+	lappend ::auto_path /usr/local/ActiveTcl/lib
+	package require Tclx
+    }
     foreach label $ivar(VERSION) {
 	set interp $ivar($label)
 	vputs stdout "Benchmark $label $interp"
@@ -262,36 +275,56 @@ proc collectData {iArray dArray oArray fileList} {
 		-iters $opts(iters) \
 		-interp $interp \
 		-errors $opts(errors) \
+		-threads $opts(usethreads) \
 		]
 	set start [clock seconds]
-	foreach file $fileList {
-	    vputs -nonewline stdout [string index [file tail $file] 0]
-	    flush stdout
-	    if {[catch {eval exec $cmd [list $file]} output]} {
+	catch { set cstart [lindex [times] 2] }
+	array set tmp {}
+	if {$opts(usethreads)} {
+	    #puts stderr "exec $cmd $fileList"
+	    if {[catch {eval exec $cmd $fileList} output]} {
 		if {$opts(errors)} {
 		    error $::errorInfo
 		} else {
 		    puts stderr $output
-		    continue
+		}
+	    } else {
+		array set tmp $output
+	    }
+	} else {
+	    foreach file $fileList {
+		vputs -nonewline stdout [string index [file tail $file] 0]
+		flush stdout
+		if {[catch {eval exec $cmd [list $file]} output]} {
+		    if {$opts(errors)} {
+			error $::errorInfo
+		    } else {
+			puts stderr $output
+			continue
+		    }
+		} else {
+		    array set tmp $output
 		}
 	    }
-	    #vputs $output ; continue
-	    array set tmp $output
-	    catch {unset tmp(Sourcing)}
-	    foreach desc [array names tmp] {
-		set DATA(desc:${desc}) {}
-		set DATA(:$desc$label) $tmp($desc)
-		if {[string length $desc] > $DATA(MAXLEN)} {
-		    set DATA(MAXLEN) [string length $desc]
-		}
-	    }
-	    unset tmp
 	}
+	catch {unset tmp(Sourcing)}
+	foreach desc [array names tmp] {
+	    set DATA(desc:${desc}) {}
+	    set DATA(:$desc$label) $tmp($desc)
+	    if {[string length $desc] > $DATA(MAXLEN)} {
+		set DATA(MAXLEN) [string length $desc]
+	    }
+	}
+	unset tmp
 	set elapsed [expr {[clock seconds] - $start}]
 	set hour [expr {$elapsed / 3600}]
 	set min [expr {$elapsed / 60}]
 	set sec [expr {$elapsed % 60}]
 	vputs stdout " [format %.2d:%.2d:%.2d $hour $min $sec] elapsed"
+	catch {
+	    set celapsed [expr {[lindex [times] 2] - $cstart}]
+	    vputs stdout "$celapsed milliseconds"
+	}
     }
 }
 
