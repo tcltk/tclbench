@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: parse.bench,v 1.1 2002/05/29 09:16:13 hobbs Exp $
+# RCS: @(#) $Id: parse.bench,v 1.2 2004/12/29 23:16:19 hobbs Exp $
 #
 
 if {[catch {package require Tcl 8.0}]} {
@@ -40,7 +40,8 @@ proc makeFile {file order} {
     close $outfid
 }
 
-set ::BOUND "-----NEXT_PART_[clock seconds].[pid]"
+# ensure the BOUND will have consistent size between runs
+set ::BOUND [format "-----NEXT_PART_%012ld.%05ld" [clock sec] [pid]]
 set ::SCRIPT [info script]
 set ::LARGEFILE [bench_tmpfile].lrg
 set ::SMALLFILE [bench_tmpfile].sml

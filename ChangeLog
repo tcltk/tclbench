@@ -1,3 +1,8 @@
+2004-12-29  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/parse.bench: ensure file size is consistent between interp
+	runs with formatted BOUND string.
+
 2004-12-27  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* doc/runbench.1: fix doc for -throwerrors [Bug 1091766]
