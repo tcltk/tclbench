@@ -48,6 +48,14 @@ proc if-4.1 {val} {
     }
 }
 
+# a check on the efficiency of if 1 { ... }
+proc if-1 {repeat} {
+    if 1 { incr repeat -1 }
+    if 0 { incr repeat -1 }
+    if 1 { incr repeat -1 }
+    if 0 { incr repeat -1 }
+}
+
 # Test cases with switch/case
 proc switch-1.1 {val} {
     switch -exact -- $val {
@@ -84,6 +92,8 @@ bench -desc "IF multi 1st true" -body {if-4.1 1}
 bench -desc "IF multi 2nd true" -body {if-4.1 2}
 bench -desc "IF multi 9th true" -body {if-4.1 9}
 bench -desc "IF multi default true" -body {if-4.1 99}
+
+bench -desc "IF 1/0 check" -body {if-1 0}
 
 bench -desc "SWITCH 1st true" -body {switch-1.1 1}
 bench -desc "SWITCH 2nd true" -body {switch-1.1 2}
