@@ -1,0 +1,55 @@
+if {[catch {package require Tcl 8.1}]} {
+    # We need the unicode support for these.
+    return
+}
+
+# Read a file using gets
+proc read-gets {enc filename} {
+    set fp [open $filename r]
+    fconfigure $fp -encoding $enc
+    while {[gets $fp line] != -1} {}
+    close $fp
+}
+
+# Read a file using read only
+proc read-read {enc filename} {
+    set fp [open $filename r]
+    fconfigure $fp -encoding $enc
+    read $fp
+    close $fp
+}
+
+# Read a file using read and [file size]
+proc read-read-size {enc filename} {
+    set fp [open $filename r]
+    fconfigure $fp -encoding $enc
+    read $fp [file size $filename]
+    close $fp
+}
+
+set ::iso2022data "\u001b\$B;d\$I\$b\$G\$O!\"%A%C%W\$49XF~;~\$K\$4EPO?\$\$\$?\$@\$\$\$?\$4=;=j\$r%-%c%C%7%e%\"%&%H\$N:]\$N\u001b(B
+\u001b\$B>.@Z<jAwIU@h\$H\$7\$F;HMQ\$7\$F\$*\$j\$^\$9!#62\$lF~\$j\$^\$9\$,!\"@5\$7\$\$=;=j\$r\$4EPO?\$7\$J\$*\u001b(B
+\u001b\$B\$7\$F\$\$\$?\$@\$1\$J\$\$\$G\$7\$g\$&\$+!#!J%W%l!<%d!<\$NJ}!9\$N0BA4\$r?^\$k\$?\$a!\"\$3\$A\$i\$G\$O!\"\u001b(B
+\u001b\$B%W%l!<%d!<=;=j\$NJQ99\$O=PMh\$J\$\$\$3\$H\$K\$J\$C\$F\$*\$j\$^\$9!#!K@5\$7\$\$=;=j\$O!\"3N<B\$K\$\"\u001b(B
+\u001b\$B\$J\$?MM\$N\$*<j85\$K>.@Z<j\$r\$*FO\$1\$9\$k\$?\$a\$KIT2D7g\$G\$9\$N\$G!\"\$46(NO\$N\$\[\$I\$h\$m\$7\$/\u001b(B
+\u001b\$B\$*4j\$\$\$\$\$?\$7\$^\$9!#\$^\$?!\"BgJQ62=L\$G\$9\$,!\"=;=jJQ99\$N\$\"\$H!\"F|K\\8l%5!<%S%9It!J\u001b(B
+casino_japanese@___.com \u001b\$B!K\$^\$G\$4=;=jJQ99:Q\$NO\"Mm\$r\$\$\$?\$@\$1\$J\$\$\$G\u001b(B
+\u001b\$B\$7\$g\$&\$+!)\u001b(B"
+
+set file [bench_tmpfile]
+set fid [open $file w]
+fconfigure $fid -encoding binary
+puts $fid $::iso2022data
+close $fid
+
+set iters 30
+foreach enc {iso2022-jp iso8859-2} {
+    bench -iter $iters -desc "ENC $enc, gets" \
+	    -body {read-gets $enc $file}
+    bench -iter $iters -desc "ENC $enc, read" \
+	    -body {read-read $enc $file}
+    bench -iter $iters -desc "ENC $enc, read & size" \
+	    -body {read-read-size $enc $file}
+}
+
+bench_rm $file
