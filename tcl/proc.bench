@@ -4,8 +4,7 @@
 
 # Explicit return at the end of a proc
 proc proc-1.1 {foo} {
-    set bar $foo
-    return $bar
+    return $foo
 }
 
 # Implicit return at the end of a proc
@@ -1753,8 +1752,24 @@ proc proc-3.3 {arg1 arg2 arg3 arg4 arg5 arg6 arg7} {
     # nothing
 }
 
+proc proc-4.1 {a} {
+     return 1
+}
+proc proc-4.2 {a} {
+     set a 1
+}
+proc proc-5.1 {a} {
+     return
+}
+proc proc-5.2 {a} {
+}
+
 bench -desc "PROC explicit return" -body {proc-1.1 abc}
 bench -desc "PROC implicit return" -body {proc-1.2 abc}
+bench -desc "PROC explicit return (2)" -body {proc-4.1 abc}
+bench -desc "PROC implicit return (2)" -body {proc-4.2 abc}
+bench -desc "PROC explicit return (3)" -body {proc-5.1 abc}
+bench -desc "PROC implicit return (3)" -body {proc-5.2 abc}
 
 bench -desc "PROC heavily commented" -body {proc-2.1 bogus}
 bench -desc "PROC do-nothing, no args" -body {proc-2.2}

@@ -62,6 +62,15 @@ proc list-2.7 {s i r} {
     lreplace $s $i $i $r
 }
 
+proc list-replace-multiple {s i r} {
+    # replace
+    lreplace $s $i $i $r $r $r $r $r $r $r $r $r $r
+}
+
+proc list-replace-range {s start end} {
+	lreplace $s $start $end
+}
+
 proc list-2.8 {s i} {
     # retrieve
     lindex $s $i
@@ -96,7 +105,7 @@ proc makeLists {{size 500}} {
     }
     string length $LSobj
 }
-makeLists 300
+makeLists 1000
 
 bench -desc "STR/LIST length, obj shimmer" \
 	-body {list-1.1 $LSobj}
@@ -149,9 +158,17 @@ bench -desc "LIST remove last element" \
 bench -desc "LIST replace first element" \
 	-body {list-2.7 $Lobj 0 10}
 bench -desc "LIST replace middle element" \
-	-body {list-2.7 $Lobj 100 10}
+	-body {list-2.7 $Lobj 500 10}
 bench -desc "LIST replace last element" \
-	-body {list-2.7 $Lobj 199 10}
+	-body {list-2.7 $Lobj 999 10}
+bench -desc "LIST replace first el with multiple" \
+	-body {list-replace-multiple $Lobj 0 10}
+bench -desc "LIST replace middle el with multiple" \
+	-body {list-replace-multiple $Lobj 500 10}
+bench -desc "LIST replace last el with multiple" \
+	-body {list-replace-multiple $Lobj 999 10}
+bench -desc "LIST replace range" \
+	-body {list-replace-range $Lobj 0 800}
 bench -desc "LIST remove in mixed list" \
 	-body {list-2.6 $LSobj 100}
 bench -desc "LIST replace in mixed list" \
