@@ -123,7 +123,7 @@ proc shuffle5a { list } {
 # The test harness times the various methods and prints the results. 
 
 set LENGTHS	[list 1     10   100  1000 10000]
-set ITERS	[list 5000  2000 800  200  20]
+set ITERS	[list 1600  800  400  200  10]
 set METHODS	[list shuffle0 shuffle1-s shuffle1a shuffle2 shuffle3 \
 	shuffle4 shuffle5-s shuffle5a]
 
