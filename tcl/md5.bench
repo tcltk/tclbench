@@ -109,7 +109,9 @@ proc ::md5::time {} {
     foreach len {10 50 100 500 1000 5000 10000} {
 	set str [str-repeat a $len]
 	set time [expr {[lindex [::time {md5 $str} 20] 0]/1000}]
-	puts "md5 msg len $len: $time millisecs/iteration"
+	puts "md5   msg len $len: $time millisecs/iteration"
+	set time [expr {[lindex [::time {md5-2 $str} 20] 0]/1000}]
+	puts "md5-2 msg len $len: $time millisecs/iteration"
     }
 }
 
@@ -626,12 +628,19 @@ namespace eval ::md5 {
     {
         lappend map \$$tName $tVal
     }
-    set md5body [string map $map $md5body]
-	
+    if {[info tclversion] < 8.2} {
+	foreach {from to} $map {
+	    regsub -all {\$} $from {\\$} from
+	    regsub -all $from $md5body $to md5body
+	}
+	#set md5body [string map $map $md5body]
+    } else {
+	set md5body [string map $map $md5body]
+    }
 
     # Finally, define the proc
     proc md5-2 {msg} $md5body
-    
+
     # unset auxiliary variables
     unset md5body tName tVal map
 }
