@@ -2,7 +2,12 @@
 
 	* tcl/parse.bench: more complex string parsing benchmark (8.0+)
 
-	* tcl/encoding.bench: start of some encoding-based benchmarks (8.1+)
+	* tcl/encoding.bench: start of some encoding benchmarks (8.1+)
+
+	* tcl/expr.bench: added ==/!= expr benchmarks
+
+	* tcl/string.bench: corrected the equality benchmarks to not use
+	the same object unless specified.
 
 2002-04-25  Jeff Hobbs  <jeffh@ActiveState.com>
 

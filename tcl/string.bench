@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: string.bench,v 1.19 2002/05/29 09:16:49 hobbs Exp $
+# RCS: @(#) $Id: string.bench,v 1.20 2002/05/29 09:51:25 hobbs Exp $
 #
 
 proc str-cmp-null {a} {
@@ -370,7 +370,6 @@ bench -desc "STR repeat, [string length $longString] chars * 10" \
 	-body {str-repeat $longString 10}
 bench -desc "STR repeat, [string length $longString] chars * 100" \
 	-body {str-repeat $longString 100}
-return
 
 foreach chars {10 100 400} {
     bench -desc "STR reverse iter/append, $chars c" \
