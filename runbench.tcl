@@ -4,7 +4,7 @@ exec tclsh "$0" ${1+"$@"}
 
 # runbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: runbench.tcl,v 1.15 2002/11/14 01:56:48 hobbs Exp $}
+set RCS {RCS: @(#) $Id: runbench.tcl,v 1.16 2004/12/20 22:29:55 hobbs Exp $}
 #
 # Copyright (c) 2000-2001 Jeffrey Hobbs.
 
@@ -87,6 +87,14 @@ if {[llength $argv]} {
 	    }
 	    -thread*	{
 		set opts(usethreads) [lindex $argv 1]
+		set argv [lreplace $argv 0 1]
+	    }
+	    -globt*	{
+		set opts(tclsh) [lindex $argv 1]
+		set argv [lreplace $argv 0 1]
+	    }
+	    -globw*	{
+		set opts(wish) [lindex $argv 1]
 		set argv [lreplace $argv 0 1]
 	    }
 	    -iter*	{
@@ -190,6 +198,18 @@ proc getInterps {optArray pattern iArray} {
     upvar 1 $optArray opts $iArray var
     foreach path $opts(paths) {
 	foreach interp [glob -nocomplain [file join $path $pattern]] {
+	    if {$::tcl_version > 8.4} {
+		set interp [file normalize $interp]
+	    }
+	    # Root out the soft-linked exes
+	    while {[string equal link [file type $interp]]} {
+		set link [file readlink $interp]
+		if {[string match relative [file pathtype $link]]} {
+		    set interp [file join [file dirname $interp] $link]
+		} else {
+		    set interp $link
+		}
+	    }
 	    if {[file executable $interp] && ![info exists var($interp)]} {
 		if {[catch {exec echo "puts \[info patchlevel\] ; exit" | \
 			$interp} patchlevel]} {
