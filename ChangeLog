@@ -1,5 +1,7 @@
 Thu Mar 15 11:44:44 2001    <jeffh@gimlet.activestate.com>
 
+	* tcl/klist.bench: improved non-tclbench data output.
+
 	* runbench.tcl: added more error capturing.
 
 	* tcl/string.bench: fixed calls to string repeat to work with
