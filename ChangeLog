@@ -1,3 +1,9 @@
+2002-03-27  Miguel Sofer <msofer@users.sourceforge.net>
+
+	* tcl/catch.bench: modified the catch benchmarks to allow
+	comparison with catching non-error exceptions; added new 
+	"CATCH except" benchmark.
+
 2002-03-15  Miguel Sofer <msofer@users.sourceforge.net>
 
 	* tcl/catch.bench: added benchmark for catch in a body with many

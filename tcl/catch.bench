@@ -1,17 +1,25 @@
+proc throw {code} {
+    return -code $code hello
+}
 
 # catch with no error condition
 proc catch-error {a} {
-    catch {set a}
+    catch {set a [throw 0]}
 }
 
 # catch with error condition
 proc catch-ok {a} {
-    catch {set b}
+    catch {set a [throw 1]}
+}
+
+# catch with non-error exception
+proc catch-except {a} {
+    catch {set a [throw 10]}
 }
 
 # no catch
 proc catch-none {a} {
-    set a 0
+    set a [throw 0]
 }
 
 # catch with error condition, complex body with many nested ranges
@@ -22,15 +30,17 @@ for {set i 0} {$i < 3} {incr i} {
 for {set i 0} {$i < 4} {incr i} {
     append nestedRanges "\n$nestedRanges"
 }
-set body "
-    catch {set b}
-    return	  
-    $nestedRanges
-"
-proc catch-ranges {a} $body
+set body {
+    catch {set a [throw 1]}
+    return
+}	  
+
+proc catch-ranges {a} [append body $nestedRanges]
+
 
 
 bench -body {catch-error arg} -desc "CATCH return ok"
 bench -body {catch-ok arg} -desc "CATCH return error"
+bench -body {catch-except arg} -desc "CATCH return except"
 bench -body {catch-none arg} -desc "CATCH no catch used"
 bench -body {catch-ranges arg} -desc "CATCH error, complex"
