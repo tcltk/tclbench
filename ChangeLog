@@ -1,3 +1,8 @@
+2004-12-24  Miguel Sofer <msofer@users.sf.net>
+
+	* tcl/namespace.bench: new benchmark, measures the cost of calling
+	the same global command alternating different namespaces.
+
 2004-12-20  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tcl/array.bench (new): array hash benchmarks
