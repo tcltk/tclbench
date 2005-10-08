@@ -1,3 +1,8 @@
+2005-10-08  Pat Thoyts  <patthoyts@users.sourceforge.net>
+
+	* tcl/sha1.bench:  Updated the sha1 and md5 implementations with
+	* tcl/md5.bench:   current tcllib code.
+
 2004-12-29  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tcl/parse.bench: ensure file size is consistent between interp
