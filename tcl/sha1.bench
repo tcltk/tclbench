@@ -21,13 +21,13 @@
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 # -------------------------------------------------------------------------
 #
-# $Id: sha1.bench,v 1.4 2005/10/08 02:13:48 patthoyts Exp $
+# $Id: sha1.bench,v 1.5 2005/10/12 14:42:08 dgp Exp $
 
 package require Tcl 8.2;                # tcl minimum version
 
 namespace eval ::sha1 {
     variable version 2.0.2
-    variable rcsid {$Id: sha1.bench,v 1.4 2005/10/08 02:13:48 patthoyts Exp $}
+    variable rcsid {$Id: sha1.bench,v 1.5 2005/10/12 14:42:08 dgp Exp $}
     variable accel
     array set accel {critcl 0 cryptkit 0 trf 0}
 
@@ -745,9 +745,11 @@ if {[info commands bench] == ""} {
         interp alias {} ::sha1::SHA1Transform {} ::sha1::SHA1TransformA
 	bench -desc "SHA (A) msg len $len" -iter $iter \
 		-body {::sha1::sha1 $str}
+if {![package vsatisfies [package provide Tcl] 8.5]} {
         interp alias {} ::sha1::SHA1Transform {} ::sha1::SHA1TransformB
 	bench -desc "SHA (B) msg len $len" -iter $iter  \
 		-body {::sha1::sha1 $str}
+}
     }
 }
 
