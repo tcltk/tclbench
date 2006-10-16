@@ -1,5 +1,9 @@
 2006-10-16  Pat Thoyts  <patthoyts@users.sourceforge.net>
 
+	* tcl/sha1.bench: Avoid using method B with tcl 8.5. Method B
+	                  relies on the implicit truncation to 32 bit
+	                  ints that exists in 8.4. In 8.5 it promotes
+	                  to bignums and takes forever.
 	* tcl/binary.bench: Updated to include TIP 275 unsigned flags
 	                    where available.
 

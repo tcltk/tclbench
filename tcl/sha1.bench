@@ -21,13 +21,13 @@
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 # -------------------------------------------------------------------------
 #
-# $Id: sha1.bench,v 1.5 2005/10/12 14:42:08 dgp Exp $
+# $Id: sha1.bench,v 1.6 2006/10/16 12:47:30 patthoyts Exp $
 
 package require Tcl 8.2;                # tcl minimum version
 
 namespace eval ::sha1 {
     variable version 2.0.2
-    variable rcsid {$Id: sha1.bench,v 1.5 2005/10/12 14:42:08 dgp Exp $}
+    variable rcsid {$Id: sha1.bench,v 1.6 2006/10/16 12:47:30 patthoyts Exp $}
     variable accel
     array set accel {critcl 0 cryptkit 0 trf 0}
 
@@ -710,8 +710,15 @@ proc ::sha1::SHA1TransformA {token msg} $::sha1::SHA1Transform_body_tmp
 proc ::sha1::SHA1TransformB {token msg} $::sha1::SHA1Transform_body_tmp2
 interp alias {} ::sha1::SHA1Transform {} ::sha1::SHA1TransformA
 
+# Avoid using method B - in tcl 8.5 it does off and uses bignums and takes
+# a very long time. method B relies on the implicit truncation to 32 bit 
+# integers that occurs in 8.4
 proc ::sha1::timing {} {
-    foreach method {SHA1TransformA SHA1TransformB} {
+    set methods {SHA1TransformA SHA1TransformB}
+    if {[package vsatisfies [package provide Tcl] 8.5]} {
+        set methods SHA1TransformA
+    }
+    foreach method $methods {
         interp alias {} ::sha1::SHA1Transform {} ::sha1::$method
 	foreach len {10 50 100 500 1000 5000 10000} {
 	    set str [str-repeat a $len]
@@ -739,17 +746,16 @@ if {[info commands bench] == ""} {
     puts "Tcl [info patchlevel]"
     sha1::timing
 } else {
-    foreach len  {10  100 1000 10000} \
-	    iter {100 40  20   10} {
+    foreach len  {10  100 1000 10000} iter {100 40  20   10} {
         set str [str-repeat a $len]
         interp alias {} ::sha1::SHA1Transform {} ::sha1::SHA1TransformA
-	bench -desc "SHA (A) msg len $len" -iter $iter \
-		-body {::sha1::sha1 $str}
-if {![package vsatisfies [package provide Tcl] 8.5]} {
-        interp alias {} ::sha1::SHA1Transform {} ::sha1::SHA1TransformB
-	bench -desc "SHA (B) msg len $len" -iter $iter  \
-		-body {::sha1::sha1 $str}
-}
+        bench -desc "SHA (A) msg len $len" -iter $iter \
+            -body {::sha1::sha1 $str}
+        if {![package vsatisfies [package provide Tcl] 8.5]} {
+            interp alias {} ::sha1::SHA1Transform {} ::sha1::SHA1TransformB
+            bench -desc "SHA (B) msg len $len" -iter $iter  \
+                -body {::sha1::sha1 $str}
+        }
     }
 }
 
