@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: binary.bench,v 1.1 2001/06/19 20:45:50 hobbs Exp $
+# RCS: @(#) $Id: binary.bench,v 1.2 2006/10/16 12:33:03 patthoyts Exp $
 #
 
 if {[catch {package require Tcl 8}]} {
@@ -38,6 +38,19 @@ proc bitset-v3 {bitmask str} {
     return [binary format c* $result]
 }
 
+proc bin-chars {str} {
+    binary scan $str c* vals
+    foreach c $vals {
+        lappend bytes [expr {$c & 0xff}]
+    }
+    return [binary format c* $bytes]
+}
+
+proc bin-uchars {str} {
+    binary scan $str cu* bytes
+    return [binary format cu* $bytes]
+}
+
 # String operations
 #
 
@@ -58,18 +71,46 @@ proc init {} {
     set ::randStr10000 $randStr
     return
 }
-init
 
-bench -desc "BIN c scan, 1000b" -iters 500 \
-	-body {bin-scan $binvar1000}
-bench -desc "BIN c scan, 5000b" -iters 300 \
-	-body {bin-scan $binvar5000}
-bench -desc "BIN c scan, 10000b" -iters 100 \
-	-body {bin-scan $binvar10000}
+proc timing {} {
+    global binvar1000
+    set methods {bin-scan bin-chars}
+    if {![catch {binary scan \x00 cu x}]} { lappend methods bin-uchars }
+    foreach iter {100 500 1000} {
+        foreach method $methods {
+            set time [expr {[lindex [::time {$method $binvar1000} $iter] 0]/1000}]
+            puts [format "% 12s iter % 6d: %.5f millisecs/iteration" \
+                      $method $iter $time]
+        }
+    }
+}
 
-foreach method {bitset-v1 bitset-v2 bitset-v3} {
-    foreach size {1000 5000 10000} iters {160 80 40} {
-	bench -desc "BIN $method $size chars" -iters $iters \
-		-body "$method 85 \$randStr$size"
+if {!$tcl_interactive} {
+    init
+    
+    if {[info commands bench] == ""} {
+        puts "Tcl [info patchlevel]"
+        timing
+    } else {
+        bench -desc "BIN c scan, 1000b" -iters 500 \
+            -body {bin-scan $binvar1000}
+        bench -desc "BIN c scan, 5000b" -iters 300 \
+            -body {bin-scan $binvar5000}
+        bench -desc "BIN c scan, 10000b" -iters 100 \
+            -body {bin-scan $binvar10000}
+
+        bench -desc "BIN chars, 10000b" -iters 500 \
+            -body {bin-chars $binvar10000}
+        if {![catch {binary scan \x00 cu x}]} {
+            bench -desc "BIN u char, 10000b" -iters 500 \
+                -body {bin-uchars $binvar10000}
+        }
+
+        foreach method {bitset-v1 bitset-v2 bitset-v3} {
+            foreach size {1000 5000 10000} iters {160 80 40} {
+                bench -desc "BIN $method $size chars" -iters $iters \
+                    -body "$method 85 \$randStr$size"
+            }
+        }
     }
 }

@@ -1,3 +1,8 @@
+2006-10-16  Pat Thoyts  <patthoyts@users.sourceforge.net>
+
+	* tcl/binary.bench: Updated to include TIP 275 unsigned flags
+	                    where available.
+
 2005-10-08  Pat Thoyts  <patthoyts@users.sourceforge.net>
 
 	* tcl/sha1.bench:  Updated the sha1 and md5 implementations with
