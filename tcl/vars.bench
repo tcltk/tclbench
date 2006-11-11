@@ -1,3 +1,25 @@
+
+proc var-incr-local {n} {
+    set VAR(foo) 0
+    for {set i 0} {$i < $n} {incr i} {
+	incr VAR(foo)
+    }
+}
+proc var-incr-global {n} {
+    global VAR
+    set VAR(foo) 0
+    for {set i 0} {$i < $n} {incr i} {
+	incr VAR(foo)
+    }
+}
+proc var-incr-upvar {n} {
+    upvar \#0 VAR v
+    set v(foo) 0
+    for {set i 0} {$i < $n} {incr i} {
+	incr v(foo)
+    }
+}
+
 # Local set variable access
 proc var-local-set {a} {
     set z 1
@@ -140,6 +162,16 @@ unset a
 set a 1
 bench -iter 10000 -desc "VAR access upvar" \
 	-body {var-upvar a}
+
+set i 1000
+catch {unset VAR}
+bench -desc "VAR incr local var ${i}x" \
+	-body {var-incr-local $i}
+bench -desc "VAR incr global var ${i}x" \
+	-body {var-incr-global $i}
+bench -desc "VAR incr upvar var ${i}x" \
+	-body {var-incr-upvar $i}
+catch {unset VAR}
 
 # Create and populate a small array, so that we can avoid the cost of
 # creating the array itself in the benchmarks below
