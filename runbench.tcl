@@ -4,7 +4,7 @@ exec tclsh "$0" ${1+"$@"}
 
 # runbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: runbench.tcl,v 1.17 2004/12/27 19:41:42 hobbs Exp $}
+set RCS {RCS: @(#) $Id: runbench.tcl,v 1.18 2006/11/11 02:33:36 hobbs Exp $}
 #
 # Copyright (c) 2000-2001 Jeffrey Hobbs.
 
@@ -359,7 +359,8 @@ proc outputData-text {iArray dArray {norm {}}} {
     set fmt "%.3d %-$DATA(MAXLEN)s"
     set i 0
     set out [format $fmt $i "VERSIONS:"]
-    foreach lbl $ivar(VERSION) { append out [format " %7s" $lbl] }
+    set LEN 8
+    foreach lbl $ivar(VERSION) { append out [format " %${LEN}s" $lbl] }
     append out \n
 
     foreach elem [lsort -dictionary [array names DATA {desc*}]] {
@@ -373,24 +374,28 @@ proc outputData-text {iArray dArray {norm {}}} {
 		[string is double -strict $DATA(:$desc$norm)]} {
 	    foreach lbl $ivar(VERSION) {
 		if {[string is double -strict $DATA(:$desc$lbl)]} {
-		    append out [format " %7.2f" \
+		    append out [format " %${LEN}.2f" \
 			    [expr {double($DATA(:$desc$lbl)) / \
 			    double($DATA(:$desc$norm))}]]
 		} else {
-		    append out [format " %7s" $DATA(:$desc$lbl)]
+		    append out [format " %${LEN}s" $DATA(:$desc$lbl)]
 		}
 	    }
 	} else {
 	    foreach lbl $ivar(VERSION) {
 		# not %d to allow non-int result codes
-		append out [format " %7s" $DATA(:$desc$lbl)]
+		if {[string is double -strict $DATA(:$desc$lbl)]} {
+		    append out [format " %${LEN}.2f" $DATA(:$desc$lbl)]
+		} else {
+		    append out [format " %${LEN}s" $DATA(:$desc$lbl)]
+		}
 	    }
 	}
 	append out "\n"
     }
 
     append out [format $fmt $i "BENCHMARKS"]
-    foreach lbl $ivar(VERSION) { append out [format " %7s" $lbl] }
+    foreach lbl $ivar(VERSION) { append out [format " %${LEN}s" $lbl] }
     append out \n
     return $out
 }
