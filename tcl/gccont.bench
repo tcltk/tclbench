@@ -271,7 +271,7 @@ proc GCCont_i::cGCC2 { sequence } {
 
 proc GCCont_i::cGCC3 { sequence } {
     variable gc
-    
+
     set seqlist [split [string toupper $sequence] "" ]
     set sl [llength $seqlist]
     if { $sl ==0 } {return 0}
@@ -287,7 +287,7 @@ proc GCCont_i::cGCC3 { sequence } {
 	    catch {incr sum $gc($c)}
 	}
     }
-    
+
     return [expr {($sum / 6.0) / $sl}]
 }
 
@@ -464,21 +464,17 @@ namespace eval GCCont_cpb {
 proc GCCont_cpb::cGCC sequence {
     set seqlist [split [string toupper $sequence] "" ]
     set sl [llength $seqlist]
-    if { $sl ==0 } {return 0}
+    if {$sl == 0} {return 0}
     variable countzero
     variable gc
-    if {[catch {
-	foreach c $seqlist { incr count($c) }
-    }]} {
-	array set count $countzero
-	foreach c $seqlist { catch {incr count($c)} }
-    }
-    set sum 0 
+    array set count $countzero
+    foreach c $seqlist { catch {incr count($c)} }
+    set sum 0
     foreach {n x} $countzero {
 	incr sum [expr {$count($n)*$gc($n)}]
     }
     return [expr {($sum / 6.0) / $sl}]
-} 
+}
 
 
 # When it comes to counting characters -- or, btw, complete regular
