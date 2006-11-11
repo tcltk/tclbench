@@ -1,7 +1,7 @@
 # -*- tcl -*-
 # Benchmark "fcopy" command
 #
-# RCS: @(#) $Id: fcopy.bench,v 1.2 2001/05/23 05:36:43 hobbs Exp $
+# RCS: @(#) $Id: fcopy.bench,v 1.3 2006/11/11 02:33:13 hobbs Exp $
 #
 
 # 1. Create a big file to copy
@@ -75,8 +75,10 @@ if {[info command fcopy] != {}} {
     # We open some dummy channels to hold all the used encodings in memory
     # and to avoid benchmarking how fast they are (un)loaded.
 
-    set d1 [open dummy.1 w]; # no fconfigure, holds system encoding
-    set d2 [open dummy.2 w]
+    set tmp1 [bench_tmpfile]
+    set tmp2 [bench_tmpfile]
+    set d1 [open $tmp1 w]; # no fconfigure, holds system encoding
+    set d2 [open $tmp2 w]
 
     # Interpreter does understand -encoding ...
     # Skip these tests if it doesn't.
@@ -90,7 +92,7 @@ if {[info command fcopy] != {}} {
     # 4. Cleanup
 
     catch {close $d1}
-    bench_rm dummy.1 dummy.2
+    bench_rm $tmp1 $tmp2
 
 } elseif {[info command unsupported0] != {}} {
 
