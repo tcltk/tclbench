@@ -1,5 +1,7 @@
 2006-11-13  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* tcl/encoding.bench: add result validation checks
+
 	* runbench.tcl (outputData-text-item): centralize item output format
 
 	* tcl/sha1.bench, tcl/md5.bench: return if < Tcl 8.2
