@@ -16,13 +16,15 @@
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 # -------------------------------------------------------------------------
 #
-# $Id: md5.bench,v 1.5 2005/10/08 02:13:48 patthoyts Exp $
+# $Id: md5.bench,v 1.6 2006/11/13 21:49:47 hobbs Exp $
 
-package require Tcl 8.2;                # tcl minimum version
+if {[catch {package require Tcl 8.2}]} { # tcl minimum version
+    return
+}
 
 namespace eval ::md5 {
     variable version 2.0.4
-    variable rcsid {$Id: md5.bench,v 1.5 2005/10/08 02:13:48 patthoyts Exp $}
+    variable rcsid {$Id: md5.bench,v 1.6 2006/11/13 21:49:47 hobbs Exp $}
     variable accel
     array set accel {critcl 0 cryptkit 0 trf 0}
 
