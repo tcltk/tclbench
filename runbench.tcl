@@ -4,7 +4,7 @@ exec tclsh "$0" ${1+"$@"}
 
 # runbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: runbench.tcl,v 1.18 2006/11/11 02:33:36 hobbs Exp $}
+set RCS {RCS: @(#) $Id: runbench.tcl,v 1.19 2006/11/13 21:54:01 hobbs Exp $}
 #
 # Copyright (c) 2000-2001 Jeffrey Hobbs.
 
@@ -353,14 +353,28 @@ proc collectData {iArray dArray oArray fileList} {
 #
 # Various data output styles
 #
+proc outputData-text-item {val} {
+    set LEN 8
+    if {[string is double -strict $val]} {
+	if {$val > 1e6} {
+	    return [format " %8d" $val]
+	} elseif {$val > 1e5} {
+	    return [format " %8.1f" $val]
+	} else {
+	    return [format " %8.2f" $val]
+	}
+    } else {
+	return [format " %8s" $val]
+    }
+}
+
 proc outputData-text {iArray dArray {norm {}}} {
     upvar 1 $iArray ivar $dArray DATA
 
     set fmt "%.3d %-$DATA(MAXLEN)s"
     set i 0
     set out [format $fmt $i "VERSIONS:"]
-    set LEN 8
-    foreach lbl $ivar(VERSION) { append out [format " %${LEN}s" $lbl] }
+    foreach lbl $ivar(VERSION) { append out [outputData-text-item $lbl] }
     append out \n
 
     foreach elem [lsort -dictionary [array names DATA {desc*}]] {
@@ -373,29 +387,23 @@ proc outputData-text {iArray dArray {norm {}}} {
 	if {[info exists DATA(:$desc$norm)] && \
 		[string is double -strict $DATA(:$desc$norm)]} {
 	    foreach lbl $ivar(VERSION) {
-		if {[string is double -strict $DATA(:$desc$lbl)]} {
-		    append out [format " %${LEN}.2f" \
-			    [expr {double($DATA(:$desc$lbl)) / \
-			    double($DATA(:$desc$norm))}]]
-		} else {
-		    append out [format " %${LEN}s" $DATA(:$desc$lbl)]
+		set val $DATA(:$desc$lbl)
+		if {[string is double -strict $val]} {
+		    set val [expr {$val / double($DATA(:$desc$norm))}]
 		}
+		append out [outputData-text-item $DATA(:$desc$lbl)]
 	    }
 	} else {
 	    foreach lbl $ivar(VERSION) {
 		# not %d to allow non-int result codes
-		if {[string is double -strict $DATA(:$desc$lbl)]} {
-		    append out [format " %${LEN}.2f" $DATA(:$desc$lbl)]
-		} else {
-		    append out [format " %${LEN}s" $DATA(:$desc$lbl)]
-		}
+		append out [outputData-text-item $DATA(:$desc$lbl)]
 	    }
 	}
 	append out "\n"
     }
 
     append out [format $fmt $i "BENCHMARKS"]
-    foreach lbl $ivar(VERSION) { append out [format " %${LEN}s" $lbl] }
+    foreach lbl $ivar(VERSION) { append out [outputData-text-item $lbl] }
     append out \n
     return $out
 }

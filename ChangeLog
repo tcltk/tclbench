@@ -1,3 +1,21 @@
+2006-11-13  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* runbench.tcl (outputData-text-item): centralize item output format
+
+	* tcl/sha1.bench, tcl/md5.bench: return if < Tcl 8.2
+
+2006-11-10  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* runbench.tcl (outputData-text): allow more space in output,
+	check for double vals in non-normalized output path.
+
+	* tcl/gccont.bench (GCCont_cpb::cGCC): correct init to work on 8.5
+	changes for incr auto-init (keeps compat with other versions).
+
+	* tcl/fcopy.bench: use bench_tmpfile where appropriate
+
+	* tcl/vars.bench (var-incr-*): add var type incr benchmarks
+
 2006-10-16  Pat Thoyts  <patthoyts@users.sourceforge.net>
 
 	* tcl/sha1.bench: Avoid using method B with tcl 8.5. Method B
