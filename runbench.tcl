@@ -4,7 +4,7 @@ exec tclsh "$0" ${1+"$@"}
 
 # runbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: runbench.tcl,v 1.19 2006/11/13 21:54:01 hobbs Exp $}
+set RCS {RCS: @(#) $Id: runbench.tcl,v 1.20 2006/11/14 15:12:37 dgp Exp $}
 #
 # Copyright (c) 2000-2001 Jeffrey Hobbs.
 
@@ -357,7 +357,7 @@ proc outputData-text-item {val} {
     set LEN 8
     if {[string is double -strict $val]} {
 	if {$val > 1e6} {
-	    return [format " %8d" $val]
+	    return [format " %8.0f" $val]
 	} elseif {$val > 1e5} {
 	    return [format " %8.1f" $val]
 	} else {
