@@ -43,8 +43,8 @@ proc read-cat {file {trans {}}} {
 	set outf [open /dev/null w]
     }
     if {[string compare $trans {}] && ([info tclversion] > 8.0)} {
-	fconfigure $f -translation binary
-	fconfigure $outf -translation binary
+	fconfigure $f -translation $trans
+	fconfigure $outf -translation $trans
     }
     set buf ""
     while {[gets $f buf] >= 0} { puts $outf $buf }
