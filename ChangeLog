@@ -1,3 +1,9 @@
+2007-11-07  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/read.bench: add grep-glob and cat benchmarks.
+	Allow changing buffer benchmarks for 8.3+.
+	Allow binary translation for 8.0.
+
 2006-11-13  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tcl/encoding.bench: add result validation checks

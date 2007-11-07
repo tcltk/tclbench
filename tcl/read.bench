@@ -10,32 +10,62 @@ proc read-gets {filename {trans {}}} {
     close $fp
 }
 
+# Read a file using gets and check line-by-line for a search term
+proc read-gets-match {filename term {trans {}}} {
+    set fp [open $filename r]
+    if {[string compare $trans {}] && ([info tclversion] > 8.0)} {
+	fconfigure $fp -translation $trans
+    }
+    while {[gets $fp line] != -1} {
+	if {[string match $term $line]} {
+	    set x $line
+	}
+    }
+    close $fp
+}
+
 # Read a file using read only
 proc read-read {filename {trans {}}} {
     set fp [open $filename r]
-    if {[string compare $trans {}] && ([info tclversion] > 8.1)} {
+    if {[string compare $trans {}] && ([info tclversion] > 8.0)} {
 	fconfigure $fp -translation $trans
     }
     set x [read $fp]
     close $fp
 }
 
+proc read-cat {file {trans {}}} {
+    global tcl_platform
+    set f [open $file r]
+    if {$tcl_platform(platform) == "windows"} {
+	set outf [open NUL: w]
+    } else {
+	set outf [open /dev/null w]
+    }
+    if {[string compare $trans {}] && ([info tclversion] > 8.0)} {
+	fconfigure $f -translation binary
+	fconfigure $outf -translation binary
+    }
+    set buf ""
+    while {[gets $f buf] >= 0} { puts $outf $buf }
+    close $f
+}
+
 # Read a file using read and [file size]
 proc read-read-size {filename {trans {}}} {
     set fp [open $filename r]
-    if {[string compare $trans {}] && ([info tclversion] > 8.1)} {
+    if {[string compare $trans {}] && ([info tclversion] > 8.0)} {
 	fconfigure $fp -translation $trans
     }
     set x [read $fp [file size $filename]]
     close $fp
 }
 
-
 # Read a file using read only, and a small buffersize
 proc read-read-10 {filename {trans {}}} {
     set fp [open $filename r]
     fconfigure $fp -buffersize 10
-    if {[string compare $trans {}] && ([info tclversion] > 8.1)} {
+    if {[string compare $trans {}] && ([info tclversion] > 8.0)} {
 	fconfigure $fp -translation $trans
     }
     set x [read $fp]
@@ -46,7 +76,7 @@ proc read-read-10 {filename {trans {}}} {
 proc read-read-dyn {filename {trans {}}} {
     set fp [open $filename r]
     fconfigure $fp -buffersize 10
-    if {[string compare $trans {}] && ([info tclversion] > 8.1)} {
+    if {[string compare $trans {}] && ([info tclversion] > 8.0)} {
 	fconfigure $fp -translation $trans
     }
     read $fp 2
@@ -55,6 +85,11 @@ proc read-read-dyn {filename {trans {}}} {
     close $fp
 }
 
+if {[info tclversion] < 8.3} {
+    # XXX - these send 8.0 into an endless loop, and 8.2 crashes on them.
+    proc read-read-10 {args} { return -code 666 "8.3+" }
+    proc read-read-dyn {args} { return -code 666 "8.3+" }
+}
 
 proc makeFiles {largeFile smallFile} {
     # 60 chars
@@ -82,53 +117,26 @@ set large "[expr {[file size $largeFile]/1024}]K"
 set small "[file size $smallFile]b"
 
 set iters 30
-bench -iter $iters -desc "READ $large, gets" \
-	-body {read-gets $largeFile}
-bench -iter $iters -desc "READ $large, read" \
-	-body {read-read $largeFile}
-bench -iter $iters -desc "READ $large, read & size" \
-	-body {read-read-size $largeFile}
-bench -iter $iters -desc "READ $small, gets" \
-	-body {read-gets $smallFile}
-bench -iter $iters -desc "READ $small, read" \
-	-body {read-read $smallFile}
-bench -iter $iters -desc "READ $small, read & size" \
-	-body {read-read-size $smallFile}
-bench -iter $iters -desc "READ bin $large, gets" \
-	-body {read-gets $largeFile binary}
-bench -iter $iters -desc "READ bin $large, read" \
-	-body {read-read $largeFile binary}
-bench -iter $iters -desc "READ bin $large, read & size" \
-	-body {read-read-size $largeFile binary}
-bench -iter $iters -desc "READ bin $small, gets" \
-	-body {read-gets $smallFile binary}
-bench -iter $iters -desc "READ bin $small, read" \
-	-body {read-read $smallFile binary}
-bench -iter $iters -desc "READ bin $small, read & size" \
-	-body {read-read-size $smallFile binary}
-
-
-if {0} {
-    # New benchmarks, affect of buffersize on timing
-    # From aku, removed by hobbs - they send 8.0 into an endless loop,
-    # and 8.2 crashes on them.
-    bench -iter $iters -desc "READ $large, read & small buffer" \
-	    -body {read-read-10 $largeFile}
-    bench -iter $iters -desc "READ $small, read & small buffer" \
-	    -body {read-read-10 $smallFile}
-    bench -iter $iters -desc "READ bin $large, read & small buffer" \
-	    -body {read-read-10 $largeFile binary}
-    bench -iter $iters -desc "READ bin $small, read & small buffer" \
-	    -body {read-read-10 $smallFile binary}
-
-    bench -iter $iters -desc "READ $large, read & dyn buffer" \
-	    -body {read-read-dyn $largeFile}
-    bench -iter $iters -desc "READ $small, read & dyn buffer" \
-	    -body {read-read-dyn $smallFile}
-    bench -iter $iters -desc "READ bin $large, read & dyn buffer" \
-	    -body {read-read-dyn $largeFile binary}
-    bench -iter $iters -desc "READ bin $small, read & dyn buffer" \
-	    -body {read-read-dyn $smallFile binary}
+foreach {fsize fname} [list $large $largeFile $small $smallFile] {
+    foreach {trans desc} {binary { bin} {} {}} {
+	set desc "READ$desc $fsize,"
+	bench -iter $iters -desc "$desc cat" \
+	    -body [list read-cat $fname $trans]
+	bench -iter $iters -desc "$desc gets" \
+	    -body [list read-gets $fname $trans]
+	bench -iter $iters -desc "$desc read" \
+	    -body [list read-read $fname $trans]
+	bench -iter $iters -desc "$desc read & size" \
+	    -body [list read-read-size $fname $trans]
+	bench -iter $iters -desc "$desc read small buf" \
+	    -body [list read-read-10 $fname $trans]
+	bench -iter $iters -desc "$desc read dyn buf" \
+	    -body [list read-read-dyn $fname $trans]
+	bench -iter $iters -desc "$desc glob-grep match" \
+	    -body [list read-gets-match $fname "*0123456789*" $trans]
+	bench -iter $iters -desc "$desc glob-grep nomatch" \
+	    -body [list read-gets-match $fname "*nomatchterm*" $trans]
+    }
 }
 
 bench_rm $largeFile $smallFile
