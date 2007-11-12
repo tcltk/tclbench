@@ -1,3 +1,7 @@
+2007-11-11  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/regexp.bench: add more RE tests for core ReToGlob perf
+
 2007-11-07  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tcl/read.bench: add grep-glob and cat benchmarks.

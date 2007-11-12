@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: regexp.bench,v 1.6 2002/11/14 01:55:34 hobbs Exp $
+# RCS: @(#) $Id: regexp.bench,v 1.7 2007/11/12 02:01:35 hobbs Exp $
 #
 
 # Literal regular expresion 
@@ -32,10 +32,15 @@ proc regexp-str-static-anchor {string} {
     regexp {^foobar$} $string
 }
 
+# Static anchored regexp
+proc regexp-str-static-anchor-dot {string} {
+    regexp {^fo.bar$} $string
+}
+
 # Variable based regexp with catching
 proc regexp-catch {string exp} {
     if {[regexp $exp $string match one two three]} {
-	list $match $one $two $three   
+	list $match $one $two $three
     }
 }
 
@@ -141,6 +146,17 @@ foreach {type re str} $tests {
 	    -body {regexp-catch $str $re}
 }
 
+set tests [list \
+	"***= directive match" "***=a" "[str-repeat foo 100]"\
+	". match" "." "[str-repeat foo 100]"\
+	"^\$ nomatch" {^$} "[str-repeat foo 100]"\
+	"***= directive nomatch" "***=bar" "[str-repeat foo 100]"\
+	]
+foreach {type re str} $tests {
+    bench -desc "RE var $type" \
+	    -body {regexp-str-exp $str $re}
+}
+
 bench -desc "RE static short match" \
 	-body {regexp-str-static "abcdef"}
 bench -desc "RE static short nomatch" \
@@ -156,6 +172,10 @@ bench -desc "RE static anchored match" \
 	-body {regexp-str-static-anchor "foobar"} -result 1
 bench -desc "RE static anchored nomatch" \
 	-body {regexp-str-static-anchor "goodbye"} -result 0
+bench -desc "RE static anchored match dot" \
+	-body {regexp-str-static-anchor-dot "foobar"} -result 1
+bench -desc "RE static anchored nomatch dot" \
+	-body {regexp-str-static-anchor-dot "goodbye"} -result 0
 bench -desc "RE static l-anchored match" \
 	-body {regexp-str-static-lanchor "foobar"} -result 1
 bench -desc "RE static l-anchored nomatch" \
