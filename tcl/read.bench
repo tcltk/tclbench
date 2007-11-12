@@ -116,8 +116,7 @@ makeFiles $largeFile $smallFile
 set large "[expr {[file size $largeFile]/1024}]K"
 set small "[file size $smallFile]b"
 
-set iters 30
-foreach {fsize fname} [list $large $largeFile $small $smallFile] {
+foreach {fsize fname iters} [list $large $largeFile 30 $small $smallFile 50] {
     foreach {trans desc} {binary { bin} {} {}} {
 	set desc "READ$desc $fsize,"
 	bench -iter $iters -desc "$desc cat" \
