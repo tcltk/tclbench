@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: string.bench,v 1.24 2004/12/20 22:29:23 hobbs Exp $
+# RCS: @(#) $Id: string.bench,v 1.25 2007/11/16 21:57:45 hobbs Exp $
 #
 
 proc str-cmp-null {a} {
@@ -203,6 +203,12 @@ proc str-append-2 {s small large count} {
     }
 }
 
+proc rev-core {string} {
+    return [string reverse $string]
+}
+if {[info tclversion] < 8.5} {
+    proc rev-core {string} { return -code 666 "8.5+" }
+}
 proc rev-set {string} {
     set len [string length $string]
     set out {}
@@ -398,26 +404,19 @@ bench -desc "STR repeat, [string length $longString] chars * 100" \
 	-body {str-repeat $longString 100}
 
 foreach chars {10 100 400} {
-    bench -desc "STR reverse iter/append, $chars c" \
+    foreach {desc cmd} {
+	iter/append rev-append
+	iter/set    rev-set
+	recursive   rev-recursive
+	core        rev-core
+    } {
+	bench -desc "STR reverse $desc, $chars c" \
 	    -pre {set string [string range $longString 1 $chars]} \
-	    -body {rev-append $string}
-    bench -desc "STR reverse iter/append, $chars uc" \
+	    -body {$cmd $string}
+	bench -desc "STR reverse $desc, $chars uc" \
 	    -pre {set string [string range $ustring 1 $chars]} \
-	    -body {rev-append $string}
-
-    bench -desc "STR reverse iter/set, $chars c" \
-	    -pre {set string [string range $longString 1 $chars]} \
-	    -body {rev-set $string}
-    bench -desc "STR reverse iter/set, $chars uc" \
-	    -pre {set string [string range $ustring 1 $chars]} \
-	    -body {rev-set $string}
-
-    bench -desc "STR reverse recursive, $chars c" \
-	    -pre {set string [string range $longString 1 $chars]} \
-	    -body {rev-recursive $string}
-    bench -desc "STR reverse recursive, $chars uc" \
-	    -pre {set string [string range $ustring 1 $chars]} \
-	    -body {rev-recursive $string}
+	    -body {$cmd $string}
+    }
 }
 
 bench -desc "STR append" \
@@ -434,20 +433,20 @@ bench -desc "STR append (10KB + 1KB)" \
 
 set base [str-repeat "0" 1049600]
 set iters 200
-bench -desc "STR append (1MB + 2b * 1000)" -iters $iters \
+bench -desc "STR append (1MB + 2b*1000)" -iters $iters \
 	-body {str-append $base "00" 1000}
 bench -desc "STR append (1MB + 1KB)" -iters $iters \
 	-body {str-append $base $kilobyte}
-bench -desc "STR append (1MB + 1KB * 20)" -iters $iters \
+bench -desc "STR append (1MB + 1KB*20)" -iters $iters \
 	-body {str-append $base $kilobyte 20}
-bench -desc "STR append (1MB + 1KB * 1000)" -iters $iters \
+bench -desc "STR append (1MB + 1KB*1000)" -iters $iters \
 	-body {str-append $base $kilobyte 1000}
-bench -desc "STR append (1MB + (1b + 1K + 1b) * 100)" -iters $iters \
+bench -desc "STR append (1MB + (1b+1K+1b)*100)" -iters $iters \
 	-body {str-append-2 $base "b" $kilobyte 100}
 set iters 50
-bench -desc "STR append (1MB + 1MB * 3)" -iters $iters \
+bench -desc "STR append (1MB + 1MB*3)" -iters $iters \
 	-body {str-append $base $base 3}
-bench -desc "STR append (1MB + 1MB * 5)" -iters $iters \
+bench -desc "STR append (1MB + 1MB*5)" -iters $iters \
 	-body {str-append $base $base 4}
 
 catch {unset longString longString2 ustring ustring2}
