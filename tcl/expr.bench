@@ -14,6 +14,16 @@ proc expr-braced {a} {
     expr {$a*$b+log($c)-pow($d,$e)}
     expr {$a*$b+log($c)-pow($d,$e)}
 }
+proc expr-unbraced-long {a op} {
+    expr $a $op $a $op $a $op $a $op $a $op $a $op $a $op $a $op $a $op $a \
+	$op $a $op $a $op $a $op $a $op $a $op $a $op $a $op $a $op $a \
+	$op $a $op $a * 2 $op $a $op $a $op $a $op $a $op $a $op $a $op $a \
+	$op $a $op $a * 2 $op $a $op $a $op $a $op $a $op $a $op $a $op $a \
+	$op $a $op $a * 2 $op $a $op $a $op $a $op $a $op $a $op $a $op $a \
+	$op $a $op $a * 2 $op $a $op $a $op $a $op $a $op $a $op $a $op $a \
+	$op $a $op $a * 2 $op $a $op $a $op $a $op $a $op $a $op $a $op $a \
+	$op $a $op $a $op $a $op $a $op $a $op $a $op  $a $op $a $op 1
+}
 
 proc expr-3.1 {a} {
     expr {$a}
@@ -60,6 +70,7 @@ bench -desc "EXPR \$a == \$b int" -body {expr-streq 100 200}
 bench -desc "EXPR \$a != \$b int" -body {expr-strneq 100 200}
 
 bench -desc "EXPR unbraced" -body {expr-unbraced 12}
+bench -desc "EXPR unbraced long" -body {expr-unbraced-long 13 +}
 bench -desc "EXPR braced" -body {expr-braced 12}
 bench -desc "EXPR inline" -body {
     set a 12
