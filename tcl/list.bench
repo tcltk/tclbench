@@ -111,6 +111,19 @@ proc list-list {a b c} {
     }
 }
 
+proc list-rev-lappend {l} {
+    set res {}
+    set i [llength $l]
+    while {$i > 0} { lappend res [lindex $l [incr i -1]] }
+    return $res
+}
+proc list-rev-core {l} {
+    return [lreverse $l]
+}
+if {[info tclversion] < 8.5} {
+    proc list-rev-core {l} { return -code 666 "8.5+" }
+}
+
 if {[info tclversion] < 8.4} {
     proc biglist { size } {}
     proc lset-1 args { return -code 666 "=8.4" }
@@ -280,6 +293,11 @@ bench -desc "LIST join list" \
 
 bench -desc "LIST iterate list" \
 	-body {list-iter $Lobj}
+
+bench -desc "LIST reverse lappend" \
+	-body {list-rev-lappend $Lobj}
+bench -desc "LIST reverse core" \
+	-body {list-rev-core $Lobj}
 
 bench -desc "LIST list" \
 	-body {list-list one two three}
