@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: regexp.bench,v 1.7 2007/11/12 02:01:35 hobbs Exp $
+# RCS: @(#) $Id: regexp.bench,v 1.8 2007/11/16 21:57:30 hobbs Exp $
 #
 
 # Literal regular expresion 
@@ -153,6 +153,10 @@ set tests [list \
 	"***= directive nomatch" "***=bar" "[str-repeat foo 100]"\
 	]
 foreach {type re str} $tests {
+    if {([info tclversion] < 8.1) && ([string first ***= $re] == 0)} {
+	# limited REs pre-8.1
+	continue
+    }
     bench -desc "RE var $type" \
 	    -body {regexp-str-exp $str $re}
 }
