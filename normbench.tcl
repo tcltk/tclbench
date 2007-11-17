@@ -4,7 +4,7 @@ exec tclsh "$0" ${1+"$@"}
 
 # normbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: normbench.tcl,v 1.5 2007/11/17 01:51:32 hobbs Exp $}
+set RCS {RCS: @(#) $Id: normbench.tcl,v 1.6 2007/11/17 02:17:09 hobbs Exp $}
 #
 # Copyright (c) 2000-2007 Jeffrey Hobbs.
 
@@ -164,14 +164,15 @@ proc max {times} {
 }
 
 proc wikisafe {str} {
-    return [string map [list | <<pipe>>] $str]
+    return [string map [list | <<pipe>> "\[" "\[\[" "\]" "\]\]" ] $str]
 }
 
 proc wiki2list {str} {
     # remove first and last 2 chars and split on | symbol
     set out [list]
     foreach elem [split [string range $str 2 end-2] "|"] {
-	lappend out [string trim $elem '] ; # remove wiki highlighting
+	set elem [string trim $elem '] ; # remove wiki highlighting
+	lappend out [string map [list "\[\[" "\[" "\]\]" "\]"] $elem]
     }
     return $out
 }
@@ -276,19 +277,19 @@ proc normalize {norm indata outformat} {
 	    }
 	    continue
 	}
-	regexp {\d+} $line num ; # gets first number in line
+	regexp {^(?:[%&]\|)?(\d+)} $line -> num ; # gets first number in line
 	if {$num == 0} {
 	    # guess format based on first line of version input
 	    if {[string match "0,VER*" $line]} {
 		set informat csv
 	    } elseif {[string match "0 VER*" $line]} {
 		set informat list
-	    } elseif {[string match "?|0|VER*" $line]} {
+	    } elseif {[string match "?|0*|VER*" $line]} {
 		set informat wiki
 	    } elseif {[string match "0*VER*" $line]} {
 		set informat text
 	    } else {
-		puts stderr "Unrecognized runbench format input file"
+		puts stderr "Unrecognized runbench format input file '$line'"
 		exit
 	    }
 	    if {$outformat == ""} {
