@@ -1,3 +1,13 @@
+2007-11-16  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* normbench.tcl: Add -output wiki and variable in/out format
+	* runbench.tcl:  Add -output wiki format
+
+	* tcl/expr.bench (expr-unbraced-long): add benchmark
+	* tcl/list.bench: add list reverse benchmarks
+	* tcl/string.bench: add string reverse core benchmark
+	* tcl/regexp.bench: limit pre-8.1 REs
+
 2007-11-11  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tcl/regexp.bench: add more RE tests for core ReToGlob perf

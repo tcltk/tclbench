@@ -4,9 +4,9 @@ exec tclsh "$0" ${1+"$@"}
 
 # runbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: runbench.tcl,v 1.20 2006/11/14 15:12:37 dgp Exp $}
+set RCS {RCS: @(#) $Id: runbench.tcl,v 1.21 2007/11/17 01:51:32 hobbs Exp $}
 #
-# Copyright (c) 2000-2001 Jeffrey Hobbs.
+# Copyright (c) 2000-2007 Jeffrey Hobbs.
 
 #
 # Run the main script from an 8.2+ interp
@@ -25,6 +25,7 @@ set ME [file tail [info script]]
 proc usage {} {
     puts stderr "Usage (v$::VERSION): $::ME ?options?\
 	    \n\t-help			# print out this message\
+	    \n\t-delta			# delta range for wiki highlight (default: 0.05)\
 	    \n\t-iterations <#>		# max # of iterations to run any benchmark\
 	    \n\t-minversion <version>	# minimum interp version to use\
 	    \n\t-maxversion <version>	# maximum interp version to use\
@@ -33,7 +34,7 @@ proc usage {} {
 	    \n\t-normalize <version>	# normalize numbers to given version\
 	    \n\t-notcl			# do not run tclsh tests\
 	    \n\t-notk			# do not run wish tests\
-	    \n\t-output <text|list|csv>	# style of output from program (default: text)\
+	    \n\t-output <text|list|csv|wiki> # style of output (default: match input format)\
 	    \n\t-paths <pathList>	# path or list of paths to search for interps\
 	    \n\t-threads <numThreads>	# num of threads to use (where possible)\
 	    \n\t-throwerrors		# propagate errors in benchmarks files\
@@ -57,6 +58,7 @@ proc convertVersion {ver} {
 #
 array set opts {
     paths	{}
+    delta	0.05
     minver	0.0
     maxver	10.0
     match	{}
@@ -136,10 +138,14 @@ if {[llength $argv]} {
 		set opts(usetk) 0
 		set argv [lreplace $argv 0 0]
 	    }
-	    -outp*	{
+	    -delta	{
+		set opts(delta) [lindex $argv 1]
+		set argv [lreplace $argv 0 1]
+	    }
+	    -out*	{
 		# Output style
 		set opts(output) [lindex $argv 1]
-		if {![regexp {^(text|list|csv)$} $opts(output)]} { usage }
+		if {![regexp {^(text|list|csv|wiki)$} $opts(output)]} { usage }
 		set argv [lreplace $argv 0 1]
 	    }
 	    -path*	{
@@ -268,6 +274,9 @@ proc getInterps {optArray pattern iArray} {
 proc vputs {args} {
     global opts
     if {$opts(verbose)} {
+	if {$opts(output) == "wiki"} {
+	    set args [lreplace $args end end " [lindex $args end]"]
+	}
 	uplevel 1 [list puts] $args
     }
 }
@@ -414,6 +423,7 @@ proc outputData-text {iArray dArray {norm {}}} {
 #
 proc outputData-list {iArray dArray {norm {}}} {
     upvar 1 $iArray ivar $dArray DATA
+    global opts
 
     set i 0
     set out [list [concat [list $i VERSIONS:] $ivar(VERSION)]]
@@ -421,7 +431,7 @@ proc outputData-list {iArray dArray {norm {}}} {
     foreach elem [lsort -dictionary [array names DATA {desc*}]] {
 	set desc [string range $elem 5 end]
 	set name [incr i]
-	set line [list [incr i] $desc]
+	set line [list $name $desc]
 	foreach lbl $ivar(VERSION) {
 	    # establish a default for tests that didn't exist for this interp
 	    if {![info exists DATA(:$desc$lbl)]} { set DATA(:$desc$lbl) "-=-" }
@@ -438,7 +448,27 @@ proc outputData-list {iArray dArray {norm {}}} {
 		}
 	    }
 	} else {
-	    foreach lbl $ivar(VERSION) { lappend line $DATA(:$desc$lbl) }
+	    foreach lbl $ivar(VERSION) {
+		lappend line $DATA(:$desc$lbl)
+	    }
+	    if {$opts(output) == "wiki"} {
+		set line [lrange $line 2 end]
+		set min [min $line]
+		set max [max $line]
+		set wline [list $name $desc]
+		foreach elem $line {
+		    if {[string is double -strict $elem]} {
+			# do magic highlighting within DELTA% of min or max
+			if {$elem < ($min*(1.0+$opts(delta)))} {
+			    set elem "''$elem''" ; # italic
+			} elseif {$elem > ($max*(1.0-$opts(delta)))} {
+			    set elem "'''$elem'''" ; # bold
+			}
+		    }
+		    lappend wline $elem
+		}
+		set line $wline
+	    }
 	}
 	lappend out $line
     }
@@ -464,6 +494,36 @@ proc list2csv {list} {
     return $out
 }
 
+proc min {times} {
+    set min [expr {1<<16}]
+    foreach t $times {
+	if {[string is double -strict $t]} { if {$t < $min} { set min $t } }
+    }
+    return $min
+}
+
+proc max {times} {
+    set max 0
+    foreach t $times {
+	if {[string is double -strict $t]} { if {$t > $max} { set max $t } }
+    }
+    return $max
+}
+
+proc wikisafe {str} {
+    return [string map [list | <<pipe>>] $str]
+}
+
+proc list2wiki {list} {
+    set out ""
+    append out "%|[join [lindex $list 0] |]|%\n" ; # VERSIONS
+    foreach l [lrange $list 1 end-1] {
+	append out "&|[join [wikisafe $l] |]|&\n"
+    }
+    append out "%|[join [lindex $list end] |]|%\n" ; # BENCHMARKS
+    return $out
+}
+
 proc outputData {optArray iArray dArray} {
     upvar 1 $optArray opts $iArray ivar $dArray DATA
 
@@ -477,6 +537,10 @@ proc outputData {optArray iArray dArray} {
 	csv {
 	    puts -nonewline stdout \
 		    [list2csv [outputData-list ivar DATA $opts(norm)]]
+	}
+	wiki {
+	    puts -nonewline stdout \
+		[list2wiki [outputData-list ivar DATA $opts(norm)]]
 	}
     }
 }
