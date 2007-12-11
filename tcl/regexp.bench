@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: regexp.bench,v 1.8 2007/11/16 21:57:30 hobbs Exp $
+# RCS: @(#) $Id: regexp.bench,v 1.9 2007/12/11 03:13:48 hobbs Exp $
 #
 
 # Literal regular expresion 
@@ -114,6 +114,15 @@ bench -desc "RE count all matches" \
 bench -desc "RE extract all matches" \
 	-body {regexp-extract "abcabcabcabcabcabc" "abc"}
 
+# See bug 1452969
+set inifile "choices=[str-repeat mx 1000]"
+bench -desc "RE ini file" -iters 30 \
+    -body {regexp-catch $inifile {^(.*)=(.*)$}}
+if {[info tclversion] > 8.0} {
+    bench -desc "RE ini file ng" -iters 100 \
+	-body {regexp-catch $inifile {^(.*?)=(.*)$}}
+}
+
 set cCommentUnopt {/\*([^*]|\*+[^/*])*\*+/}
 set cCommentOpt   {/\*[^*]*\*+([^/*][^*]*\*+)*/}
 set 1char "(c)"
@@ -146,11 +155,15 @@ foreach {type re str} $tests {
 	    -body {regexp-catch $str $re}
 }
 
+set numstr "[str-repeat a 50]123.50[str-repeat b 20]"
 set tests [list \
 	"***= directive match" "***=a" "[str-repeat foo 100]"\
 	". match" "." "[str-repeat foo 100]"\
 	"^\$ nomatch" {^$} "[str-repeat foo 100]"\
 	"***= directive nomatch" "***=bar" "[str-repeat foo 100]"\
+	"backtrack case" "a.*b.*c" "a[str-repeat b 200]" \
+	{[0-9] match} {[0-9]+\.[0-9]+} $numstr \
+	{\d match} {\d+\.\d+} $numstr \
 	]
 foreach {type re str} $tests {
     if {([info tclversion] < 8.1) && ([string first ***= $re] == 0)} {
