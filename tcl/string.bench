@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: string.bench,v 1.25 2007/11/16 21:57:45 hobbs Exp $
+# RCS: @(#) $Id: string.bench,v 1.26 2007/12/11 03:13:33 hobbs Exp $
 #
 
 proc str-cmp-null {a} {
@@ -377,10 +377,22 @@ bench -desc "STR match, complex (success late)" \
 	-body {str-match $longString *321} -result 1
 bench -desc "STR match, complex (failure)" \
 	-body {str-match $longString *cba*} -result 0
-bench -desc "STR match, complex (failure 2)" -iter 100 \
-	-body {str-match $longString *a*z*cba*} -result 0
 bench -desc "STR match, complex (total failure)" \
 	-body {str-match $longString *===*} -result 0
+bench -desc "STR match, recurse2 (fail)" -iter 100 \
+	-body {str-match $longString *a*z*cba*} -result 0
+bench -desc "STR match, recurse2 (success)" -iter 100 \
+	-body {str-match $longString *a*z*987*} -result 1
+bench -desc "STR match, recurse (fail backtrack)" -iter 100 \
+	-body {str-match a[str-repeat b 200] *a*b*c*} -result 0
+bench -desc "STR match, recurse (fail bt1)" -iter 100 \
+    -body {str-match a[str-repeat b 200] {*a*[abc]*c*}} -result 0
+bench -desc "STR match, recurse (fail bt2)" -iter 100 \
+    -body {str-match a[str-repeat b 200] {*a*[a-z]*c*}} -result 0
+bench -desc "STR match, recurse (success bt2)" -iter 100 \
+    -body {str-match a[str-repeat b 200] {*a*b*[a-z]}} -result 1
+bench -desc "STR match, recurse (fail ranchor)" -iter 100 \
+	-body {str-match $longString *a*b*%} -result 0
 
 bench -desc "STR range, index 100..200 of [string length $longString]" \
 	-body {str-range $longString 100 200}
