@@ -1,3 +1,13 @@
+2007-12-10  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/read.bench: use -buffering full on cat output
+	up iters on the benchmarks for slightly better consistency
+
+	* tcl/regexp.bench: add ini file benchmark to highlight RE slowdown
+	Add backtrack case and digit matching benchmarks.
+
+	* tcl/string.bench: more glob recursion case benchmarks
+
 2007-11-16  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* normbench.tcl: Add -output wiki and variable in/out format
