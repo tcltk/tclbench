@@ -1,0 +1,62 @@
+#
+# Benchmarks to measure the performance of [uplevel] scripts under different
+# circumstances .
+#
+# First version: only testing script in a single non-list obj. Could also
+# consider single canonical-list obj and multi-obj scripts as interesting cases
+# to benchmark.
+#
+
+proc foreachcount {var list countvar command} {
+    upvar $var v
+    upvar $countvar i
+    set i 0
+    foreach v $list {
+	uplevel 1 $command
+	incr i
+    }
+}
+
+proc loop1 {} {
+    # base case
+    set i 0
+    foreach x $::a {
+	set y [expr {$i + $x}]
+	incr i
+    }
+}
+
+set basebody {
+    foreachcount x $::a i {
+	set y [expr {$i + $x}]
+    }
+}
+
+# pre-populate the LVT (if any)
+set primedbody "
+    set x {}
+    set y {}
+    set i {}
+    $basebody
+"
+
+# script upleveled to proc body
+proc loop2 {} $basebody
+
+# script upleveled to proc body, pre-populated LVT
+proc loop3 {} $primedbody
+
+set a [lrepeat 1000 1]
+set iter 50
+
+bench -desc "UPLEVEL none" -iter $iter \
+    -body loop1
+
+bench -desc "UPLEVEL to proc" -iter $iter \
+    -body loop2
+
+bench -desc "UPLEVEL primed" -iter $iter \
+    -body loop3
+
+bench -desc "UPLEVEL to nseval" -iter $iter \
+    -body [list namespace eval foo $basebody]

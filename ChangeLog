@@ -1,3 +1,8 @@
+2008-06-12  Miguel Sofer <msofer@users.sf.net>
+
+	* tcl/uplevel.bench: new benchmarks to show uplevel compilation
+	speedups 
+
 2007-12-10  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tcl/read.bench: use -buffering full on cat output
