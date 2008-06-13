@@ -1,5 +1,9 @@
 2008-06-12  Miguel Sofer <msofer@users.sf.net>
 
+	* tcl/uplevel.bench: oops, bench required 8.5 ... fixed.
+
+2008-06-12  Miguel Sofer <msofer@users.sf.net>
+
 	* tcl/uplevel.bench: new benchmarks to show uplevel compilation
 	speedups 
 

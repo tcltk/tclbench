@@ -7,6 +7,17 @@
 # to benchmark.
 #
 
+if {[info command lrepeat] eq {}} {
+    proc lrepeat {n s} {
+	set l {}
+	incr n
+	while {[incr n -1]} {
+	    lappend l $s
+	}
+	return $l
+    }
+}
+
 proc foreachcount {var list countvar command} {
     upvar $var v
     upvar $countvar i
