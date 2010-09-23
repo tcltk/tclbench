@@ -4,16 +4,16 @@ exec tclsh "$0" ${1+"$@"}
 
 # runbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: runbench.tcl,v 1.21 2007/11/17 01:51:32 hobbs Exp $}
+set RCS {RCS: @(#) $Id: runbench.tcl,v 1.22 2010/09/23 00:42:24 hobbs Exp $}
 #
 # Copyright (c) 2000-2007 Jeffrey Hobbs.
 
 #
-# Run the main script from an 8.2+ interp
+# Run the main script from an 8.3+ interp
 #
-if {[catch {package require Tcl 8.2}]} {
+if {[catch {package require Tcl 8.3}]} {
     set me [file tail [info script]]
-    puts stderr "$me requires 8.2+ to run, although it can benchmark\
+    puts stderr "$me requires 8.3+ to run, although it can benchmark\
 	    any Tcl v7+ interpreter"
     exit 1
 }
@@ -204,7 +204,7 @@ proc getInterps {optArray pattern iArray} {
     upvar 1 $optArray opts $iArray var
     set evalString {puts [info patchlevel] ; exit}
     foreach path $opts(paths) {
-	foreach interp [glob -nocomplain [file join $path $pattern]] {
+	foreach interp [glob -nocomplain -directory $path $pattern] {
 	    if {$::tcl_version > 8.4} {
 		set interp [file normalize $interp]
 	    }
