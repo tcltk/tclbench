@@ -1,3 +1,11 @@
+2010-09-24  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/string.bench: add binary string compare benchmarks
+
+2010-09-22  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* runbench.tcl: require 8.3
+
 2008-06-12  Miguel Sofer <msofer@users.sf.net>
 
 	* tcl/uplevel.bench: oops, bench required 8.5 ... fixed.

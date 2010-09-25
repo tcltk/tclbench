@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: string.bench,v 1.26 2007/12/11 03:13:33 hobbs Exp $
+# RCS: @(#) $Id: string.bench,v 1.27 2010/09/25 01:51:32 hobbs Exp $
 #
 
 proc str-cmp-null {a} {
@@ -322,6 +322,31 @@ bench -desc "STR str \$a eq \$b (same obj)" \
 	-body {str-eq $str1 $str1}
 bench -desc "STR str \$a ne \$b (same obj)" \
 	-body {str-ne $str1 $str1}
+
+if {[info tclversion] >= 8.2} {
+    # binary obj data comparison checks
+    bench -desc "STR strcmp bin short eq" \
+	-body {str-cmp [binary format @100a 0] [binary format @100a 0]}
+    bench -desc "STR streq bin short eq" \
+	-body {str-eq  [binary format @100a 0] [binary format @100a 0]}
+    bench -desc "STR strcmp bin long eq" \
+	-body {str-cmp [binary format @10000a 0] [binary format @10000a 0]}
+    bench -desc "STR streq bin long eq" \
+	-body {str-eq  [binary format @10000a 0] [binary format @10000a 0]}
+    bench -desc "STR strcmp bin long neq" \
+	-body {str-cmp [binary format @10000aa 0 2] \
+		   [binary format @10000aa 0 1]}
+    bench -desc "STR streq bin long neq" \
+	-body {str-eq  [binary format @10000aa 0 3] \
+		   [binary format @10000aa 0 4]}
+
+    bench -desc "STR strcmp bin long neqS" \
+	-body {str-cmp [binary format @10000aa 0 2] \
+		   [binary format a@10000a 5 1]}
+    bench -desc "STR streq bin long neqS" \
+	-body {str-eq  [binary format @10000aa 0 3] \
+		   [binary format a@10000a 5 4]}
+}
 
 bench -desc "STR length (==[string length $longString])" \
 	-body {str-len $longString}
