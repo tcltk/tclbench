@@ -49,6 +49,7 @@ proc read-cat {file {trans {}}} {
     set buf ""
     while {[gets $f buf] >= 0} { puts $outf $buf }
     close $f
+    close $outf
 }
 
 # Read a file using read and [file size]
