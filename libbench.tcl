@@ -4,7 +4,7 @@
 # This file has to have code that works in any version of Tcl that
 # the user would want to benchmark.
 #
-# RCS: @(#) $Id: libbench.tcl,v 1.14 2002/04/26 03:42:55 hobbs Exp $
+# RCS: @(#) $Id: libbench.tcl,v 1.15 2010/09/28 00:05:14 hobbs Exp $
 #
 # Copyright (c) 2000-2001 Jeffrey Hobbs.
 
@@ -102,18 +102,20 @@ proc bench {args} {
 	-post	{}
     }
     set opts(-iter) $BENCH(ITERS)
+    set opts(-autoscale) $BENCH(AUTOSCALE)
     while {[llength $args]} {
 	set key [lindex $args 0]
+	set val [lindex $args 1]
 	switch -glob -- $key {
-	    -res*	{ set opts(-res)  [lindex $args 1] }
-	    -pr*	{ set opts(-pre)  [lindex $args 1] }
-	    -po*	{ set opts(-post) [lindex $args 1] }
-	    -bo*	{ set opts(-body) [lindex $args 1] }
-	    -de*	{ set opts(-desc) [lindex $args 1] }
+	    -auto*	{ set opts(-autoscale) $val }
+	    -res*	{ set opts(-res)  $val }
+	    -pr*	{ set opts(-pre)  $val }
+	    -po*	{ set opts(-post) $val }
+	    -bo*	{ set opts(-body) $val }
+	    -de*	{ set opts(-desc) $val }
 	    -it*	{
 		# Only change the iterations when it is smaller than
 		# the requested default
-		set val [lindex $args 1]
 		if {$opts(-iter) > $val} { set opts(-iter) $val }
 	    }
 	    default {
@@ -145,8 +147,20 @@ proc bench {args} {
 	    set bench($opts(-desc)) $res
 	    puts $BENCH(OUTFID) [list Sourcing "$opts(-desc): $res"]
 	} else {
-	    set code [catch {uplevel \#0 \
-		    [list time $opts(-body) $opts(-iter)]} res]
+	    set iter $opts(-iter)
+	    if {!$code && $opts(-autoscale)} {
+		# Ensure total test runtime is 0.1s < $runtime < 4s.
+		# time reports in microsecs.
+		# Do 2nd call to remove catch variance
+		set runtime [lindex [uplevel \#0 [list time $opts(-body) 1]] 0]
+		if {$runtime*$iter < 100000} {
+		    set iter [expr {int(100000.0/$runtime)}]
+		} elseif {($runtime*$iter/1000.) > 5000} {
+		    set iter [expr {int(4000000.0/$runtime)}]
+		    if {$iter < 8} { set iter 8 }
+		}
+	    }
+	    set code [catch {uplevel \#0 [list time $opts(-body) $iter]} res]
 	    if {!$BENCH(THREADS)} {
 		if {$code == 0} {
 		    # Get just the microseconds value from the time result
@@ -202,7 +216,8 @@ foreach {var val} {
 	RMATCH		{}
 	OUTFILE		stdout
 	FILES		{}
-	ITERS		1000
+	ITERS		5000
+	AUTOSCALE	1
 	THREADS		0
 	EXIT		"[info exists tk_version]"
 } {
@@ -215,14 +230,16 @@ set BENCH(EXIT) 1
 if {[llength $argv]} {
     while {[llength $argv]} {
 	set key [lindex $argv 0]
+	set val [lindex $argv 1]
 	switch -glob -- $key {
 	    -help*	{ usage }
-	    -err*	{ set BENCH(ERRORS)  [lindex $argv 1] }
-	    -int*	{ set BENCH(INTERP)  [lindex $argv 1] }
-	    -rmat*	{ set BENCH(RMATCH)  [lindex $argv 1] }
-	    -mat*	{ set BENCH(MATCH)   [lindex $argv 1] }
-	    -iter*	{ set BENCH(ITERS)   [lindex $argv 1] }
-	    -thr*	{ set BENCH(THREADS) [lindex $argv 1] }
+	    -err*	{ set BENCH(ERRORS)  $val }
+	    -int*	{ set BENCH(INTERP)  $val }
+	    -rmat*	{ set BENCH(RMATCH)  $val }
+	    -mat*	{ set BENCH(MATCH)   $val }
+	    -auto*	{ set BENCH(AUTOSCALE) $val }
+	    -iter*	{ set BENCH(ITERS)   $val }
+	    -thr*	{ set BENCH(THREADS) $val }
 	    default {
 		foreach arg $argv {
 		    if {![file exists $arg]} { usage }
