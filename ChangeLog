@@ -1,5 +1,14 @@
 2010-09-27  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* libbench.tcl (bench): guard again "0" claimed runtime speed
+	(bench_tmpfile): add pid to tmpfile
+
+	* tcl/binary.bench: bench to generate random binary
+
+	* tcl/ascii85.bench (new): ascii85 benchmarks, works for 8.4+
+
+	* tcl/uplevel.bench: works for 8.0+ only
+
 	* tcl/expr.bench: more simple expr benchmarks
 
 	* tcl/eval.bench (e-cmd-expand): add {*} benchmark
