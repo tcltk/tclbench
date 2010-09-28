@@ -1,5 +1,10 @@
 2010-09-27  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* tcl/eval.bench (e-cmd-expand): add {*} benchmark
+
+	* runbench.tcl, libbench.tcl: add -autoscale option that ensures
+	min and max runtime length independent of iters requested.
+
 	* tcl/read.bench (read-cat): make sure to close /dev/null
 
 2010-09-24  Jeff Hobbs  <jeffh@ActiveState.com>

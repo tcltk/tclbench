@@ -1,6 +1,18 @@
 proc e-cmd {val} {
     set cmd [list set val $val]
     eval $cmd
+    eval $cmd
+    eval $cmd
+}
+
+proc e-cmd-expand {val} {
+    set cmd [list set val $val]
+    {*}$cmd
+    {*}$cmd
+    {*}$cmd
+}
+if {[info tclversion] < 8.5} {
+    proc e-cmd-expand {string} { return -code 666 "8.5+" }
 }
 
 proc e-list val {
@@ -51,6 +63,8 @@ proc makeListOfLists {{size 1000}} {
 set iter 1000
 bench -iter $iter -desc "EVAL cmd eval in list obj var" \
 	-body {e-cmd val}
+bench -iter $iter -desc "EVAL cmd eval in list obj {*}" \
+	-body {e-cmd-expand val}
 bench -iter $iter -desc "EVAL cmd eval as list" \
 	-body {e-list val}
 bench -iter $iter -desc "EVAL cmd eval as string" \
