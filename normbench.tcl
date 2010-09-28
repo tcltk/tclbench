@@ -1,10 +1,8 @@
-#!/bin/sh
-# The next line is executed by /bin/sh, but not tcl \
-exec tclsh "$0" ${1+"$@"}
+#!/usr/bin/env tclsh
 
 # normbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: normbench.tcl,v 1.6 2007/11/17 02:17:09 hobbs Exp $}
+set RCS {RCS: @(#) $Id: normbench.tcl,v 1.7 2010/09/28 04:36:19 hobbs Exp $}
 #
 # Copyright (c) 2000-2007 Jeffrey Hobbs.
 
@@ -187,7 +185,7 @@ proc list2wiki {l} {
 
 
 proc findVersion {norm versions} {
-    if {$norm == ""} { return 0 }
+    if {$norm == "" || $norm == "none"} { return 0 }
     set i [lsearch -exact $versions $norm]
     if {$i >= 0} { return $i }
     set i [lsearch -glob $versions *$norm*]
@@ -219,7 +217,7 @@ proc normalize-text {norm line} {
     }
     set out [string range $line 0 [expr {$start-1}]]
     foreach t $times {
-	if {[string is double -strict $t]} {
+	if {$norm != "none" && [string is double -strict $t]} {
 	    append out [format " %7.2f" \
 		    [expr {double($t) / double($ntime)}]]
 	} else {
@@ -247,7 +245,11 @@ proc normalize-list {norm line} {
 	}
 	foreach t $times {
 	    if {[string is double -strict $t]} {
-		set elem [format "%.2f" [expr {double($t) / double($ntime)}]]
+		if {$norm == "none"} {
+		    set elem $t
+		} else {
+		    set elem [format "%.2f" [expr {double($t)/$ntime}]]
+		}
 		if {$opts(output) == "wiki"} {
 		    # do magic highlighting within DELTA% of min or max
 		    if {$t < ($min*(1.0+$opts(delta)))} {

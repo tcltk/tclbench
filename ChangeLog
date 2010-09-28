@@ -1,5 +1,8 @@
 2010-09-27  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* normbench.tcl: support -normalize "none" to mean just change
+	formats but not normalize
+
 	* libbench.tcl (bench): guard again "0" claimed runtime speed
 	(bench_tmpfile): add pid to tmpfile
 
