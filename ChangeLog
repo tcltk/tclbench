@@ -1,5 +1,7 @@
 2010-09-27  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* tcl/expr.bench: more simple expr benchmarks
+
 	* tcl/eval.bench (e-cmd-expand): add {*} benchmark
 
 	* runbench.tcl, libbench.tcl: add -autoscale option that ensures

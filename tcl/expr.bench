@@ -47,6 +47,32 @@ proc expr-streq {a b} {
 proc expr-strneq {a b} {
     expr {$a != $b}; expr {$a != $b}; expr {$a != $b}; expr {$a != $b}
 }
+proc expr-int {val} {
+    expr {int($val)}
+    expr {int($val)}
+}
+proc expr-dbl {val} {
+    expr {double($val)}
+    expr {double($val)}
+}
+proc expr-rand-fun {rng} {
+    expr {int([rand]*$rng)}
+    expr {int([rand]*$rng)}
+}
+proc rand {} { return 0.5 }
+proc expr-rand {rng} {
+    expr {int(rand()*$rng)}
+    expr {int(rand()*$rng)}
+}
+proc expr-builtin {} {
+    expr {sin(0.50)}
+    expr {sin(0.50)}
+}
+proc expr-builtin-dyn {fun val} {
+    expr ${fun}($val)
+    expr ${fun}($val)
+}
+
 
 if { [catch {string repeat "abc" 10}] } {
     proc str-repeat {str num} {
@@ -68,6 +94,8 @@ bench -desc "EXPR \$a == \$b str (!= len)" -body {expr-streq $str1 $str3}
 bench -desc "EXPR \$a != \$b str (!= len)" -body {expr-strneq $str1 $str3}
 bench -desc "EXPR \$a == \$b int" -body {expr-streq 100 200}
 bench -desc "EXPR \$a != \$b int" -body {expr-strneq 100 200}
+bench -desc "EXPR \$a == \$b dbl" -body {expr-streq 100.0 200.0}
+bench -desc "EXPR \$a != \$b dbl" -body {expr-strneq 100.0 200.0}
 
 bench -desc "EXPR unbraced" -body {expr-unbraced 12}
 bench -desc "EXPR unbraced long" -body {expr-unbraced-long 13 +}
@@ -85,3 +113,10 @@ bench -body {expr-3.2 1} -desc "EXPR ten operands"
 bench -body {expr-3.3 1} -desc "EXPR fifty operands"
 bench -body {expr-incr-incr 1} -desc "EXPR incr with incr"
 bench -body {expr-incr-expr 1} -desc "EXPR incr with expr"
+
+bench -body {expr-int 100.0} -desc "EXPR cast int"
+bench -body {expr-dbl 100} -desc "EXPR cast double"
+bench -body {expr-rand 100} -desc "EXPR rand range"
+bench -body {expr-rand-fun 100} -desc "EXPR rand range func"
+bench -body {expr-builtin} -desc "EXPR builtin sin"
+bench -body {expr-builtin-dyn cos 0.5} -desc "EXPR builtin dyn"
