@@ -1,5 +1,5 @@
 #
-# RCS: @(#) $Id: binary.bench,v 1.2 2006/10/16 12:33:03 patthoyts Exp $
+# RCS: @(#) $Id: binary.bench,v 1.3 2010/09/28 01:20:10 hobbs Exp $
 #
 
 if {[catch {package require Tcl 8}]} {
@@ -51,6 +51,18 @@ proc bin-uchars {str} {
     return [binary format cu* $bytes]
 }
 
+binary scan Az cc A z
+proc bin-randstr [list length [list min $A] [list max $z]] {
+    set range [expr {$max-$min}]
+
+    set txt ""
+    for {set i 0} {$i < $length} {incr i} {
+	set ch [expr {$min+int(rand()*$range)}]
+	append txt [binary format c $ch]
+    }
+    return $txt
+}
+
 # String operations
 #
 
@@ -98,6 +110,10 @@ if {!$tcl_interactive} {
             -body {bin-scan $binvar5000}
         bench -desc "BIN c scan, 10000b" -iters 100 \
             -body {bin-scan $binvar10000}
+        bench -desc "BIN random string 100b" \
+            -body {bin-randstr 100}
+        bench -desc "BIN random string 5000b" -iters 1000 \
+            -body {bin-randstr 5000}
 
         bench -desc "BIN chars, 10000b" -iters 500 \
             -body {bin-chars $binvar10000}
