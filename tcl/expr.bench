@@ -116,7 +116,9 @@ bench -body {expr-incr-expr 1} -desc "EXPR incr with expr"
 
 bench -body {expr-int 100.0} -desc "EXPR cast int"
 bench -body {expr-dbl 100} -desc "EXPR cast double"
-bench -body {expr-rand 100} -desc "EXPR rand range"
+if {$tcl_version >= 8.0} {
+    bench -body {expr-rand 100} -desc "EXPR rand range"
+}
 bench -body {expr-rand-fun 100} -desc "EXPR rand range func"
 bench -body {expr-builtin} -desc "EXPR builtin sin"
 bench -body {expr-builtin-dyn cos 0.5} -desc "EXPR builtin dyn"
