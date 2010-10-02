@@ -2,9 +2,9 @@
 
 # runbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: runbench.tcl,v 1.23 2010/09/28 00:05:14 hobbs Exp $}
+set RCS {RCS: @(#) $Id: runbench.tcl,v 1.24 2010/10/02 01:22:27 hobbs Exp $}
 #
-# Copyright (c) 2000-2007 Jeffrey Hobbs.
+# Copyright (c) 2000-2010 Jeffrey Hobbs.
 
 #
 # Run the main script from an 8.3+ interp
@@ -35,6 +35,7 @@ proc usage {} {
 	    \n\t-notk			# do not run wish tests\
 	    \n\t-output <text|list|csv|wiki> # style of output (default: match input format)\
 	    \n\t-paths <pathList>	# path or list of paths to search for interps\
+	    \n\t-single <bool>		# whether to run all tests in same interp instance\
 	    \n\t-threads <numThreads>	# num of threads to use (where possible)\
 	    \n\t-throwerrors		# propagate errors in benchmarks files\
 	    \n\t-verbose		# output interim status info\
@@ -73,6 +74,7 @@ array set opts {
     verbose	0
     output	text
     iters	5000
+    single	1
     autoscale	1
     norm	{}
 }
@@ -80,92 +82,81 @@ array set opts {
 if {[llength $argv]} {
     while {[llength $argv]} {
 	set key [lindex $argv 0]
+	set val [lindex $argv 1]
+	set consumed 1
 	switch -glob -- $key {
 	    -help*	{ usage }
 	    -throw*	{
 		# throw errors when they occur in benchmark files
 		set opts(errors) 1
-		set argv [lreplace $argv 0 0]
+		set consumed 0
 	    }
 	    -thread*	{
-		set opts(usethreads) [lindex $argv 1]
-		set argv [lreplace $argv 0 1]
+		set opts(usethreads) [string is true -strict $val]
 	    }
 	    -globt*	{
-		set opts(tclsh) [lindex $argv 1]
-		set argv [lreplace $argv 0 1]
+		set opts(tclsh) $val
 	    }
 	    -globw*	{
-		set opts(wish) [lindex $argv 1]
-		set argv [lreplace $argv 0 1]
+		set opts(wish) $val
 	    }
 	    -auto*	{
-		set opts(autoscale) [lindex $argv 1]
-		set argv [lreplace $argv 0 1]
+		set opts(autoscale) [string is true -strict $val]
 	    }
 	    -iter*	{
 		# Maximum iters to run a test
 		# The test may set a smaller iter run, but anything larger
 		# will be reduced.
-		set opts(iters) [lindex $argv 1]
-		set argv [lreplace $argv 0 1]
+		set opts(iters) $val
 	    }
 	    -min*	{
 		# Allow a minimum version to search for,
 		# restricted to version, not patchlevel
-		set opts(minver) [convertVersion [lindex $argv 1]]
-		set argv [lreplace $argv 0 1]
+		set opts(minver) [convertVersion $val]
 	    }
 	    -max*	{
 		# Allow a maximum version to search for,
 		# restricted to version, not patchlevel
-		set opts(maxver) [convertVersion [lindex $argv 1]]
-		set argv [lreplace $argv 0 1]
+		set opts(maxver) [convertVersion $val]
 	    }
 	    -match*	{
-		set opts(match) [lindex $argv 1]
-		set argv [lreplace $argv 0 1]
+		set opts(match) $val
 	    }
 	    -rmatch*	{
-		set opts(rmatch) [lindex $argv 1]
-		set argv [lreplace $argv 0 1]
+		set opts(rmatch) $val
 	    }
 	    -norm*	{
-		set opts(norm) [lindex $argv 1]
-		set argv [lreplace $argv 0 1]
+		set opts(norm) $val
 	    }
 	    -notcl	{
 		set opts(usetcl) 0
-		set argv [lreplace $argv 0 0]
+		set consumed 0
 	    }
 	    -notk	{
 		set opts(usetk) 0
-		set argv [lreplace $argv 0 0]
+		set consumed 0
 	    }
 	    -delta	{
-		set opts(delta) [lindex $argv 1]
-		set argv [lreplace $argv 0 1]
+		set opts(delta) $val
+	    }
+	    -single*	{
+		set opts(single) [string is true -strict $val]
 	    }
 	    -out*	{
 		# Output style
-		set opts(output) [lindex $argv 1]
-		if {![regexp {^(text|list|csv|wiki)$} $opts(output)]} { usage }
-		set argv [lreplace $argv 0 1]
+		if {![regexp {^(text|list|csv|wiki)$} $val]} { usage }
+		set opts(output) $val
 	    }
 	    -path*	{
 		# Support single dir path or multiple paths as a list
-		if {[file isdir [lindex $argv 1]]} {
-		    lappend opts(paths) [lindex $argv 1]
-		} else {
-		    foreach path [lindex $argv 1] {
-			lappend opts(paths) $path
-		    }
+		if {[file isdir $val]} { set val [list $val] }
+		foreach path $val {
+		    if {[file isdir $val]} { lappend opts(paths) $path }
 		}
-		set argv [lreplace $argv 0 1]
 	    }
 	    -v*	{
 		set opts(verbose) 1
-		set argv [lreplace $argv 0 0]
+		set consumed 0
 	    }
 	    default {
 		foreach arg $argv {
@@ -181,6 +172,7 @@ if {[llength $argv]} {
 		break
 	    }
 	}
+	set argv [lreplace $argv 0 $consumed]
     }
 }
 if {[llength $opts(tcllist)] == 0 && [llength $opts(tklist)] == 0} {
@@ -222,7 +214,6 @@ proc getInterps {optArray pattern iArray} {
 		}
 	    }
 	    if {[file executable $interp] && ![info exists var($interp)]} {
-
 		if {[catch {exec $interp << $evalString} patchlevel]} {
 		    if {$opts(errors)} {
 			error $::errorInfo
@@ -328,10 +319,25 @@ proc collectData {iArray dArray oArray fileList} {
 		array set tmp $output
 	    }
 	} else {
-	    foreach file $fileList {
-		vputs -nonewline stdout [string index [file tail $file] 0]
+	    if {$opts(single)} {
+		foreach file $fileList {
+		    vputs -nonewline stdout [string index [file tail $file] 0]
+		    flush stdout
+		    if {[catch {eval exec $cmd [list $file]} output]} {
+			if {$opts(errors)} {
+			    error $::errorInfo
+			} else {
+			    puts stderr $output
+			    continue
+			}
+		    } else {
+			array set tmp $output
+		    }
+		}
+	    } else {
+		vputs -nonewline "running all"
 		flush stdout
-		if {[catch {eval exec $cmd [list $file]} output]} {
+		if {[catch {eval exec $cmd $fileList} output]} {
 		    if {$opts(errors)} {
 			error $::errorInfo
 		    } else {
