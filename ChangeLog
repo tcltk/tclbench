@@ -1,5 +1,7 @@
 2010-10-01  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* tcl/binary.bench: add improved random binary string bench
+
 	* runbench.tcl: clean up arg handling, add -single $bool option to
 	run all tests in same interp instance (default no == separate).
 
