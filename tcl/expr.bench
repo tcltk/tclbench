@@ -72,6 +72,11 @@ proc expr-builtin-dyn {fun val} {
     expr ${fun}($val)
     expr ${fun}($val)
 }
+proc expr-UpdateStringOfDouble {} {
+    # 8.5 slowdown caused by UpdateStringOfDouble: http://tip.tcl.tk/132
+    set moo [expr {double(1.234)}]
+    set cow "moo $moo"
+}
 
 
 if { [catch {string repeat "abc" 10}] } {
@@ -122,3 +127,5 @@ if {$tcl_version >= 8.0} {
 bench -body {expr-rand-fun 100} -desc "EXPR rand range func"
 bench -body {expr-builtin} -desc "EXPR builtin sin"
 bench -body {expr-builtin-dyn cos 0.5} -desc "EXPR builtin dyn"
+
+bench -body { expr-UpdateStringOfDouble } -desc "EXPR UpdateStrOfDbl"

@@ -1,3 +1,8 @@
+2010-11-09  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/expr.bench (expr-UpdateStringOfDouble): add TIP#132
+	UpdateStringOfDouble slowdown benchmark
+
 2010-10-01  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tcl/binary.bench: add improved random binary string bench
