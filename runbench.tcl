@@ -2,7 +2,7 @@
 
 # runbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: runbench.tcl,v 1.24 2010/10/02 01:22:27 hobbs Exp $}
+set RCS {RCS: @(#) $Id: runbench.tcl,v 1.25 2010/11/30 19:46:29 hobbs Exp $}
 #
 # Copyright (c) 2000-2010 Jeffrey Hobbs.
 
@@ -292,6 +292,12 @@ proc collectData {iArray dArray oArray fileList} {
 	lappend ::auto_path /usr/local/ActiveTcl/lib
 	package require Tclx
     }
+    if {$opts(autoscale)} {
+	# Warn users that with autoscaling, you can't compare elapsed time
+	# to each other because the system will run different iters based
+	# on interp speed
+	vputs stdout "AUTOSCALING ON - total elapsed time may be skewed"
+    }
     foreach label $ivar(VERSION) {
 	set interp $ivar($label)
 	vputs stdout "Benchmark $label $interp"
@@ -307,8 +313,8 @@ proc collectData {iArray dArray oArray fileList} {
 	set start [clock seconds]
 	catch { set cstart [lindex [times] 2] }
 	array set tmp {}
+	#vputs stderr "exec $cmd $fileList"
 	if {$opts(usethreads)} {
-	    #puts stderr "exec $cmd $fileList"
 	    if {[catch {eval exec $cmd $fileList} output]} {
 		if {$opts(errors)} {
 		    error $::errorInfo

@@ -1,6 +1,9 @@
 2010-11-30  Jeff Hobbs  <jeffh@ActiveState.com>
 
-	* libbench.tcl (thread_finish): spit out evalstats info if available
+	* runbench.tcl (collectData): warn if autoscale is on that the
+	total elapsed time gets skewed
+
+	* libbench.tcl: spit out evalstats info if available
 
 2010-11-09  Jeff Hobbs  <jeffh@ActiveState.com>
 
