@@ -74,7 +74,20 @@ proc expr-builtin-dyn {fun val} {
 }
 proc expr-UpdateStringOfDouble {} {
     # 8.5 slowdown caused by UpdateStringOfDouble: http://tip.tcl.tk/132
+    # 8.6 performance patched 2010-11-28, 8.5 2010-11-30
     set moo [expr {double(1.234)}]
+    set cow "moo $moo"
+}
+proc expr-USoD2 {} {
+    # 8.5 slowdown caused by UpdateStringOfDouble: http://tip.tcl.tk/132
+    # 8.6 performance patched 2010-11-28, 8.5 2010-11-30
+    set moo [expr {double(1e27)}]
+    set cow "moo $moo"
+}
+proc expr-USoD3 {} {
+    # 8.5 slowdown caused by UpdateStringOfDouble: http://tip.tcl.tk/132
+    # 8.6 performance patched 2010-11-28, 8.5 2010-11-30
+    set moo [expr {double(0.000123)}]
     set cow "moo $moo"
 }
 
@@ -128,4 +141,14 @@ bench -body {expr-rand-fun 100} -desc "EXPR rand range func"
 bench -body {expr-builtin} -desc "EXPR builtin sin"
 bench -body {expr-builtin-dyn cos 0.5} -desc "EXPR builtin dyn"
 
-bench -body { expr-UpdateStringOfDouble } -desc "EXPR UpdateStrOfDbl"
+foreach val {0 12 17} {
+    if {![catch {set tcl_precision $val}]} {
+	bench -body { expr-UpdateStringOfDouble } \
+	    -desc "EXPR UpdStrOfDbl+1.23 prec$tcl_precision"
+	bench -body { expr-USoD2 } \
+	    -desc "EXPR UpdStrOfDbl+1e27 prec$tcl_precision"
+	bench -body { expr-USoD3 } \
+	    -desc "EXPR UpdStrOfDbl+1e-4 prec$tcl_precision"
+	unset tcl_precision
+    }
+}
