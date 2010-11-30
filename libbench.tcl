@@ -4,7 +4,7 @@
 # This file has to have code that works in any version of Tcl that
 # the user would want to benchmark.
 #
-# RCS: @(#) $Id: libbench.tcl,v 1.16 2010/09/28 01:21:03 hobbs Exp $
+# RCS: @(#) $Id: libbench.tcl,v 1.17 2010/11/30 19:43:06 hobbs Exp $
 #
 # Copyright (c) 2000-2001 Jeffrey Hobbs.
 
@@ -401,6 +401,9 @@ if {$BENCH(THREADS)} {
 
     foreach desc [array names bench] {
 	puts $BENCH(OUTFID) [list $desc $bench($desc)]
+    }
+    if {[llength [info commands evalstats]]} {
+	puts stdout [list ZZZ_STATS [evalstats]]
     }
 
     if {$BENCH(EXIT)} {
