@@ -1,5 +1,9 @@
 2010-11-30  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* runbench.tcl: add -repeat and -collate options that allow for
+	multiple runs to be accumulated and collate to be min, max or avg
+	value of runs.
+
 	* tcl/expr.bench (UpdStrOfDbl): improve UpdStrOfDbl benchmarks
 
 	* runbench.tcl (collectData): warn if autoscale is on that the

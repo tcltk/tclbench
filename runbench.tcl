@@ -2,7 +2,7 @@
 
 # runbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: runbench.tcl,v 1.25 2010/11/30 19:46:29 hobbs Exp $}
+set RCS {RCS: @(#) $Id: runbench.tcl,v 1.26 2010/12/01 04:07:41 hobbs Exp $}
 #
 # Copyright (c) 2000-2010 Jeffrey Hobbs.
 
@@ -23,9 +23,11 @@ set ME [file tail [info script]]
 proc usage {} {
     puts stderr "Usage (v$::VERSION): $::ME ?options?\
 	    \n\t-help			# print out this message\
-	    \n\t-delta			# delta range for wiki highlight (default: 0.05)\
 	    \n\t-autoscale <bool>	# autoscale runtime iters to 0.1s..4s (default on)\
-	    \n\t-iterations <#>		# max # of iterations to run any benchmark\
+	    \n\t-repeat <#>		# run X times and collate results (default 1)
+	    \n\t-collate min|max|avg	# collate command (default min)
+	    \n\t-delta			# delta range for wiki highlight (default: 0.05)\
+	    \n\t-iterations <#>		# max X of iterations to run any benchmark\
 	    \n\t-minversion <version>	# minimum interp version to use\
 	    \n\t-maxversion <version>	# maximum interp version to use\
 	    \n\t-match <glob>		# only run tests matching this pattern\
@@ -54,7 +56,7 @@ proc convertVersion {ver} {
 }
 
 #
-# Process args
+# Default process options
 #
 array set opts {
     paths	{}
@@ -77,120 +79,136 @@ array set opts {
     single	1
     autoscale	1
     norm	{}
+    repeat	1
+    ccmd	collate_min
 }
 
-if {[llength $argv]} {
-    while {[llength $argv]} {
-	set key [lindex $argv 0]
-	set val [lindex $argv 1]
-	set consumed 1
-	switch -glob -- $key {
-	    -help*	{ usage }
-	    -throw*	{
-		# throw errors when they occur in benchmark files
-		set opts(errors) 1
-		set consumed 0
-	    }
-	    -thread*	{
-		set opts(usethreads) [string is true -strict $val]
-	    }
-	    -globt*	{
-		set opts(tclsh) $val
-	    }
-	    -globw*	{
-		set opts(wish) $val
-	    }
-	    -auto*	{
-		set opts(autoscale) [string is true -strict $val]
-	    }
-	    -iter*	{
-		# Maximum iters to run a test
-		# The test may set a smaller iter run, but anything larger
-		# will be reduced.
-		set opts(iters) $val
-	    }
-	    -min*	{
-		# Allow a minimum version to search for,
-		# restricted to version, not patchlevel
-		set opts(minver) [convertVersion $val]
-	    }
-	    -max*	{
-		# Allow a maximum version to search for,
-		# restricted to version, not patchlevel
-		set opts(maxver) [convertVersion $val]
-	    }
-	    -match*	{
-		set opts(match) $val
-	    }
-	    -rmatch*	{
-		set opts(rmatch) $val
-	    }
-	    -norm*	{
-		set opts(norm) $val
-	    }
-	    -notcl	{
-		set opts(usetcl) 0
-		set consumed 0
-	    }
-	    -notk	{
-		set opts(usetk) 0
-		set consumed 0
-	    }
-	    -delta	{
-		set opts(delta) $val
-	    }
-	    -single*	{
-		set opts(single) [string is true -strict $val]
-	    }
-	    -out*	{
-		# Output style
-		if {![regexp {^(text|list|csv|wiki)$} $val]} { usage }
-		set opts(output) $val
-	    }
-	    -path*	{
-		# Support single dir path or multiple paths as a list
-		if {[file isdir $val]} { set val [list $val] }
-		foreach path $val {
-		    if {[file isdir $val]} { lappend opts(paths) $path }
+proc parseOpts {} {
+    global argv opts
+    if {[llength $argv]} {
+	while {[llength $argv]} {
+	    set key [lindex $argv 0]
+	    set val [lindex $argv 1]
+	    set consumed 1
+	    switch -glob -- $key {
+		-help*	{ usage }
+		-throw*	{
+		    # throw errors when they occur in benchmark files
+		    set opts(errors) 1
+		    set consumed 0
 		}
-	    }
-	    -v*	{
-		set opts(verbose) 1
-		set consumed 0
-	    }
-	    default {
-		foreach arg $argv {
-		    if {![file exists $arg]} {
-			usage
-		    }
-		    if {[string match *tk* $arg]} {
-			lappend opts(tklist) $arg
-		    } else {
-			lappend opts(tcllist) $arg
+		-thread*	{
+		    set opts(usethreads) [string is true -strict $val]
+		}
+		-globt*	{
+		    set opts(tclsh) $val
+		}
+		-globw*	{
+		    set opts(wish) $val
+		}
+		-auto*	{
+		    set opts(autoscale) [string is true -strict $val]
+		}
+		-rep*	{
+		    if {![string is integer -strict $val] || $val < 1} { usage }
+		    set opts(repeat) $val
+		    # Repeats and soft-errors don't mix
+		    set opts(errors) 1
+		}
+		-col*	{
+		    set ccmd [info commands collate_$val]
+		    if {[llength $ccmd] != 1} { usage }
+		    set opts(ccmd) $ccmd
+		}
+		-iter*	{
+		    # Maximum iters to run a test
+		    # The test may set a smaller iter run, but anything larger
+		    # will be reduced.
+		    set opts(iters) $val
+		}
+		-min*	{
+		    # Allow a minimum version to search for,
+		    # restricted to version, not patchlevel
+		    set opts(minver) [convertVersion $val]
+		}
+		-max*	{
+		    # Allow a maximum version to search for,
+		    # restricted to version, not patchlevel
+		    set opts(maxver) [convertVersion $val]
+		}
+		-match*	{
+		    set opts(match) $val
+		}
+		-rmatch*	{
+		    set opts(rmatch) $val
+		}
+		-norm*	{
+		    set opts(norm) $val
+		}
+		-notcl	{
+		    set opts(usetcl) 0
+		    set consumed 0
+		}
+		-notk	{
+		    set opts(usetk) 0
+		    set consumed 0
+		}
+		-delta	{
+		    set opts(delta) $val
+		}
+		-single*	{
+		    set opts(single) [string is true -strict $val]
+		}
+		-out*	{
+		    # Output style
+		    if {![regexp {^(text|list|csv|wiki)$} $val]} { usage }
+		    set opts(output) $val
+		}
+		-path*	{
+		    # Support single dir path or multiple paths as a list
+		    if {[file isdir $val]} { set val [list $val] }
+		    foreach path $val {
+			if {[file isdir $val]} { lappend opts(paths) $path }
 		    }
 		}
-		break
+		-v*	{
+		    set opts(verbose) 1
+		    set consumed 0
+		}
+		default {
+		    foreach arg $argv {
+			if {![file exists $arg]} {
+			    usage
+			}
+			if {[string match *tk* $arg]} {
+			    lappend opts(tklist) $arg
+			} else {
+			    lappend opts(tcllist) $arg
+			}
+		    }
+		    break
+		}
 	    }
+	    set argv [lreplace $argv 0 $consumed]
 	}
-	set argv [lreplace $argv 0 $consumed]
     }
-}
-if {[llength $opts(tcllist)] == 0 && [llength $opts(tklist)] == 0} {
-    set opts(tcllist) [lsort [glob $MYDIR/tcl/*.bench]]
-    set opts(tklist)  [lsort [glob $MYDIR/tk/*.bench]]
-}
+    if {[llength $opts(tcllist)] == 0 && [llength $opts(tklist)] == 0} {
+	set opts(tcllist) [lsort [glob $MYDIR/tcl/*.bench]]
+	set opts(tklist)  [lsort [glob $MYDIR/tk/*.bench]]
+    }
 
-#
-# Find available interpreters.
-# The user PATH will be searched, unless specified otherwise by -paths.
-# 
-if {[llength $opts(paths)] == 0} {
-    set pathSep [expr {($tcl_platform(platform) == "windows") ? ";" : ":"}]
-    set opts(paths) [split $env(PATH) $pathSep]
-}
-# Hobbs override for precise testing
-if {[info exists env(SNAME)]} {
-    #set opts(paths) /home/hobbs/install/$env(SNAME)/bin
+    #
+    # Find available interpreters.
+    # The user PATH will be searched, unless specified otherwise by -paths.
+    # 
+    if {[llength $opts(paths)] == 0} {
+	set pathSep [expr {($tcl_platform(platform) == "windows") ? ";" : ":"}]
+	set opts(paths) [split $env(PATH) $pathSep]
+    }
+    # Hobbs override for precise testing
+    if {[info exists env(SNAME)]} {
+	#set opts(paths) /home/hobbs/install/$env(SNAME)/bin
+    }
 }
 
 #
@@ -292,44 +310,71 @@ proc collectData {iArray dArray oArray fileList} {
 	lappend ::auto_path /usr/local/ActiveTcl/lib
 	package require Tclx
     }
+    if {$opts(repeat) > 1} {
+	vputs stdout "REPEATING $opts(repeat) $opts(ccmd)"
+    }
     if {$opts(autoscale)} {
 	# Warn users that with autoscaling, you can't compare elapsed time
 	# to each other because the system will run different iters based
 	# on interp speed
 	vputs stdout "AUTOSCALING ON - total elapsed time may be skewed"
     }
-    foreach label $ivar(VERSION) {
-	set interp $ivar($label)
-	vputs stdout "Benchmark $label $interp"
-	set cmd [list $interp [file join $::MYDIR libbench.tcl] \
-		-match $opts(match) \
+    for {set i 0} {$i < $opts(repeat)} {incr i} {
+	if {$i} {
+	    vputs -nonewline stdout "R[expr {$i+1}] "
+	}
+	foreach label $ivar(VERSION) {
+	    set interp $ivar($label)
+	    if {$i == 0} {
+		vputs stdout "Benchmark $label $interp"
+	    }
+	    set cmd [list $interp [file join $::MYDIR libbench.tcl]]
+	    lappend cmd -match $opts(match) \
 		-rmatch $opts(rmatch) \
 		-autos $opts(autoscale) \
 		-iters $opts(iters) \
 		-interp $interp \
 		-errors $opts(errors) \
-		-threads $opts(usethreads) \
-		]
-	set start [clock seconds]
-	catch { set cstart [lindex [times] 2] }
-	array set tmp {}
-	#vputs stderr "exec $cmd $fileList"
-	if {$opts(usethreads)} {
-	    if {[catch {eval exec $cmd $fileList} output]} {
-		if {$opts(errors)} {
-		    error $::errorInfo
+		-threads $opts(usethreads)
+	    array set tmp {}
+	    #vputs stderr "exec $cmd $fileList"
+	    set start [clock seconds]
+	    catch { set cstart [lindex [times] 2] }
+	    if {$opts(usethreads)} {
+		if {[catch {eval exec $cmd $fileList} output]} {
+		    if {$opts(errors)} {
+			error $::errorInfo
+		    } else {
+			puts stderr $output
+		    }
 		} else {
-		    puts stderr $output
+		    array set tmp $output
 		}
 	    } else {
-		array set tmp $output
-	    }
-	} else {
-	    if {$opts(single)} {
-		foreach file $fileList {
-		    vputs -nonewline stdout [string index [file tail $file] 0]
+		if {$opts(single)} {
+		    foreach file $fileList {
+			if {$i == 0} {
+			    vputs -nonewline stdout \
+				[string index [file tail $file] 0]
+			}
+			flush stdout
+			if {[catch {eval exec $cmd [list $file]} output]} {
+			    if {$opts(errors)} {
+				error $::errorInfo
+			    } else {
+				puts stderr $output
+				continue
+			    }
+			} else {
+			    array set tmp $output
+			}
+		    }
+		} else {
+		    if {$i == 0} {
+			vputs -nonewline "running all"
+		    }
 		    flush stdout
-		    if {[catch {eval exec $cmd [list $file]} output]} {
+		    if {[catch {eval exec $cmd $fileList} output]} {
 			if {$opts(errors)} {
 			    error $::errorInfo
 			} else {
@@ -340,40 +385,51 @@ proc collectData {iArray dArray oArray fileList} {
 			array set tmp $output
 		    }
 		}
-	    } else {
-		vputs -nonewline "running all"
-		flush stdout
-		if {[catch {eval exec $cmd $fileList} output]} {
-		    if {$opts(errors)} {
-			error $::errorInfo
-		    } else {
-			puts stderr $output
-			continue
-		    }
-		} else {
-		    array set tmp $output
+	    }
+	    catch { set celapsed [expr {[lindex [times] 2] - $cstart}] }
+	    set elapsed [expr {[clock seconds] - $start}]
+	    set hour [expr {$elapsed / 3600}]
+	    set min [expr {$elapsed / 60}]
+	    set sec [expr {$elapsed % 60}]
+	    if {$i == 0} {
+		vputs stdout " [format %.2d:%.2d:%.2d $hour $min $sec] elapsed"
+		if {[info exists celapsed]} {
+		    vputs stdout "$celapsed milliseconds"
 		}
 	    }
-	}
-	catch {unset tmp(Sourcing)}
-	foreach desc [array names tmp] {
-	    set DATA(desc:${desc}) {}
-	    set DATA(:$desc$label) $tmp($desc)
-	    if {[string length $desc] > $DATA(MAXLEN)} {
-		set DATA(MAXLEN) [string length $desc]
+	    catch { unset tmp(Sourcing) }
+	    foreach desc [array names tmp] {
+		set DATA(desc:${desc}) {}
+		set key :$desc$label ; set val $tmp($desc)
+		if {![info exists DATA($key)]} {   # $i == 0
+		    set DATA($key) $val
+		} elseif {[string is double -strict $val]} {
+		    # Call user-request collation type
+		    set DATA($key) [$opts(ccmd) $DATA($key) $val $i]
+		}
+		if {[string length $desc] > $DATA(MAXLEN)} {
+		    set DATA(MAXLEN) [string length $desc]
+		}
 	    }
-	}
-	unset tmp
-	set elapsed [expr {[clock seconds] - $start}]
-	set hour [expr {$elapsed / 3600}]
-	set min [expr {$elapsed / 60}]
-	set sec [expr {$elapsed % 60}]
-	vputs stdout " [format %.2d:%.2d:%.2d $hour $min $sec] elapsed"
-	catch {
-	    set celapsed [expr {[lindex [times] 2] - $cstart}]
-	    vputs stdout "$celapsed milliseconds"
+	    unset tmp
 	}
     }
+    if {$i > 1} {
+	vputs stdout ""
+    }
+}
+
+proc collate_min {cur new runs} {
+    # Minimum
+    return [expr {$cur > $new ? $new : $cur}]
+}
+proc collate_avg {cur new runs} {
+    # Average
+    return [expr {($cur * $i + $new)/($i+1)}]
+}
+proc collate_max {cur new runs} {
+    # Maximum
+    return [expr {$cur < $new ? $new : $cur}]
 }
 
 #
@@ -565,6 +621,8 @@ proc outputData {optArray iArray dArray} {
 proc now {} {
     return [clock format [clock seconds] -format "%Y-%m-%d %H:%M:%S"]
 }
+
+parseOpts
 
 if {[llength $opts(tcllist)] && $opts(usetcl)} {
     array set TCL_INTERP {ORDERED {} VERSION {}}
