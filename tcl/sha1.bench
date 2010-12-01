@@ -4,24 +4,15 @@
 # Copyright (C) 2003 Pat Thoyts <patthoyts@users.sourceforge.net>
 #
 # SHA1 defined by FIPS 180-1, "The SHA1 Message-Digest Algorithm"
-# HMAC defined by RFC 2104, "Keyed-Hashing for Message Authentication"
 #
 # This is an implementation of SHA1 based upon the example code given in
 # FIPS 180-1 and upon the tcllib MD4 implementation and taking some ideas
 # and methods from the earlier tcllib sha1 version by Don Libes.
 #
-# This implementation permits incremental updating of the hash and 
-# provides support for external compiled implementations either using
-# critcl (sha1c) or Trf.
+# Adapted from tcllib for benchmark use only, no C accelerators.
+# See tcllib sha1 module for latest version and more details.
 #
-# ref: http://www.itl.nist.gov/fipspubs/fip180-1.htm
-#
-# -------------------------------------------------------------------------
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-# -------------------------------------------------------------------------
-#
-# $Id: sha1.bench,v 1.7 2006/11/13 21:49:47 hobbs Exp $
+# $Id: sha1.bench,v 1.8 2010/12/01 21:57:01 hobbs Exp $
 
 if {[catch {package require Tcl 8.2}]} { # tcl minimum version
     return
@@ -29,11 +20,8 @@ if {[catch {package require Tcl 8.2}]} { # tcl minimum version
 
 namespace eval ::sha1 {
     variable version 2.0.2
-    variable rcsid {$Id: sha1.bench,v 1.7 2006/11/13 21:49:47 hobbs Exp $}
-    variable accel
-    array set accel {critcl 0 cryptkit 0 trf 0}
 
-    namespace export sha1 hmac SHA1Init SHA1Update SHA1Final
+    namespace export sha1 SHA1Init SHA1Update SHA1Final
 
     variable uid
     if {![info exists uid]} {
@@ -49,7 +37,6 @@ namespace eval ::sha1 {
 #   cleaned up when we call SHA1Final
 #
 proc ::sha1::SHA1Init {} {
-    variable accel
     variable uid
     set token [namespace current]::[incr uid]
     upvar #0 $token state
@@ -63,24 +50,6 @@ proc ::sha1::SHA1Init {} {
              D [expr {int(0x10325476)}] \
              E [expr {int(0xC3D2E1F0)}] \
              n 0 i "" ]
-    if {$accel(cryptkit)} {
-        cryptkit::cryptCreateContext state(ckctx) CRYPT_UNUSED CRYPT_ALGO_SHA
-    } elseif {$accel(trf)} {
-        set s {}
-        switch -exact -- $::tcl_platform(platform) {
-            windows { set s [open NUL w] }
-            unix    { set s [open /dev/null w] }
-        }
-        if {$s != {}} {
-            fconfigure $s -translation binary -buffering none
-            ::sha1 -attach $s -mode write \
-                -read-type variable \
-                -read-destination [subst $token](trfread) \
-                -write-type variable \
-                -write-destination [subst $token](trfwrite)
-            array set state [list trfread 0 trfwrite 0 trf $s]
-        }
-    }
     return $token
 }
 
@@ -95,25 +64,7 @@ proc ::sha1::SHA1Init {} {
 #   it here in preference to the pure-Tcl implementation.
 #
 proc ::sha1::SHA1Update {token data} {
-    variable accel
     upvar #0 $token state
-
-    if {$accel(critcl)} {
-        if {[info exists state(sha1c)]} {
-            set state(sha1c) [sha1c $data $state(sha1c)]
-        } else {
-            set state(sha1c) [sha1c $data]
-        }
-        return
-    } elseif {[info exists state(ckctx)]} {
-        if {[string length $data] > 0} {
-            cryptkit::cryptEncrypt $state(ckctx) $data
-        }
-        return
-    } elseif {[info exists state(trf)]} {
-        puts -nonewline $state(trf) $data
-        return
-    }
 
     # Update the state values
     incr state(n) [string length $data]
@@ -141,28 +92,6 @@ proc ::sha1::SHA1Update {token data} {
 proc ::sha1::SHA1Final {token} {
     upvar #0 $token state
 
-    # Check for either of the C-compiled versions.
-    if {[info exists state(sha1c)]} {
-        set r $state(sha1c)
-        unset state
-        return $r
-    } elseif {[info exists state(ckctx)]} {
-        cryptkit::cryptEncrypt $state(ckctx) ""
-        cryptkit::cryptGetAttributeString $state(ckctx) \
-            CRYPT_CTXINFO_HASHVALUE r 20
-        cryptkit::cryptDestroyContext $state(ckctx)
-        # If nothing was hashed, we get no r variable set!
-        if {[info exists r]} {
-            unset state
-            return $r
-        }
-    } elseif {[info exists state(trf)]} {
-        close $state(trf)
-        set r $state(trfwrite)
-        unset state
-        return $r
-    }
-
     # Padding
     #
     set len [string length $state(i)]
@@ -189,73 +118,6 @@ proc ::sha1::SHA1Final {token} {
     set r [bytes $state(A)][bytes $state(B)][bytes $state(C)][bytes $state(D)][bytes $state(E)]
     unset state
     return $r
-}
-
-# -------------------------------------------------------------------------
-# HMAC Hashed Message Authentication (RFC 2104)
-#
-# hmac = H(K xor opad, H(K xor ipad, text))
-#
-
-# HMACInit --
-#
-#    This is equivalent to the SHA1Init procedure except that a key is
-#    added into the algorithm
-#
-proc ::sha1::HMACInit {K} {
-
-    # Key K is adjusted to be 64 bytes long. If K is larger, then use
-    # the SHA1 digest of K and pad this instead.
-    set len [string length $K]
-    if {$len > 64} {
-        set tok [SHA1Init]
-        SHA1Update $tok $K
-        set K [SHA1Final $tok]
-        set len [string length $K]
-    }
-    set pad [expr {64 - $len}]
-    append K [string repeat \0 $pad]
-
-    # Cacluate the padding buffers.
-    set Ki {}
-    set Ko {}
-    binary scan $K i16 Ks
-    foreach k $Ks {
-        append Ki [binary format i [expr {$k ^ 0x36363636}]]
-        append Ko [binary format i [expr {$k ^ 0x5c5c5c5c}]]
-    }
-
-    set tok [SHA1Init]
-    SHA1Update $tok $Ki;                 # initialize with the inner pad
-    
-    # preserve the Ko value for the final stage.
-    # FRINK: nocheck
-    set [subst $tok](Ko) $Ko
-
-    return $tok
-}
-
-# HMACUpdate --
-#
-#    Identical to calling SHA1Update
-#
-proc ::sha1::HMACUpdate {token data} {
-    SHA1Update $token $data
-    return
-}
-
-# HMACFinal --
-#
-#    This is equivalent to the SHA1Final procedure. The hash context is
-#    closed and the binary representation of the hash result is returned.
-#
-proc ::sha1::HMACFinal {token} {
-    upvar #0 $token state
-
-    set tok [SHA1Init];                 # init the outer hashing function
-    SHA1Update $tok $state(Ko);         # prepare with the outer pad.
-    SHA1Update $tok [SHA1Final $token]; # hash the inner result
-    return [SHA1Final $tok]
 }
 
 # -------------------------------------------------------------------------
@@ -371,10 +233,9 @@ proc ::sha1::F4 {A B C D E W} {
 }
 
 proc ::sha1::rotl32 {v n} {
-    return [expr {((($v << $n) \
-                        | (($v >> (32 - $n)) \
-                               & (0x7FFFFFFF >> (31 - $n))))) \
-                      & 0xFFFFFFFF}]
+    return [expr {((($v << $n)
+                    | (($v >> (32 - $n))
+                       & (0x7FFFFFFF >> (31 - $n))))) & 0xFFFFFFFF}]
 }
 
 
@@ -386,7 +247,7 @@ proc ::sha1::rotl32 {v n} {
 # a procedure call overhead within the loops.
 #
 # We can do some minor tweaking to improve speed on Tcl < 8.5 where we
-# know our arithmetic is limited to 64 bits. On > 8.5 we may have 
+# know our arithmetic is limited to 64 bits. On > 8.5 we may have
 # unconstrained integer arithmetic and must avoid letting it run away.
 #
 
@@ -426,58 +287,12 @@ regsub -all -line \
     {[expr {(($B << 30) \& 0xffffffff) | (($B >> 2) \& 0x3fffffff)}]} \
     ::sha1::SHA1Transform_body_tmp
 
-#
-# Version 2 avoids a few truncations to 32 bits in non-essential places.
-#
-regsub -all -line \
-    {\[F1 \$A \$B \$C \$D \$E (\[.*?\])\]} \
-    $::sha1::SHA1Transform_body \
-    {[expr {rotl32($A,5) + ($D ^ ($B \& ($C ^ $D))) + $E + \1 + 0x5a827999}]} \
-    ::sha1::SHA1Transform_body_tmp2
-
-regsub -all -line \
-    {\[F2 \$A \$B \$C \$D \$E (\[.*?\])\]} \
-    $::sha1::SHA1Transform_body_tmp2 \
-    {[expr {rotl32($A,5) + ($B ^ $C ^ $D) + $E + \1 + 0x6ed9eba1}]} \
-    ::sha1::SHA1Transform_body_tmp2
-
-regsub -all -line \
-    {\[F3 \$A \$B \$C \$D \$E (\[.*?\])\]} \
-    $::sha1::SHA1Transform_body_tmp2 \
-    {[expr {rotl32($A,5) + (($B \& $C) | ($D \& ($B | $C))) + $E + \1 + 0x8f1bbcdc}]} \
-    ::sha1::SHA1Transform_body_tmp2
-
-regsub -all -line \
-    {\[F4 \$A \$B \$C \$D \$E (\[.*?\])\]} \
-    $::sha1::SHA1Transform_body_tmp2 \
-    {[expr {rotl32($A,5) + ($B ^ $C ^ $D) + $E + \1 + 0xca62c1d6}]} \
-    ::sha1::SHA1Transform_body_tmp2
-
-regsub -all -line \
-    {rotl32\(\$A,5\)} \
-    $::sha1::SHA1Transform_body_tmp2 \
-    {(($A << 5) | (($A >> 27) \& 0x1f))} \
-    ::sha1::SHA1Transform_body_tmp2
-
-regsub -all -line \
-    {\[rotl32 \$B 30\]} \
-    $::sha1::SHA1Transform_body_tmp2 \
-    {[expr {($B << 30) | (($B >> 2) \& 0x3fffffff)}]} \
-    ::sha1::SHA1Transform_body_tmp2
-
-if {[package vsatisfies [package provide Tcl] 8.5]} {
-    proc ::sha1::SHA1Transform {token msg} $::sha1::SHA1Transform_body_tmp
-} else {
-    proc ::sha1::SHA1Transform {token msg} $::sha1::SHA1Transform_body_tmp2
-}
-
-#unset ::sha1::SHA1Transform_body_tmp
-#unset ::sha1::SHA1Transform_body_tmp2
+proc ::sha1::SHA1Transform {token msg} $::sha1::SHA1Transform_body_tmp
 
 # -------------------------------------------------------------------------
 
 proc ::sha1::byte {n v} {expr {((0xFF << (8 * $n)) & $v) >> (8 * $n)}}
-proc ::sha1::bytes {v} { 
+proc ::sha1::bytes {v} {
     #format %c%c%c%c [byte 0 $v] [byte 1 $v] [byte 2 $v] [byte 3 $v]
     format %c%c%c%c \
         [expr {((0xFF000000 & $v) >> 24) & 0xFF}] \
@@ -495,49 +310,11 @@ proc ::sha1::Hex {data} {
 
 # -------------------------------------------------------------------------
 
-# LoadAccelerator --
-#
-#	This package can make use of a number of compiled extensions to
-#	accelerate the digest computation. This procedure manages the
-#	use of these extensions within the package. During normal usage
-#	this should not be called, but the test package manipulates the
-#	list of enabled accelerators.
-#
-proc ::sha1::LoadAccelerator {name} {
-    variable accel
-    set r 0
-    switch -exact -- $name {
-        critcl {
-            if {![catch {package require tcllibc}]
-                || ![catch {package require sha1c}]} {
-                set r [expr {[info command ::sha1::sha1c] != {}}]
-            }
-        }
-        cryptkit {
-            if {![catch {package require cryptkit}]} {
-                set r [expr {![catch {cryptkit::cryptInit}]}]
-            }
-        }
-        trf {
-            if {![catch {package require Trf}]} {
-                set r [expr {![catch {::sha1 aa} msg]}]
-            }
-        }
-        default {
-            return -code error "invalid accelerator package:\
-                must be one of [join [array names accel] {, }]"
-        }
-    }
-    set accel($name) $r
-}
-
-# -------------------------------------------------------------------------
-
 # Description:
 #  Pop the nth element off a list. Used in options processing.
 #
 proc ::sha1::Pop {varname {nth 0}} {
-    upvar $varname args
+    upvar 1 $varname args
     set r [lindex $args $nth]
     set args [lreplace $args $nth $nth]
     return $r
@@ -554,7 +331,7 @@ proc ::sha1::Chunk {token channel {chunksize 4096}} {
         fileevent $channel readable {}
         set state(reading) 0
     }
-        
+
     SHA1Update $token [read $channel $chunksize]
 }
 
@@ -623,112 +400,7 @@ proc ::sha1::sha1 {args} {
     return $r
 }
 
-# -------------------------------------------------------------------------
-
-proc ::sha1::hmac {args} {
-    array set opts {-hex 1 -filename {} -channel {} -chunksize 4096}
-    if {[llength $args] != 2} {
-        while {[string match -* [set option [lindex $args 0]]]} {
-            switch -glob -- $option {
-                -key       { set opts(-key) [Pop args 1] }
-                -hex       { set opts(-hex) 1 }
-                -bin       { set opts(-hex) 0 }
-                -file*     { set opts(-filename) [Pop args 1] }
-                -channel   { set opts(-channel) [Pop args 1] }
-                -chunksize { set opts(-chunksize) [Pop args 1] }
-                default {
-                    if {[llength $args] == 1} { break }
-                    if {[string compare $option "--"] == 0} { Pop args; break }
-                    set err [join [lsort [array names opts]] ", "]
-                    return -code error "bad option $option:\
-                    must be one of $err"
-                }
-            }
-            Pop args
-        }
-    }
-
-    if {[llength $args] == 2} {
-        set opts(-key) [Pop args]
-    }
-
-    if {![info exists opts(-key)]} {
-        return -code error "wrong # args:\
-            should be \"hmac ?-hex? -key key -filename file | string\""
-    }
-
-    if {$opts(-filename) != {}} {
-        set opts(-channel) [open $opts(-filename) r]
-        fconfigure $opts(-channel) -translation binary
-    }
-
-    if {$opts(-channel) == {}} {
-
-        if {[llength $args] != 1} {
-            return -code error "wrong # args:\
-                should be \"hmac ?-hex? -key key -filename file | string\""
-        }
-        set tok [HMACInit $opts(-key)]
-        HMACUpdate $tok [lindex $args 0]
-        set r [HMACFinal $tok]
-
-    } else {
-
-        set tok [HMACInit $opts(-key)]
-        # FRINK: nocheck
-        set [subst $tok](reading) 1
-        fileevent $opts(-channel) readable \
-            [list [namespace origin Chunk] \
-                 $tok $opts(-channel) $opts(-chunksize)]
-        # FRINK: nocheck
-        vwait [subst $tok](reading)
-        set r [HMACFinal $tok]
-
-        # If we opened the channel - we should close it too.
-        if {$opts(-filename) != {}} {
-            close $opts(-channel)
-        }
-    }
-    
-    if {$opts(-hex)} {
-        set r [Hex $r]
-    }
-    return $r
-}
-
-# -------------------------------------------------------------------------
-
-## Try and load a compiled extension to help.
-#namespace eval ::sha1 {
-#    foreach e {critcl cryptkit trf} { if {[LoadAccelerator $e]} { break } }
-#}
-#
-#package provide sha1 $::sha1::version
-
-# -------------------------------------------------------------------------
 # Start of tcl bench code...
-
-proc ::sha1::SHA1TransformA {token msg} $::sha1::SHA1Transform_body_tmp
-proc ::sha1::SHA1TransformB {token msg} $::sha1::SHA1Transform_body_tmp2
-interp alias {} ::sha1::SHA1Transform {} ::sha1::SHA1TransformA
-
-# Avoid using method B - in tcl 8.5 it does off and uses bignums and takes
-# a very long time. method B relies on the implicit truncation to 32 bit 
-# integers that occurs in 8.4
-proc ::sha1::timing {} {
-    set methods {SHA1TransformA SHA1TransformB}
-    if {[package vsatisfies [package provide Tcl] 8.5]} {
-        set methods SHA1TransformA
-    }
-    foreach method $methods {
-        interp alias {} ::sha1::SHA1Transform {} ::sha1::$method
-	foreach len {10 50 100 500 1000 5000 10000} {
-	    set str [str-repeat a $len]
-	    set time [expr {[lindex [::time {::sha1::sha1 $str} 20] 0]/1000}]
-	    puts "$method msg len $len: $time millisecs/iteration"
-	}
-    }
-}
 
 if { [catch {string repeat "abc" 10}] } {
     proc str-repeat {str num} {
@@ -744,21 +416,9 @@ if { [catch {string repeat "abc" 10}] } {
     }
 }
 
-if {[info commands bench] == ""} {
-    puts "Tcl [info patchlevel]"
-    sha1::timing
-} else {
-    foreach len  {10  100 1000 10000} iter {100 40  20   10} {
-        set str [str-repeat a $len]
-        interp alias {} ::sha1::SHA1Transform {} ::sha1::SHA1TransformA
-        bench -desc "SHA (A) msg len $len" -iter $iter \
-            -body {::sha1::sha1 $str}
-        if {![package vsatisfies [package provide Tcl] 8.5]} {
-            interp alias {} ::sha1::SHA1Transform {} ::sha1::SHA1TransformB
-            bench -desc "SHA (B) msg len $len" -iter $iter  \
-                -body {::sha1::sha1 $str}
-        }
-    }
+foreach len  {10  100 1000 10000} iter {100 40  20   10} {
+    set str [str-repeat a $len]
+    bench -desc "SHA1 msg len $len" -iter $iter -body {::sha1::sha1 $str}
 }
 
 # -------------------------------------------------------------------------

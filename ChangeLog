@@ -1,3 +1,9 @@
+2010-12-01  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tcl/sha1.bench: use only SHA1 algorithm that works across
+	versions.  The variant didn't add any extra value.  Also strip out
+	the unused code that wasn't relevant to the benchmark.
+
 2010-11-30  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* runbench.tcl: add -repeat and -collate options that allow for
