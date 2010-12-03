@@ -2,7 +2,7 @@
 
 # runbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: runbench.tcl,v 1.26 2010/12/01 04:07:41 hobbs Exp $}
+set RCS {RCS: @(#) $Id: runbench.tcl,v 1.27 2010/12/03 02:34:10 hobbs Exp $}
 #
 # Copyright (c) 2000-2010 Jeffrey Hobbs.
 
@@ -24,7 +24,7 @@ proc usage {} {
     puts stderr "Usage (v$::VERSION): $::ME ?options?\
 	    \n\t-help			# print out this message\
 	    \n\t-autoscale <bool>	# autoscale runtime iters to 0.1s..4s (default on)\
-	    \n\t-repeat <#>		# run X times and collate results (default 1)
+	    \n\t-repeat <#>		# repeat X times and collate results (default 1)
 	    \n\t-collate min|max|avg	# collate command (default min)
 	    \n\t-delta			# delta range for wiki highlight (default: 0.05)\
 	    \n\t-iterations <#>		# max X of iterations to run any benchmark\
@@ -79,16 +79,17 @@ array set opts {
     single	1
     autoscale	1
     norm	{}
-    repeat	1
+    repeat	0
     ccmd	collate_min
 }
 
 proc parseOpts {} {
     global argv opts
     if {[llength $argv]} {
-	while {[llength $argv]} {
-	    set key [lindex $argv 0]
-	    set val [lindex $argv 1]
+	set theargs $argv
+	while {[llength $theargs]} {
+	    set key [lindex $theargs 0]
+	    set val [lindex $theargs 1]
 	    set consumed 1
 	    switch -glob -- $key {
 		-help*	{ usage }
@@ -110,10 +111,10 @@ proc parseOpts {} {
 		    set opts(autoscale) [string is true -strict $val]
 		}
 		-rep*	{
-		    if {![string is integer -strict $val] || $val < 1} { usage }
+		    if {![string is integer -strict $val] || $val < 0} { usage }
 		    set opts(repeat) $val
 		    # Repeats and soft-errors don't mix
-		    set opts(errors) 1
+		    if {$val} { set opts(errors) 1 }
 		}
 		-col*	{
 		    set ccmd [info commands collate_$val]
@@ -176,7 +177,7 @@ proc parseOpts {} {
 		    set consumed 0
 		}
 		default {
-		    foreach arg $argv {
+		    foreach arg $theargs {
 			if {![file exists $arg]} {
 			    usage
 			}
@@ -186,10 +187,11 @@ proc parseOpts {} {
 			    lappend opts(tcllist) $arg
 			}
 		    }
+		    vputs stdout "ARGS [lrange $argv 0 end-[llength $theargs]]"
 		    break
 		}
 	    }
-	    set argv [lreplace $argv 0 $consumed]
+	    set theargs [lreplace $theargs 0 $consumed]
 	}
     }
     if {[llength $opts(tcllist)] == 0 && [llength $opts(tklist)] == 0} {
@@ -202,11 +204,11 @@ proc parseOpts {} {
     # The user PATH will be searched, unless specified otherwise by -paths.
     # 
     if {[llength $opts(paths)] == 0} {
-	set pathSep [expr {($tcl_platform(platform) == "windows") ? ";" : ":"}]
-	set opts(paths) [split $env(PATH) $pathSep]
+	set pathSep [expr {($::tcl_platform(platform)=="windows") ? ";" : ":"}]
+	set opts(paths) [split $::env(PATH) $pathSep]
     }
     # Hobbs override for precise testing
-    if {[info exists env(SNAME)]} {
+    if {[info exists ::env(SNAME)]} {
 	#set opts(paths) /home/hobbs/install/$env(SNAME)/bin
     }
 }
@@ -310,19 +312,24 @@ proc collectData {iArray dArray oArray fileList} {
 	lappend ::auto_path /usr/local/ActiveTcl/lib
 	package require Tclx
     }
-    if {$opts(repeat) > 1} {
+    if {$opts(repeat)} {
 	vputs stdout "REPEATING $opts(repeat) $opts(ccmd)"
-    }
-    if {$opts(autoscale)} {
+	if {$opts(autoscale)} {
+	    # We'll waste one run not autoscaled to get good elapsed time
+	    incr opts(repeat)
+	}
+    } elseif {$opts(autoscale)} {
 	# Warn users that with autoscaling, you can't compare elapsed time
 	# to each other because the system will run different iters based
 	# on interp speed
 	vputs stdout "AUTOSCALING ON - total elapsed time may be skewed"
     }
-    for {set i 0} {$i < $opts(repeat)} {incr i} {
+    for {set i 0} {$i <= $opts(repeat)} {incr i} {
 	if {$i} {
-	    vputs -nonewline stdout "R[expr {$i+1}] "
+	    vputs -nonewline stdout "R$i "
 	}
+	# Don't autoscale the first run if repeating
+	set auto [expr {($opts(repeat)&&$i) ? $opts(autoscale) : 0}]
 	foreach label $ivar(VERSION) {
 	    set interp $ivar($label)
 	    if {$i == 0} {
@@ -331,7 +338,7 @@ proc collectData {iArray dArray oArray fileList} {
 	    set cmd [list $interp [file join $::MYDIR libbench.tcl]]
 	    lappend cmd -match $opts(match) \
 		-rmatch $opts(rmatch) \
-		-autos $opts(autoscale) \
+		-autos $auto \
 		-iters $opts(iters) \
 		-interp $interp \
 		-errors $opts(errors) \

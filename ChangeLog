@@ -1,3 +1,9 @@
+2010-12-02  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* runbench.tcl (parseOpts): fix var scoping
+	Make -repeat really be repeat runs and adjust auto-scale to work
+	with repeats.
+
 2010-12-01  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tcl/sha1.bench: use only SHA1 algorithm that works across
