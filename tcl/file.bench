@@ -110,4 +110,6 @@ bench -desc "FILE exec interp: pkg require" -iter 30 \
 	-body {exec $BENCH(INTERP) $file}
 
 bench_rm $file
-file delete -force $dir
+if {[catch {file delete -force $dir}] && $tcl_platform(platform) == "unix"} {
+    catch {exec rm -rf $dir}
+}
