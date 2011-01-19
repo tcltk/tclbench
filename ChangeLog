@@ -1,5 +1,7 @@
 2011-01-19  Jeff Hobbs  <jeffh@ActiveState.com>
 
+	* tcl/format.bench (new): bench for 'format'
+
 	* runbench.tcl (parseOpts): fix scoping and -paths arg handling
 
 2010-12-02  Jeff Hobbs  <jeffh@ActiveState.com>
