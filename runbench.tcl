@@ -2,7 +2,7 @@
 
 # runbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: runbench.tcl,v 1.28 2010/12/04 00:28:02 hobbs Exp $}
+set RCS {RCS: @(#) $Id: runbench.tcl,v 1.29 2011/01/19 17:07:34 hobbs Exp $}
 #
 # Copyright (c) 2000-2010 Jeffrey Hobbs.
 
@@ -169,7 +169,7 @@ proc parseOpts {} {
 		    # Support single dir path or multiple paths as a list
 		    if {[file isdir $val]} { set val [list $val] }
 		    foreach path $val {
-			if {[file isdir $val]} { lappend opts(paths) $path }
+			if {[file isdir $path]} { lappend opts(paths) $path }
 		    }
 		}
 		-v*	{
@@ -195,8 +195,8 @@ proc parseOpts {} {
 	}
     }
     if {[llength $opts(tcllist)] == 0 && [llength $opts(tklist)] == 0} {
-	set opts(tcllist) [lsort [glob $MYDIR/tcl/*.bench]]
-	set opts(tklist)  [lsort [glob $MYDIR/tk/*.bench]]
+	set opts(tcllist) [lsort [glob $::MYDIR/tcl/*.bench]]
+	set opts(tklist)  [lsort [glob $::MYDIR/tk/*.bench]]
     }
 
     #
