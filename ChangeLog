@@ -1,3 +1,8 @@
+2011-02-16  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* runbench.tcl (collectData): correct autoscale magic if not
+	repeating and autoscale is requested (ensure output).
+
 2011-01-19  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tcl/format.bench (new): bench for 'format'

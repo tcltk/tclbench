@@ -2,7 +2,7 @@
 
 # runbench.tcl ?options?
 #
-set RCS {RCS: @(#) $Id: runbench.tcl,v 1.29 2011/01/19 17:07:34 hobbs Exp $}
+set RCS {RCS: @(#) $Id: runbench.tcl,v 1.30 2011/02/16 19:07:53 hobbs Exp $}
 #
 # Copyright (c) 2000-2010 Jeffrey Hobbs.
 
@@ -324,7 +324,7 @@ proc collectData {iArray dArray oArray fileList} {
 	    vputs -nonewline stdout "R$i "
 	}
 	# Don't autoscale the first run if repeating
-	set auto [expr {($opts(repeat)&&$i) ? $opts(autoscale) : 0}]
+	set auto [expr {($opts(repeat) && !$i) ? 0 : $opts(autoscale)}]
 	foreach label $ivar(VERSION) {
 	    set interp $ivar($label)
 	    if {$i == 0} {
