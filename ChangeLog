@@ -3,6 +3,8 @@
 	* runbench.tcl (collectData): correct autoscale magic if not
 	repeating and autoscale is requested (ensure output).
 
+	* tcl/expr.bench (expr-abs): abs proc vs built-in comparison
+
 2011-01-19  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	* tcl/format.bench (new): bench for 'format'

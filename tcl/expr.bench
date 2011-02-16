@@ -90,6 +90,16 @@ proc expr-USoD3 {} {
     set moo [expr {double(0.000123)}]
     set cow "moo $moo"
 }
+proc expr-abs-expr {a b} {
+    if {$a > $b} {
+	return [expr {$a - $b}]
+    } else {
+	return [expr {$b - $a}]
+    }
+}
+proc expr-abs-func {a b} {
+    return [expr {abs($a - $b)}]
+}
 
 
 if { [catch {string repeat "abc" 10}] } {
@@ -140,6 +150,9 @@ if {$tcl_version >= 8.0} {
 bench -body {expr-rand-fun 100} -desc "EXPR rand range func"
 bench -body {expr-builtin} -desc "EXPR builtin sin"
 bench -body {expr-builtin-dyn cos 0.5} -desc "EXPR builtin dyn"
+
+bench -body {expr-abs-expr 0.2 1.5} -desc "EXPR abs as expr"
+bench -body {expr-abs-func 0.2 1.5} -desc "EXPR abs builtin"
 
 foreach val {0 12 17} {
     if {![catch {set tcl_precision $val}]} {
